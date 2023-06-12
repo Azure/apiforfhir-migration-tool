@@ -20,15 +20,12 @@ stages:
         vmImage: ${{ variables.WindowsVmImage }}
       steps:
       - template: ./jobs/checkCode.yml
-        parameters:
-          DotNetVersion: ${{ variables.DotNetVersion }}
-          SolutionName: ${{ variables.SolutionName }}
 
     - job: BuildTestPublish
       pool:
         vmImage: ${{ variables.WindowsVmImage }}
       steps:
-      - template: ./jobs/update-semver.yml
+      # - template: ./jobs/update-semver.yml
       - template: ./jobs/build.yml
         parameters:
           RunUnitTest: true

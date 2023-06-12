@@ -10,7 +10,8 @@ steps:
   - task: DotNetCoreCLI@2
     inputs:
       command: "build"
-      arguments: '--configuration $(BuildConfiguration) --no-incremental -p:ContinuousIntegrationBuild=true -p:AssemblyVersion="$(SetVariablesFromGitVersion.AssemblySemVer)" -p:FileVersion="$(SetVariablesFromGitVersion.AssemblySemFileVer)" -p:InformationalVersion="$(SetVariablesFromGitVersion.InformationalVersion)" -p:Version="$(SetVariablesFromGitVersion.MajorMinorPatch)" -warnaserror'
+      # arguments: '--configuration $(BuildConfiguration) --no-incremental -p:ContinuousIntegrationBuild=true -p:AssemblyVersion="$(SetVariablesFromGitVersion.AssemblySemVer)" -p:FileVersion="$(SetVariablesFromGitVersion.AssemblySemFileVer)" -p:InformationalVersion="$(SetVariablesFromGitVersion.InformationalVersion)" -p:Version="$(SetVariablesFromGitVersion.MajorMinorPatch)" -warnaserror'
+      arguments: '--configuration $(BuildConfiguration) --no-incremental -p:ContinuousIntegrationBuild=true -warnaserror'
       projects: $(SourceProjectsString)
     displayName: "Build Source Projects"
 

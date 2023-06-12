@@ -5,7 +5,6 @@ variables:
   BuildConfiguration: 'Release' 
   VmImage: 'ubuntu-latest'
   WindowsVmImage: 'windows-latest'
-  DotNetVersion: '7.0.x'
   GitVersionFilePath: './src/GitVersion.yml'
   SolutionName: 'FhirMigrationTool.sln'
   SourceProjectsString: '**/FhirMigrationTool.csproj'
