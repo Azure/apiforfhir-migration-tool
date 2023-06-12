@@ -4,7 +4,6 @@
 // -------------------------------------------------------------------------------------------------
 
 // placeholder file for now
-
 using Microsoft.Extensions.Hosting;
 
 var host = new HostBuilder()
