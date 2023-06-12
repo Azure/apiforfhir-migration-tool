@@ -11,8 +11,7 @@ variables:
 
 stages:
   # Run for PRs and check-ins to the main branch. Run automatically.
-  - stage: CheckBuildTes
-    displayName: "Build, Test, and Run Code Checks"
+  - stage: Build
 
     jobs:
     - job: CodeChecks
@@ -21,7 +20,7 @@ stages:
       steps:
       - template: ./jobs/checkCode.yml
 
-    - job: BuildTestPublish
+    - job: BuildTest
       pool:
         vmImage: ${{ variables.WindowsVmImage }}
       steps:
