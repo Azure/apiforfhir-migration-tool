@@ -9,23 +9,27 @@ trigger: none
 variables:
   - template: ./ci-variables.yml
 
-jobs:
-  jobs:
-  - job: CodeChecks
-    pool:
-      vmImage: ${{ variables.WindowsVmImage }}
-    steps:
-    - template: ./jobs/checkCode.yml
-      parameters:
-        DotNetVersion: ${{ variables.DotNetVersion }}
-        SolutionName: ${{ variables.SolutionName }}
+stages:
+  # Run for PRs and check-ins to the main branch. Run automatically.
+  - stage: CheckBuildTes
+    displayName: "Build, Test, and Run Code Checks"
 
-  - job: BuildTestPublish
-    pool:
-      vmImage: ${{ variables.WindowsVmImage }}
-    steps:
-    - template: ./jobs/update-semver.yml
-    - template: ./jobs/build.yml
-      parameters:
-        RunUnitTest: true
-        RunComponentGovernance: false
+    jobs:
+    - job: CodeChecks
+      pool:
+        vmImage: ${{ variables.WindowsVmImage }}
+      steps:
+      - template: ./jobs/checkCode.yml
+        parameters:
+          DotNetVersion: ${{ variables.DotNetVersion }}
+          SolutionName: ${{ variables.SolutionName }}
+
+    - job: BuildTestPublish
+      pool:
+        vmImage: ${{ variables.WindowsVmImage }}
+      steps:
+      - template: ./jobs/update-semver.yml
+      - template: ./jobs/build.yml
+        parameters:
+          RunUnitTest: true
+          RunComponentGovernance: false
