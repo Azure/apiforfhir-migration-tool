@@ -28,7 +28,6 @@ steps:
       setupCommandlinePicker: 'vs2022'
       msBuildArchitecture: "DotNetCore"
       msBuildCommandline: '$(Agent.ToolsDirectory)\dotnet\dotnet.exe build "$(Build.SourcesDirectory)\FhirMigrationTool.sln"'
-    displayName: "Run code checks"  
 
   - task: PostAnalysis@2
     displayName: 'Check Roslyn Results '
