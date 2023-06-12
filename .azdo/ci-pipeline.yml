@@ -11,7 +11,7 @@ variables:
 
 stages:
   # Run for PRs and check-ins to the main branch. Run automatically.
-  - stage: CheckBuildTestPublish
+  - stage: Build
 
     jobs:
     - job: CodeChecks
@@ -19,30 +19,13 @@ stages:
         vmImage: ${{ variables.WindowsVmImage }}
       steps:
       - template: ./jobs/checkCode.yml
-        parameters:
-          DotNetVersion: ${{ variables.DotNetVersion }}
-          SolutionName: ${{ variables.SolutionName }}
 
-    - job: BuildTestPublish
+    - job: BuildTest
       pool:
         vmImage: ${{ variables.WindowsVmImage }}
       steps:
-      - template: ./jobs/update-semver.yml
+      # - template: ./jobs/update-semver.yml
       - template: ./jobs/build.yml
         parameters:
-          RunUnitTest: false
+          RunUnitTest: true
           RunComponentGovernance: false
-      - template: ./jobs/publish.yml
-
-  - stage: PublishGithubRelease
-    # Only run for commits to the main branch. Run automatically.
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
-    dependsOn: CheckBuildTestPublish
-    variables:
-      Version: $[stageDependencies.CheckBuildTestPublish.BuildTestPublish.outputs['SetVariablesFromGitVersion.SemVer']]
-    jobs:
-      - job: CreateGitHubRelease
-        pool:
-          vmImage: ${{ variables.VmImage }}
-        steps:
-        - template: ./jobs/githubRelease.yml

@@ -3,8 +3,6 @@ steps:
     fetchDepth: 0
 
   - task: UseDotNet@2
-    inputs:
-      version: $(DotNetVersion)
 
   - powershell: |
       dotnet tool install --global GitVersion.Tool

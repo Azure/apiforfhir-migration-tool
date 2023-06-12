@@ -1,13 +1,14 @@
 steps:
   - task: UseDotNet@2
+    displayName: 'Use .NET SDK'
     inputs:
-      version: $(DotNetVersion)
+      useGlobalJson: true
 
   - task: RoslynAnalyzers@3
     inputs:
       userProvideBuildInfo: "msBuildInfo"
       msBuildArchitecture: "DotNetCore"
-      msBuildCommandline: 'C:\hostedtoolcache\windows\dotnet\dotnet.exe build $(Build.SourcesDirectory)\$(SolutionName)'
+      msBuildCommandline: '$(Agent.ToolsDirectory)\dotnet\dotnet.exe build "$(Build.Repository.LocalPath)\FhirMigrationTool.sln"'
     displayName: "Run code checks"
 
   - task: CredScan@3
