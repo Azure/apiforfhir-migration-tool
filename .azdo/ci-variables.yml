@@ -9,6 +9,6 @@ variables:
   GitVersionFilePath: './src/GitVersion.yml'
   SolutionName: 'FhirMigrationTool.sln'
   SourceProjectsString: '**/FhirMigrationTool.csproj'
-  TestProjectsString: ''
+  TestProjectsString: '**/*.Test.csproj'
   PackageArtifactName: 'FhirMigrationTool'
   RepositoryName: 'azure/fhir-migration-tool'

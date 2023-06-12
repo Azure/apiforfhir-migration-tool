@@ -6,8 +6,6 @@ parameters:
 
 steps:
   - task: UseDotNet@2
-    inputs:
-      version: $(DotNetVersion)
 
   - task: DotNetCoreCLI@2
     inputs:
