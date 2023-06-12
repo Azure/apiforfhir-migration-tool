@@ -1,5 +1,8 @@
 steps:
   - task: UseDotNet@2
+    displayName: 'Use .NET SDK'
+    inputs:
+      useGlobalJson: true
 
   - task: RoslynAnalyzers@3
     inputs:

@@ -6,6 +6,9 @@ parameters:
 
 steps:
   - task: UseDotNet@2
+    displayName: 'Use .NET SDK'
+    inputs:
+      useGlobalJson: true
 
   - task: DotNetCoreCLI@2
     inputs:
