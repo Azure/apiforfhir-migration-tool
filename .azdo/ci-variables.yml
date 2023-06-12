@@ -6,8 +6,3 @@ variables:
   VmImage: 'ubuntu-latest'
   WindowsVmImage: 'windows-latest'
   GitVersionFilePath: './src/GitVersion.yml'
-  SolutionName: 'FhirMigrationTool.sln'
-  SourceProjectsString: '**/FhirMigrationTool.csproj'
-  TestProjectsString: '**/*.Test.csproj'
-  PackageArtifactName: 'FhirMigrationTool'
-  RepositoryName: 'azure/fhir-migration-tool'

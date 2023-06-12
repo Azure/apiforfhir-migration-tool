@@ -12,7 +12,6 @@ steps:
       command: "build"
       # arguments: '--configuration $(BuildConfiguration) --no-incremental -p:ContinuousIntegrationBuild=true -p:AssemblyVersion="$(SetVariablesFromGitVersion.AssemblySemVer)" -p:FileVersion="$(SetVariablesFromGitVersion.AssemblySemFileVer)" -p:InformationalVersion="$(SetVariablesFromGitVersion.InformationalVersion)" -p:Version="$(SetVariablesFromGitVersion.MajorMinorPatch)" -warnaserror'
       arguments: '--configuration $(BuildConfiguration) --no-incremental -p:ContinuousIntegrationBuild=true -warnaserror'
-      projects: $(SourceProjectsString)
     displayName: "Build Source Projects"
 
   - ${{ if eq(parameters.RunComponentGovernance, 'true') }}:
@@ -30,5 +29,4 @@ steps:
           command: "test"
           arguments: "--no-build --configuration $(BuildConfiguration)"
           publishTestResults: true
-          projects: $(TestProjectsString)
         displayName: "Run all tests"
