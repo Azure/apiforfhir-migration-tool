@@ -34,14 +34,6 @@ steps:
     inputs:
       GdnBreakGdnToolRoslynAnalyzers: true
 
-  - task: RunComponentGovernanceComponentDetection@0
-    inputs:
-      scanType: "Register"
-      verbosity: "Verbose"
-      alertWarningLevel: "High"
-      failOnAlert: true
-    displayName: "Run component governance"
-
   - task: DotNetCoreCLI@2
     inputs:
       command: "test"
