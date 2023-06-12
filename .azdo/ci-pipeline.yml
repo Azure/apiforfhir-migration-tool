@@ -14,18 +14,9 @@ stages:
   - stage: Build
 
     jobs:
-    - job: CodeChecks
-      pool:
-        vmImage: ${{ variables.WindowsVmImage }}
-      steps:
-      - template: ./jobs/checkCode.yml
-
     - job: BuildTest
       pool:
         vmImage: ${{ variables.WindowsVmImage }}
       steps:
       # - template: ./jobs/update-semver.yml
       - template: ./jobs/build.yml
-        parameters:
-          RunUnitTest: true
-          RunComponentGovernance: false

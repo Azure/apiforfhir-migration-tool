@@ -7,26 +7,44 @@ parameters:
 steps:
   - task: UseDotNet@2
 
+  - task: CredScan@3
+    inputs:
+      outputFormat: "csv"
+      toolVersion: Latest
+      verboseOutput: true
+    displayName: "Run CredScan"
+
   - task: DotNetCoreCLI@2
     inputs:
       command: "build"
       # arguments: '--configuration $(BuildConfiguration) --no-incremental -p:ContinuousIntegrationBuild=true -p:AssemblyVersion="$(SetVariablesFromGitVersion.AssemblySemVer)" -p:FileVersion="$(SetVariablesFromGitVersion.AssemblySemFileVer)" -p:InformationalVersion="$(SetVariablesFromGitVersion.InformationalVersion)" -p:Version="$(SetVariablesFromGitVersion.MajorMinorPatch)" -warnaserror'
       arguments: '--configuration $(BuildConfiguration) --no-incremental -p:ContinuousIntegrationBuild=true -warnaserror'
     displayName: "Build Source Projects"
+    
+  - task: RoslynAnalyzers@3
+    displayName: 'Run Roslyn Analyzers'
+    inputs:
+      userProvideBuildInfo: auto
+    env:
+      system_accesstoken: $(System.AccessToken)
+    continueOnError: true
 
-  - ${{ if eq(parameters.RunComponentGovernance, 'true') }}:
-      - task: RunComponentGovernanceComponentDetection@0
-        inputs:
-          scanType: "Register"
-          verbosity: "Verbose"
-          alertWarningLevel: "High"
-          failOnAlert: true
-        displayName: "Run component governance"
+  - task: PostAnalysis@2
+    displayName: 'Check Roslyn Results '
+    inputs:
+      GdnBreakGdnToolRoslynAnalyzers: true
 
-  - ${{ if eq(parameters.RunUnitTest, 'true') }}:
-      - task: DotNetCoreCLI@2
-        inputs:
-          command: "test"
-          arguments: "--no-build --configuration $(BuildConfiguration)"
-          publishTestResults: true
-        displayName: "Run all tests"
+  - task: RunComponentGovernanceComponentDetection@0
+    inputs:
+      scanType: "Register"
+      verbosity: "Verbose"
+      alertWarningLevel: "High"
+      failOnAlert: true
+    displayName: "Run component governance"
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: "test"
+      arguments: "--no-build --configuration $(BuildConfiguration)"
+      publishTestResults: true
+    displayName: "Run all tests"
