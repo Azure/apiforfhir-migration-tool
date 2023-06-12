@@ -5,7 +5,7 @@ steps:
     inputs:
       userProvideBuildInfo: "msBuildInfo"
       msBuildArchitecture: "DotNetCore"
-      msBuildCommandline: 'C:\hostedtoolcache\windows\dotnet\dotnet.exe build $(Build.SourcesDirectory)\$(SolutionName)'
+      msBuildCommandline: 'C:\hostedtoolcache\windows\dotnet\dotnet.exe build $(Build.SourcesDirectory)\FhirMigrationTool.sln'
     displayName: "Run code checks"
 
   - task: CredScan@3
