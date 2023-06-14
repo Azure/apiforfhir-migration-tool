@@ -1,6 +1,6 @@
 # Migrating data from Azure API for FHIR server to Azure Health Data Services FHIR service
 
-This sample will focus on how to migrate the FHIR data from Azure API for FHIR server to Azure Health Data Services FHIR service. This sample app utilizes [$export](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/export-data) (which allows you to filter and export certain data according to your [query](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters)) to export data from a source Azure API for FHIR server, and [$import](https://github.com/microsoft/fhir-loader) to import to Azure Health Data Service FHIR service.
+This sample will focus on how to migrate the FHIR data from Azure API for FHIR server to Azure Health Data Services FHIR service. This sample script utilizes [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) (which allows you to filter and export certain data according to your [query](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters)) to export data from a source Azure API for FHIR server, and [$import](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) to import to Azure Health Data Service FHIR service.
 
 ## Architecture Overview
 
@@ -23,10 +23,10 @@ This sample will focus on how to migrate the FHIR data from Azure API for FHIR s
 
 1. Export data from the **source** Azure API for FHIR server.
 	
-	1. Follow steps [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/configure-export-data) to configure settings for export on Azure API for FHIR server. The steps list [query parameters](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters) that can be used to filter what data gets exported (for example, using _since and _till query parameters).
+	1. Follow steps [here](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/configure-export-data) to configure settings for export on Azure API for FHIR server. The steps list [query parameters](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters) that can be used to filter what data gets exported (for example, using _since and _till query parameters).
 
 	2. Once the export configuration is setup, run the export command on Azure API for FHIR server.
-	Follow the [steps](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/export-data) to run the export command.
+	Follow the [steps](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) to run the export command.
 		- The GET commands can be run on Postman.
 		**Examples**:  
 			If you'd like to run a system export:
@@ -62,7 +62,7 @@ This sample will focus on how to migrate the FHIR data from Azure API for FHIR s
 
 2. Import data to the **destination** Azure Health Data Services FHIR service.
 
-	1. Follow steps [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/configure-import-data) to configure settings for import on Destination Azure Health Data Services FHIR Service.
+	1. Follow steps [here](https://learn.microsoft.com/azure/healthcare-apis/fhir/configure-import-data) to configure settings for import on Destination Azure Health Data Services FHIR Service.
 	
 		__Note__: Use the same storage account while configuring the import on AHDS FHIR service which was configured for $export.
 	
@@ -70,17 +70,17 @@ This sample will focus on how to migrate the FHIR data from Azure API for FHIR s
 		
 		The PowerShell script will take the $export Content-Location as parameter and will create the $import body payload that will be use during executing the $import command.
 	
-		- To run the PowerShell Script user need to have FHIR Data contributor role on AHDS FHIR Service as script require token to access the $export command output. Follow [steps](https://learn.microsoft.com/en-us/azure/healthcare-apis/configure-azure-rbac#assign-roles-for-the-fhir-service) to configure role on AHDS FHIR services.
+		- To run the PowerShell Script user need to have FHIR Data contributor role on AHDS FHIR Service as script require token to access the $export command output. Follow [steps](https://learn.microsoft.com/azure/healthcare-apis/configure-azure-rbac#assign-roles-for-the-fhir-service) to configure role on AHDS FHIR services.
 		
 		- Follow the steps to execute the script:
 
 			1. You can run the Powershell script locally Or can use [Open Azure Cloud Shell](https://shell.azure.com) - you can also access this from [Azure Portal](https://portal.azure.com).\
-			More details on how to setup [Azure Cloud Shell](https://learn.microsoft.com/en-us/azure/cloud-shell/overview)
+			More details on how to setup [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview)
 
 				- If using Azure Cloud Shell, select PowerShell for the environment 
 				- Clone this repo
 					```azurecli
-					https://microsofthealth@dev.azure.com/microsofthealth/Health/_git/fhir-migration-tool
+					git clone https://github.com/Azure/fhir-migration-tool.git --depth 1
 					```
 				- Change working directory to the repo directory
 					```azurecli-interactive
@@ -108,16 +108,16 @@ This sample will focus on how to migrate the FHIR data from Azure API for FHIR s
 				```
 
 	3. Once the import configuration is setup and $import body payload is created (optional), run the import command on Azure Health Data Services FHIR service.
-	Follow the [steps](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data) to run the import command.
+	Follow the [steps](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) to run the import command.
 
-	4. Follow steps [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#checking-import-status) to check the $import operation status .
+	4. Follow steps [here](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#checking-import-status) to check the $import operation status .
 
 ## Troubleshooting
 
 1. Azure API for FHIR.
-	-  Please see the [troubleshooting section](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/export-data#troubleshoot) to handle issues on exporting the data.
+	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/export-data#troubleshoot) to handle issues on exporting the data.
 2. Azure Health Data Services FHIR service.
-	-  Please see the [troubleshooting section](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#troubleshooting) to handle issues on importing the data.
+	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#troubleshooting) to handle issues on importing the data.
 
 ## Data Movement Verification
 

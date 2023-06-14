@@ -12,10 +12,26 @@ $cl_url = [uri]$url
 $host_name = $cl_url.Host
 
 try {
+
+    #Check Az Module and user logged in
+    $Azmodule_check = Get-InstalledModule -Name 'Az' -ErrorVariable Azmodule_check -ErrorAction SilentlyContinue
+    if (!$Azmodule_check) {
+        Write-Host "Az Module does not exist. Please install and re-run the script." -ForegroundColor Red
+        Exit
+    }
+
+    $User_Check = az account show 2>&1
+    if (!$?) {
+        Write-Host "User not logged into the az account. Please login using az login." -ForegroundColor Red
+        Exit
+    }
+
     # Get the Auth token
     Write-Host "Fetching the Auth Token to call the `$export` Content-Location URL." -ForegroundColor Yellow
-    $Access_token = Get-AzAccessToken -ResourceUrl "https://$host_name"
-    $token = $Access_token.Token
+    
+    $Access_token = az account get-access-token --scope "https://$host_name/.default"
+    $token = $Access_token[1].TrimEnd(",","`"").Split(":")[1].TrimStart(" ","`"")
+    
     Write-Host "Fetching of Auth Token completed." -ForegroundColor Green
 
     # Call the $export Content-Location URL to get the output.
