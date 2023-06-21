@@ -13,10 +13,10 @@ $host_name = $cl_url.Host
 
 try {
 
-    #Check Az Module and user logged in
-    $Azmodule_check = Get-InstalledModule -Name 'Az' -ErrorVariable Azmodule_check -ErrorAction SilentlyContinue
+    #Check Az Module and user logged in    
+    $Azmodule_check = Get-Command az -ErrorVariable Azmodule_check -ErrorAction SilentlyContinue
     if (!$Azmodule_check) {
-        Write-Host "Az Module does not exist. Please install and re-run the script." -ForegroundColor Red
+        Write-Host "Az CLI is not installed. Please install the az cli and re-run the script." -ForegroundColor Red
         Exit
     }
 
