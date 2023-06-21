@@ -1,0 +1,52 @@
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {
+      "name": "inputFormat",
+      "valueString": "application/fhir+ndjson"
+    },
+    {
+      "name": "mode",
+      "valueString": "IncrementalImport"
+    },
+    {
+      "name": "input",
+      "part": [
+        {
+          "name": "type",
+          "valueString": "Patient"
+        },
+        {
+          "name": "url",
+          "valueString": "https://examplefhirservice.blob.core.windows.net/b5306174-358b-4018-84f9-36aeea01219a/Patient-1.ndjson"
+        }
+      ]
+    },
+    {
+      "name": "input",
+      "part": [
+        {
+          "name": "type",
+          "valueString": "Patient"
+        },
+        {
+          "name": "url",
+          "valueString": "https://examplefhirservice.blob.core.windows.net/b5306174-358b-4018-84f9-36aeea01219a/Patient-2.ndjson"
+        }
+      ]
+    },
+    {
+      "name": "input",
+      "part": [
+        {
+          "name": "type",
+          "valueString": "Patient"
+        },
+        {
+          "name": "url",
+          "valueString": "https://examplefhirservice.blob.core.windows.net/b5306174-358b-4018-84f9-36aeea01219a/Patient-3.ndjson"
+        }
+      ]
+    }
+  ]
+}
