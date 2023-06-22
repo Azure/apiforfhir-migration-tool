@@ -46,7 +46,7 @@ namespace FhirMigrationTool.ExportProcess
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(baseUri, "/$export?_type=Patient"),
+                    RequestUri = new Uri(baseUri, "/$export"),
                     Headers =
                     {
                         { HttpRequestHeader.Accept.ToString(), "application/fhir+json" },
