@@ -5,7 +5,6 @@
 
 using Azure.Core;
 using Azure.Identity;
-using FhirMigrationTool.Configuration;
 
 namespace FhirMigrationTool.Security
 {
@@ -14,11 +13,11 @@ namespace FhirMigrationTool.Security
         private readonly SemaphoreSlim _semaphoreSlim = new(1, 1);
         private AccessToken? _accessToken = null;
         private DateTimeOffset _accessTokenExpiration;
-        private readonly MigrationOptions _options;
 
-        public BearerTokenHelper(MigrationOptions options)
+        // private readonly MigrationOptions _options;
+        public BearerTokenHelper()
         {
-            _options = options;
+            // _options = options;
         }
 
         public async Task<AccessToken> GetTokenAsync(string[] scopes, CancellationToken cancellationToken, string nullAccessToken = "")

@@ -49,7 +49,7 @@ namespace FhirMigrationTool.ImportProcess
                     Content = new StringContent(requestContent, Encoding.UTF8, "application/fhir+json"),
                 };
 
-                var importResponse = await _fhirClient.Send(request, baseUri);
+                HttpResponseMessage importResponse = await _fhirClient.Send(request, baseUri);
 
                 if (importResponse.IsSuccessStatusCode)
                 {
@@ -66,7 +66,7 @@ namespace FhirMigrationTool.ImportProcess
                 }
                 else
                 {
-                    _logger?.LogInformation($"Import returned: Unsuccessful.");
+                    _logger?.LogInformation($"Import returned: Unsuccessful. StatusCode: {importResponse.StatusCode}");
                     throw new Exception($"StatusCode: {importResponse.StatusCode}, Response: {importResponse.Content.ReadAsStringAsync()} ");
                 }
 
@@ -74,6 +74,7 @@ namespace FhirMigrationTool.ImportProcess
             }
             catch
             {
+                _logger?.LogError($"Error occurred at ImportProcessor:Execute().");
                 throw;
             }
 
@@ -102,11 +103,11 @@ namespace FhirMigrationTool.ImportProcess
                             },
                         };
 
-                        var importStatusResponse = await _fhirClient.Send(statusRequest, baseUri);
+                        HttpResponseMessage importStatusResponse = await _fhirClient.Send(statusRequest, baseUri);
 
                         if (importStatusResponse.StatusCode == HttpStatusCode.OK)
                         {
-                            _logger?.LogInformation($"Import Status check returned success.");
+                            _logger?.LogInformation($"Import Status check returned: Success.");
                             importStatus = "Completed";
                             break;
                         }
@@ -127,6 +128,7 @@ namespace FhirMigrationTool.ImportProcess
             }
             catch
             {
+                _logger?.LogError($"Error occurred at ImportProcessor:CheckImportStatus().");
                 throw;
             }
 

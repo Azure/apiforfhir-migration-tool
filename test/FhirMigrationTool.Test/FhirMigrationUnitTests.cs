@@ -120,11 +120,17 @@ namespace FhirMigrationtool.Tests
 
             _mockClient.Setup(c => c.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(response));
 
-            IExportProcessor exportProcessor = new ExportProcessor(_mockClient.Object, _config, telemetryClient, (ILogger<ExportProcessor>)_loggerExport, orchestrationHelper);
-
             try
             {
                 string result = string.Empty;
+
+#pragma warning disable CS8604 // Possible null reference argument.
+                IExportProcessor exportProcessor = new ExportProcessor(
+                    fhirClient: _mockClient.Object,
+                    options: _config,
+                    telemetryClient: telemetryClient,
+                    logger: _loggerExport as ILogger<ExportProcessor>,
+                    orchestrationHelper: orchestrationHelper);
                 result = await exportProcessor.Execute();
                 Assert.IsTrue(!string.IsNullOrEmpty(result));
             }
@@ -132,6 +138,7 @@ namespace FhirMigrationtool.Tests
             {
                 _loggerExport.LogError($"Error occurred during test: {ex.Message}");
             }
+#pragma warning restore CS8604 // Possible null reference argument.
         }
 
         [TestMethod]
@@ -146,11 +153,17 @@ namespace FhirMigrationtool.Tests
 
             _mockClient.Setup(c => c.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(response));
 
-            IExportProcessor exportProcessor = new ExportProcessor(_mockClient.Object, _config, telemetryClient, (ILogger<ExportProcessor>)_loggerExport, orchestrationHelper);
-
             try
             {
                 string result = string.Empty;
+
+#pragma warning disable CS8604 // Possible null reference argument.
+                IExportProcessor exportProcessor = new ExportProcessor(
+                    _mockClient.Object,
+                    options: _config,
+                    telemetryClient: telemetryClient,
+                    logger: _loggerExport as ILogger<ExportProcessor>,
+                    orchestrationHelper: orchestrationHelper);
                 result = await exportProcessor.CheckExportStatus(exportStatusUrl);
                 Assert.IsTrue(!string.IsNullOrEmpty(result));
             }
@@ -158,6 +171,7 @@ namespace FhirMigrationtool.Tests
             {
                 _loggerExport.LogError($"Error occurred during test: {ex.Message}");
             }
+#pragma warning restore CS8604 // Possible null reference argument.
         }
 
         [TestMethod]
@@ -180,11 +194,16 @@ namespace FhirMigrationtool.Tests
 
             _mockClient.Setup(c => c.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(response));
 
-            IImportProcessor importProcessor = new ImportProcessor(_mockClient.Object, _config, telemetryClient, (ILogger<ImportProcessor>)_loggerImport);
-
             try
             {
                 string result = string.Empty;
+
+#pragma warning disable CS8604 // Possible null reference argument.
+                IImportProcessor importProcessor = new ImportProcessor(
+                    fhirClient: _mockClient.Object,
+                    options: _config,
+                    telemetryClient: telemetryClient,
+                    logger: _loggerImport as ILogger<ImportProcessor>);
                 result = await importProcessor.Execute(importRequest);
                 Assert.IsTrue(!string.IsNullOrEmpty(result));
             }
@@ -192,6 +211,7 @@ namespace FhirMigrationtool.Tests
             {
                 _loggerImport.LogError($"Error occurred during test: {ex.Message}");
             }
+#pragma warning restore CS8604 // Possible null reference argument.
         }
 
         [TestMethod]
@@ -206,11 +226,16 @@ namespace FhirMigrationtool.Tests
 
             _mockClient.Setup(c => c.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(response));
 
-            IImportProcessor importProcessor = new ImportProcessor(_mockClient.Object, _config, telemetryClient, (ILogger<ImportProcessor>)_loggerImport);
-
             try
             {
                 string result = string.Empty;
+
+#pragma warning disable CS8604 // Possible null reference argument.
+                IImportProcessor importProcessor = new ImportProcessor(
+                    fhirClient: _mockClient.Object,
+                    options: _config,
+                    telemetryClient: telemetryClient,
+                    logger: _loggerImport as ILogger<ImportProcessor>);
                 result = await importProcessor.CheckImportStatus(importStatusUrl);
                 Assert.IsTrue(!string.IsNullOrEmpty(result));
             }
@@ -218,6 +243,7 @@ namespace FhirMigrationtool.Tests
             {
                 _loggerImport.LogError($"Error occurred during test: {ex.Message}");
             }
+#pragma warning restore CS8604 // Possible null reference argument.
         }
 
         [TestMethod]
@@ -241,11 +267,15 @@ namespace FhirMigrationtool.Tests
             {
                 string result = string.Empty;
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 var exportResult = await exportOrchestrator.ProcessExport(null, null);
+
+#pragma warning disable CS8604 // Possible null reference argument.
                 _logger.LogInformation($"Export result: {exportResult}");
                 if (!string.IsNullOrEmpty(exportResult))
                 {
                     result = await importOrchestrator.ProcessImport(exportResult, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     if (!string.IsNullOrEmpty(result))
                     {
                         _logger.LogInformation($"Import result: {result}");
@@ -265,6 +295,7 @@ namespace FhirMigrationtool.Tests
             catch (Exception ex)
             {
                 _loggerExport.LogError($"Error occurred during test: {ex.Message}");
+#pragma warning restore CS8604 // Possible null reference argument.
             }
         }
 
@@ -287,11 +318,15 @@ namespace FhirMigrationtool.Tests
             try
             {
                 string result = string.Empty;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 var exportResult = await exportOrchestrator.ProcessExport(null, null);
+
+#pragma warning disable CS8604 // Possible null reference argument.
                 _logger.LogInformation($"Export result: {exportResult}");
                 if (!string.IsNullOrEmpty(exportResult))
                 {
                     result = await importOrchestrator.ProcessImport(exportResult, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     if (!string.IsNullOrEmpty(result))
                     {
                         _logger.LogInformation($"Import result: {result}");
@@ -311,9 +346,9 @@ namespace FhirMigrationtool.Tests
             catch (Exception ex)
             {
                 _loggerExport.LogError($"Error occurred during test: {ex.Message}");
+#pragma warning restore CS8604 // Possible null reference argument.
                 Assert.AreEqual<string>("Export status Url was not received in export response.", ex.Message);
             }
-
         }
 
         [TestMethod]
@@ -337,11 +372,15 @@ namespace FhirMigrationtool.Tests
             {
                 string result = string.Empty;
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 var exportResult = await exportOrchestrator.ProcessExport(null, null);
+
+#pragma warning disable CS8604 // Possible null reference argument.
                 _logger.LogInformation($"Export result: {exportResult}");
                 if (!string.IsNullOrEmpty(exportResult))
                 {
                     result = await importOrchestrator.ProcessImport(exportResult, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     if (!string.IsNullOrEmpty(result))
                     {
                         _logger.LogInformation($"Import result: {result}");
@@ -361,8 +400,8 @@ namespace FhirMigrationtool.Tests
             catch (Exception ex)
             {
                 _loggerExport.LogError($"Error occurred during test: {ex.Message}");
+#pragma warning restore CS8604 // Possible null reference argument.
             }
-
         }
 
         [TestMethod]
@@ -385,11 +424,15 @@ namespace FhirMigrationtool.Tests
             {
                 string result = string.Empty;
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 var exportResult = await exportOrchestrator.ProcessExport(null, null);
+
+#pragma warning disable CS8604 // Possible null reference argument.
                 _logger.LogInformation($"Export result: {exportResult}");
                 if (!string.IsNullOrEmpty(exportResult))
                 {
                     result = await importOrchestrator.ProcessImport(exportResult, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     if (!string.IsNullOrEmpty(result))
                     {
                         _logger.LogInformation($"Import result: {result}");
@@ -409,9 +452,9 @@ namespace FhirMigrationtool.Tests
             catch (Exception ex)
             {
                 _loggerExport.LogError($"Error occurred during test: {ex.Message}");
+#pragma warning restore CS8604 // Possible null reference argument.
                 Assert.AreEqual<string>("Import status Url was not received in export response.", ex.Message);
             }
-
         }
 
         [TestMethod]
@@ -435,11 +478,15 @@ namespace FhirMigrationtool.Tests
             {
                 string result = string.Empty;
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 var exportResult = await exportOrchestrator.ProcessExport(null, null);
+
+#pragma warning disable CS8604 // Possible null reference argument.
                 _logger.LogInformation($"Export result: {exportResult}");
                 if (!string.IsNullOrEmpty(exportResult))
                 {
                     result = await importOrchestrator.ProcessImport(exportResult, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     if (!string.IsNullOrEmpty(result))
                     {
                         _logger.LogInformation($"Import result: {result}");
@@ -461,6 +508,7 @@ namespace FhirMigrationtool.Tests
                 _loggerExport.LogError($"Error occurred during test: {ex.Message}");
                 Assert.AreEqual<string>("Import status Url was not received in export response.", ex.Message);
             }
+#pragma warning restore CS8604 // Possible null reference argument.
         }
     }
 }

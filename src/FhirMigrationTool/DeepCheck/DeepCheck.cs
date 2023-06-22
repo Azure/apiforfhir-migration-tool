@@ -31,11 +31,11 @@ namespace FhirMigrationTool.DeepCheck
         {
             int resourceCount = _options.DeepCheckCount;
             var baseUri = new Uri(_options.SourceFhirUri);
-            Uri desbaseUri = new Uri(_options.DestinationFhirUri);
+            var desbaseUri = new Uri(_options.DestinationFhirUri);
 
-            JObject res = new JObject();
-            JArray passResource = new JArray();
-            JArray errorResource = new JArray();
+            var res = new JObject();
+            var passResource = new JArray();
+            var errorResource = new JArray();
 
             _logger?.LogInformation($"Deep Check Function start");
             try
@@ -45,17 +45,17 @@ namespace FhirMigrationTool.DeepCheck
                     Method = HttpMethod.Get,
                     RequestUri = new Uri(baseUri, string.Format("/?_count={0}", resourceCount)),
                 };
-                var srcTask = await _fhirClient.Send(request, baseUri);
+                HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri);
 
                 // var response = srcTask.Result;
-                JObject objResponse = JObject.Parse(srcTask.Content.ReadAsStringAsync().Result);
-                var entry = objResponse["entry"];
+                var objResponse = JObject.Parse(srcTask.Content.ReadAsStringAsync().Result);
+                JToken? entry = objResponse["entry"];
 
                 if (entry != null)
                 {
-                    foreach (var item in entry)
+                    foreach (JToken item in entry)
                     {
-                        JObject? gen1Response = (JObject?)item["resource"];
+                        var gen1Response = (JObject?)item["resource"];
                         if (gen1Response != null)
                         {
                             gen1Response.Remove("meta");
@@ -67,28 +67,32 @@ namespace FhirMigrationTool.DeepCheck
                                 RequestUri = new Uri(desbaseUri, string.Format("{0}/{1}", gen1Response.GetValue("resourceType"), gen1Response.GetValue("id"))),
                             };
 
-                            var desTask = await _fhirClient.Send(desrequest, desbaseUri, "newToken");
+                            HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, "newToken");
 
                             // var desResponse = desTask.Result;
-                            JObject gen2Response = JObject.Parse(desTask.Content.ReadAsStringAsync().Result);
+                            var gen2Response = JObject.Parse(desTask.Content.ReadAsStringAsync().Result);
                             gen2Response.Remove("meta");
 
                             // Comparing the resource from Gen1 and Gen2 server.
                             if (JToken.DeepEquals(gen1Response, gen2Response))
                             {
-                                JObject inputFormat = new JObject();
-                                inputFormat.Add("Resource", gen1Response.GetValue("resourceType"));
-                                inputFormat.Add("id", gen1Response.GetValue("id"));
-                                inputFormat.Add("Compared", true);
+                                var inputFormat = new JObject
+                                {
+                                    { "Resource", gen1Response.GetValue("resourceType") },
+                                    { "id", gen1Response.GetValue("id") },
+                                    { "Compared", true },
+                                };
 
                                 passResource.Add(inputFormat);
                             }
                             else
                             {
-                                JObject errorFormat = new JObject();
-                                errorFormat.Add("Resource", gen1Response.GetValue("resourceType"));
-                                errorFormat.Add("id", gen1Response.GetValue("id"));
-                                errorFormat.Add("Compared", false);
+                                var errorFormat = new JObject
+                                {
+                                    { "Resource", gen1Response.GetValue("resourceType") },
+                                    { "id", gen1Response.GetValue("id") },
+                                    { "Compared", false },
+                                };
                                 errorResource.Add(errorFormat);
                             }
                         }
