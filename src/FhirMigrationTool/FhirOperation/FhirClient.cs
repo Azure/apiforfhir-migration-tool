@@ -27,19 +27,17 @@ namespace FhirMigrationTool.FhirOperation
         public async Task<HttpResponseMessage> Send(HttpRequestMessage request, Uri fhirUrl, string nullAccessToken = "")
         {
             HttpResponseMessage fhirResponse;
-            Uri baseUri = fhirUrl;
-
             try
             {
-                HttpClient client;
-                client = _httpClient == null ? new HttpClient() : _httpClient.CreateClient();
-                client.BaseAddress = baseUri;
+                HttpClient client = _httpClient == null ? new HttpClient() : _httpClient.CreateClient();
+                client.BaseAddress = fhirUrl;
 
-                var cancellationTokenSource = new CancellationTokenSource();
-                var cancellationToken = cancellationTokenSource.Token;
+                CancellationToken cancellationToken = new CancellationTokenSource().Token;
 
-                var tokenResponse = await _tokenCache.GetTokenAsync(GetDefaultScopes(baseUri), cancellationToken, nullAccessToken);
-                var accessToken = tokenResponse;
+                Azure.Core.AccessToken tokenResponse = await _tokenCache.GetTokenAsync(
+                    GetDefaultScopes(requestUri: fhirUrl),
+                    cancellationToken,
+                    nullAccessToken);
 
                 if (!client.DefaultRequestHeaders.Contains("Authorization"))
                 {
@@ -50,7 +48,7 @@ namespace FhirMigrationTool.FhirOperation
                         client.DefaultRequestHeaders.Clear();
                         client.DefaultRequestHeaders.Accept.Clear();
                         client.DefaultRequestHeaders.Remove("Authorization");
-                        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken.Token}");
+                        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {tokenResponse.Token}");
                     }
                 }
 

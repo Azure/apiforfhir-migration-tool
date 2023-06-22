@@ -32,6 +32,11 @@ namespace FhirMigrationTool.ExportProcess
 
         public async Task<string> Execute()
         {
+            if (!_orchestrationHelper.ValidateConfig(_options))
+            {
+                throw new Exception($"Process exiting: Please check all the required configuration values are available.");
+            }
+
             var baseUri = new Uri(_options.SourceFhirUri);
             string exportStatusUrl = string.Empty;
             try
@@ -50,7 +55,7 @@ namespace FhirMigrationTool.ExportProcess
                     },
                 };
 
-                var exportResponse = await _fhirClient.Send(request, baseUri);
+                HttpResponseMessage exportResponse = await _fhirClient.Send(request, baseUri);
 
                 if (exportResponse.IsSuccessStatusCode)
                 {
@@ -67,7 +72,7 @@ namespace FhirMigrationTool.ExportProcess
                 }
                 else
                 {
-                    _logger?.LogInformation($"Export returned: Unsuccessful.");
+                    _logger?.LogInformation($"Export returned: Unsuccessful. StatusCode: {exportResponse.StatusCode}");
                     throw new Exception($"StatusCode: {exportResponse.StatusCode}, Response: {exportResponse.Content.ReadAsStringAsync()} ");
                 }
 
@@ -75,6 +80,7 @@ namespace FhirMigrationTool.ExportProcess
             }
             catch
             {
+                _logger?.LogError($"Error occurred at ExportProcessor:Execute().");
                 throw;
             }
 
@@ -103,7 +109,7 @@ namespace FhirMigrationTool.ExportProcess
                             },
                         };
 
-                        var exportStatusResponse = await _fhirClient.Send(statusRequest, baseUri);
+                        HttpResponseMessage exportStatusResponse = await _fhirClient.Send(statusRequest, baseUri);
 
                         if (exportStatusResponse.StatusCode == HttpStatusCode.OK)
                         {
@@ -128,6 +134,7 @@ namespace FhirMigrationTool.ExportProcess
             }
             catch
             {
+                _logger?.LogError($"Error occurred at ExportProcessor:CheckExportStatus().");
                 throw;
             }
 

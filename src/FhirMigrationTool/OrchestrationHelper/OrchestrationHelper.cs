@@ -3,6 +3,7 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
+using FhirMigrationTool.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -68,6 +69,21 @@ namespace FhirMigrationTool.OrchestrationHelper
             }
 
             return importRequestJson;
+        }
+
+        public bool ValidateConfig(MigrationOptions options)
+        {
+            try
+            {
+                return !string.IsNullOrEmpty(options.SourceFhirUri)
+                    && !string.IsNullOrEmpty(options.DestinationFhirUri)
+                    && !string.IsNullOrEmpty(options.ImportMode)
+                    && !string.IsNullOrEmpty(options.ScheduleInterval);
+            }
+            catch
+            {
+                throw;
+            }
         }
     }
 }

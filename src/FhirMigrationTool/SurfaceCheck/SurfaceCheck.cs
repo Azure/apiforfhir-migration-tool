@@ -29,15 +29,15 @@ namespace FhirMigrationTool.SurfaceCheck
 
         public async Task<string> Execute()
         {
-            JObject res = new JObject();
-            JArray passResource = new JArray();
-            JArray errorResource = new JArray();
+            var res = new JObject();
+            var passResource = new JArray();
+            var errorResource = new JArray();
 
             if (_options.SurfaceCheckResources != null)
             {
-                List<string> surfaceCheckResource = new List<string>(_options.SurfaceCheckResources);
+                var surfaceCheckResource = new List<string>(_options.SurfaceCheckResources);
                 var baseUri = new Uri(_options.SourceFhirUri);
-                Uri desbaseUri = new Uri(_options.DestinationFhirUri);
+                var desbaseUri = new Uri(_options.DestinationFhirUri);
                 foreach (var item in surfaceCheckResource)
                 {
                     _logger?.LogInformation($"Surface Check Function start for resource :{item}");
@@ -48,10 +48,10 @@ namespace FhirMigrationTool.SurfaceCheck
                             Method = HttpMethod.Get,
                             RequestUri = new Uri(baseUri, string.Format("{0}?_summary=Count", item)),
                         };
-                        var srcTask = await _fhirClient.Send(request, baseUri);
+                        HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri);
 
-                        JObject objResponse = JObject.Parse(srcTask.Content.ReadAsStringAsync().Result);
-                        var srctotalCount = objResponse["total"];
+                        var objResponse = JObject.Parse(srcTask.Content.ReadAsStringAsync().Result);
+                        JToken? srctotalCount = objResponse["total"];
 
                         // Destination count
                         var desrequest = new HttpRequestMessage
@@ -60,29 +60,33 @@ namespace FhirMigrationTool.SurfaceCheck
                             RequestUri = new Uri(desbaseUri, string.Format("{0}?_summary=Count", item)),
                         };
 
-                        var desTask = await _fhirClient.Send(desrequest, desbaseUri, "newToken");
+                        HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, "newToken");
 
-                        JObject desobjResponse = JObject.Parse(desTask.Content.ReadAsStringAsync().Result);
-                        var destotalCount = desobjResponse["total"];
+                        var desobjResponse = JObject.Parse(desTask.Content.ReadAsStringAsync().Result);
+                        JToken? destotalCount = desobjResponse["total"];
 
                         // Comparing Count
                         if (destotalCount != null)
                         {
                             if (destotalCount.Equals(srctotalCount))
                             {
-                                JObject inputFormat = new JObject();
-                                inputFormat.Add("Resource", item);
-                                inputFormat.Add("SourceCount", srctotalCount);
-                                inputFormat.Add("DestinationCount", destotalCount);
+                                var inputFormat = new JObject
+                                {
+                                    { "Resource", item },
+                                    { "SourceCount", srctotalCount },
+                                    { "DestinationCount", destotalCount },
+                                };
 
                                 passResource.Add(inputFormat);
                             }
                             else
                             {
-                                JObject errorFormat = new JObject();
-                                errorFormat.Add("Resource", item);
-                                errorFormat.Add("SourceCount", srctotalCount);
-                                errorFormat.Add("DestinationCount", destotalCount);
+                                var errorFormat = new JObject
+                                {
+                                    { "Resource", item },
+                                    { "SourceCount", srctotalCount },
+                                    { "DestinationCount", destotalCount },
+                                };
                                 errorResource.Add(errorFormat);
                             }
                         }
