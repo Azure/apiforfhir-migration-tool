@@ -24,9 +24,6 @@ var resourcePrefix = '${nameShort}-${substring(envRandomString, 0, 5)}'
 
 var createResourceGroup = empty(existingResourceGroupName) ? true : false
 
-// var fhirUrlClean = replace(split(fhirUrl, '.')[0], 'https://', '')
-// var fhirUrlCleanSplit = split(fhirUrlClean, '-')
-
 var appTags = {
   'app-id': 'fhir-migration-tool'
 }

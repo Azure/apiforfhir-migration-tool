@@ -44,7 +44,6 @@ namespace FhirMigrationTool.ImportProcess
                     {
                         { HttpRequestHeader.Accept.ToString(), "application/fhir+json" },
                         { "Prefer", "respond-async" },
-                        { HttpRequestHeader.UserAgent.ToString(), "fhir-migration-tool" },
                     },
                     Content = new StringContent(requestContent, Encoding.UTF8, "application/fhir+json"),
                 };
@@ -97,10 +96,6 @@ namespace FhirMigrationTool.ImportProcess
                         {
                             Method = HttpMethod.Get,
                             RequestUri = new Uri(statusUrl),
-                            Headers =
-                            {
-                                { HttpRequestHeader.UserAgent.ToString(), "fhir-migration-tool" },
-                            },
                         };
 
                         HttpResponseMessage importStatusResponse = await _fhirClient.Send(statusRequest, baseUri);

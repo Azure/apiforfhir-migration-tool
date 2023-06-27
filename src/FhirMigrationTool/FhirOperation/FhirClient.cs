@@ -29,7 +29,7 @@ namespace FhirMigrationTool.FhirOperation
             HttpResponseMessage fhirResponse;
             try
             {
-                HttpClient client = _httpClient == null ? new HttpClient() : _httpClient.CreateClient();
+                HttpClient client = _httpClient == null ? new HttpClient() : _httpClient.CreateClient("FhirServer");
                 client.BaseAddress = fhirUrl;
 
                 CancellationToken cancellationToken = new CancellationTokenSource().Token;

@@ -40,5 +40,8 @@ namespace FhirMigrationTool.Configuration
 
         [JsonProperty("DeepCheckCount")]
         public int DeepCheckCount { get; set; }
+
+        [JsonProperty("UserAgent")]
+        public string UserAgent { get; set; } = "FhirMigrationTool";
     }
 }
