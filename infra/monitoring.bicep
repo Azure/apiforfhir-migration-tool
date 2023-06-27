@@ -27,7 +27,7 @@ resource logAnalyticsWorkspaceDiagnostics 'Microsoft.Insights/diagnosticSettings
         category: 'Audit'
         enabled: true
         retentionPolicy: {
-          days: 7
+          days: 30
           enabled: true
         }
       }
@@ -37,7 +37,7 @@ resource logAnalyticsWorkspaceDiagnostics 'Microsoft.Insights/diagnosticSettings
         category: 'AllMetrics'
         enabled: true
         retentionPolicy: {
-          days: 7
+          days: 30
           enabled: true
         }
       }

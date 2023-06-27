@@ -37,7 +37,7 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   tags: appTags
 }
 
-@description('Azure Function used to run toolkit compute')
+@description('Azure Function used to run Migration Tool')
 resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
     name: functionAppName
     location: location
@@ -51,7 +51,6 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         httpsOnly: true
         enabled: true
         serverFarmId: hostingPlan.id
-        //reserved: true
         clientAffinityEnabled: false
         siteConfig: {
             linuxFxVersion: 'dotnet-isolated|7.0'
@@ -60,9 +59,6 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         }
     }
 
-    // tags: union(appTags, {
-    //         'azd-service-name': 'func'
-    //     })
 
     resource ftpPublishingPolicy 'basicPublishingCredentialsPolicies' = {
         name: 'ftp'
@@ -115,9 +111,6 @@ module functionFhirServiceRoleAssignment './roleAssignment.bicep' = if (createRo
   name: 'functionFhirServiceRoleAssignment'
   params: {
     resourceId: fhirService.id
-    // FHIR Contributor
-    //roleId: '5a1fc7df-4bf1-4951-a576-89034ee01acd'
-
     //FHIR Importer
     roleId : '4465e953-8ced-4406-a58e-0f6e3f3b530b'
     principalId: functionApp.identity.principalId
@@ -129,9 +122,6 @@ module functionApiForFhirRoleAssignment './roleAssignment.bicep' = if (createRol
   name: 'bulk-import-function-fhir-managed-id-role-assignment'
   params: {
     resourceId: apiForFhir.id
-    // FHIR Contributor
-    //roleId: '5a1fc7df-4bf1-4951-a576-89034ee01acd'
-
     //FHIR Export
     roleId: '3db33094-8700-4567-8da5-1501d4e7e843'
     principalId: functionApp.identity.principalId
