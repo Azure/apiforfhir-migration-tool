@@ -32,6 +32,7 @@ namespace FhirMigrationTool.ImportProcess
         {
             var baseUri = new Uri(_options.DestinationFhirUri);
             string importStatusUrl = string.Empty;
+            string destinationFhirEndpoint = _options.DestinationHttpClient;
             try
             {
                 _logger?.LogInformation($"Import Function start");
@@ -48,7 +49,7 @@ namespace FhirMigrationTool.ImportProcess
                     Content = new StringContent(requestContent, Encoding.UTF8, "application/fhir+json"),
                 };
 
-                HttpResponseMessage importResponse = await _fhirClient.Send(request, baseUri);
+                HttpResponseMessage importResponse = await _fhirClient.Send(request, baseUri, destinationFhirEndpoint);
 
                 if (importResponse.IsSuccessStatusCode)
                 {
@@ -84,6 +85,7 @@ namespace FhirMigrationTool.ImportProcess
         {
             string importStatus = string.Empty;
             var baseUri = new Uri(_options.DestinationFhirUri);
+            string destinationFhirEndpoint = _options.DestinationHttpClient;
             _logger?.LogInformation($"Import Status check started.");
 
             try
@@ -98,7 +100,7 @@ namespace FhirMigrationTool.ImportProcess
                             RequestUri = new Uri(statusUrl),
                         };
 
-                        HttpResponseMessage importStatusResponse = await _fhirClient.Send(statusRequest, baseUri);
+                        HttpResponseMessage importStatusResponse = await _fhirClient.Send(statusRequest, baseUri, destinationFhirEndpoint);
 
                         if (importStatusResponse.StatusCode == HttpStatusCode.OK)
                         {

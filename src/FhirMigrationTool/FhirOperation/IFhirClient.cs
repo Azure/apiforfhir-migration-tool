@@ -7,6 +7,6 @@ namespace FhirMigrationTool.FhirOperation
 {
     public interface IFhirClient
     {
-        Task<HttpResponseMessage> Send(HttpRequestMessage request, Uri fhirUrl, string nullAccessToken = "");
+        Task<HttpResponseMessage> Send(HttpRequestMessage request, Uri fhirUrl, string clientName = "");
     }
 }

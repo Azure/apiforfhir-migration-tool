@@ -5,6 +5,7 @@
 
 // placeholder file for now
 using System.Reflection;
+using Azure.Identity;
 using FhirMigrationTool.Configuration;
 using FhirMigrationTool.DeepCheck;
 using FhirMigrationTool.ExportProcess;
@@ -71,10 +72,31 @@ internal class Program
 
         services.AddTransient<IDeepCheck, DeepCheck>();
         services.AddSingleton(config);
-        services.AddHttpClient("FhirServer", httpClient =>
+
+        var credential = new DefaultAzureCredential();
+        var baseUri = new Uri(config.SourceFhirUri);
+        var desUri = new Uri(config.DestinationFhirUri);
+        string[]? scopes = default;
+
+#pragma warning disable CS8604 // Possible null reference argument.
+        services.AddHttpClient(config.SourceHttpClient, httpClient =>
         {
             httpClient.DefaultRequestHeaders.Add(HeaderNames.UserAgent, config.UserAgent);
-        });
+            httpClient.BaseAddress = baseUri;
+        })
+        .AddHttpMessageHandler(x => new BearerTokenHandler(credential, baseUri, scopes));
+
+#pragma warning restore CS8604 // Possible null reference argument.
+
+#pragma warning disable CS8604 // Possible null reference argument.
+        services.AddHttpClient(config.DestinationHttpClient, client =>
+        {
+            client.DefaultRequestHeaders.Add(HeaderNames.UserAgent, config.UserAgent);
+            client.BaseAddress = desUri;
+        })
+        .AddHttpMessageHandler(x => new BearerTokenHandler(credential, desUri, scopes));
+#pragma warning restore CS8604 // Possible null reference argument.
+
     })
     .Build();
 

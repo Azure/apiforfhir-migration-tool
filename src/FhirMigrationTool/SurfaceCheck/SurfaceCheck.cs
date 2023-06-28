@@ -38,6 +38,8 @@ namespace FhirMigrationTool.SurfaceCheck
                 var surfaceCheckResource = new List<string>(_options.SurfaceCheckResources);
                 var baseUri = new Uri(_options.SourceFhirUri);
                 var desbaseUri = new Uri(_options.DestinationFhirUri);
+                string sourceFhirEndpoint = _options.SourceHttpClient;
+                string destinationFhirEndpoint = _options.DestinationHttpClient;
                 foreach (var item in surfaceCheckResource)
                 {
                     _logger?.LogInformation($"Surface Check Function start for resource :{item}");
@@ -48,7 +50,7 @@ namespace FhirMigrationTool.SurfaceCheck
                             Method = HttpMethod.Get,
                             RequestUri = new Uri(baseUri, string.Format("{0}?_summary=Count", item)),
                         };
-                        HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri);
+                        HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
 
                         var objResponse = JObject.Parse(srcTask.Content.ReadAsStringAsync().Result);
                         JToken? srctotalCount = objResponse["total"];
@@ -60,7 +62,7 @@ namespace FhirMigrationTool.SurfaceCheck
                             RequestUri = new Uri(desbaseUri, string.Format("{0}?_summary=Count", item)),
                         };
 
-                        HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, "newToken");
+                        HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, destinationFhirEndpoint);
 
                         var desobjResponse = JObject.Parse(desTask.Content.ReadAsStringAsync().Result);
                         JToken? destotalCount = desobjResponse["total"];

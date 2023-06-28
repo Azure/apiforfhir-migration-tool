@@ -43,5 +43,11 @@ namespace FhirMigrationTool.Configuration
 
         [JsonProperty("UserAgent")]
         public string UserAgent { get; set; } = "FhirMigrationTool";
+
+        [JsonProperty("SourceHttpClient")]
+        public string SourceHttpClient { get; set; } = "SourceFhirEndpoint";
+
+        [JsonProperty("DestinationHttpClient")]
+        public string DestinationHttpClient { get; set; } = "DestinationFhirEndpoint";
     }
 }
