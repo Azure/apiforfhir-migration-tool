@@ -38,6 +38,7 @@ namespace FhirMigrationTool.ExportProcess
             }
 
             var baseUri = new Uri(_options.SourceFhirUri);
+            string sourceFhirEndpoint = _options.SourceHttpClient;
             string exportStatusUrl = string.Empty;
             try
             {
@@ -54,7 +55,7 @@ namespace FhirMigrationTool.ExportProcess
                     },
                 };
 
-                HttpResponseMessage exportResponse = await _fhirClient.Send(request, baseUri);
+                HttpResponseMessage exportResponse = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
 
                 if (exportResponse.IsSuccessStatusCode)
                 {
@@ -90,6 +91,9 @@ namespace FhirMigrationTool.ExportProcess
         {
             string import_body = string.Empty;
             var baseUri = new Uri(_options.SourceFhirUri);
+
+            string sourceFhirEndpoint = _options.SourceHttpClient;
+
             _logger?.LogInformation($"Export Status check started.");
 
             try
@@ -104,7 +108,7 @@ namespace FhirMigrationTool.ExportProcess
                             RequestUri = new Uri(statusUrl),
                         };
 
-                        HttpResponseMessage exportStatusResponse = await _fhirClient.Send(statusRequest, baseUri);
+                        HttpResponseMessage exportStatusResponse = await _fhirClient.Send(statusRequest, baseUri, sourceFhirEndpoint);
 
                         if (exportStatusResponse.StatusCode == HttpStatusCode.OK)
                         {

@@ -24,34 +24,35 @@ namespace FhirMigrationTool.FhirOperation
             _options = options;
         }
 
-        public async Task<HttpResponseMessage> Send(HttpRequestMessage request, Uri fhirUrl, string nullAccessToken = "")
+        public async Task<HttpResponseMessage> Send(HttpRequestMessage request, Uri fhirUrl, string clientName = "")
         {
             HttpResponseMessage fhirResponse;
             try
             {
-                HttpClient client = _httpClient == null ? new HttpClient() : _httpClient.CreateClient("FhirServer");
-                client.BaseAddress = fhirUrl;
+                // HttpClient client = _httpClient == null ? new HttpClient() : _httpClient.CreateClient(httpClientName ?? string.Empty);
+                HttpClient client = _httpClient.CreateClient(clientName);
 
-                CancellationToken cancellationToken = new CancellationTokenSource().Token;
+                // client.BaseAddress = fhirUrl;
 
-                Azure.Core.AccessToken tokenResponse = await _tokenCache.GetTokenAsync(
-                    GetDefaultScopes(requestUri: fhirUrl),
-                    cancellationToken,
-                    nullAccessToken);
+                // CancellationToken cancellationToken = new CancellationTokenSource().Token;
 
-                if (!client.DefaultRequestHeaders.Contains("Authorization"))
-                {
-                    object lockobj = new();
+                // Azure.Core.AccessToken tokenResponse = await _tokenCache.GetTokenAsync(
+                //    GetDefaultScopes(requestUri: fhirUrl),
+                //    cancellationToken,
+                //    nullAccessToken);
 
-                    lock (lockobj)
-                    {
-                        client.DefaultRequestHeaders.Clear();
-                        client.DefaultRequestHeaders.Accept.Clear();
-                        client.DefaultRequestHeaders.Remove("Authorization");
-                        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {tokenResponse.Token}");
-                    }
-                }
+                // if (!client.DefaultRequestHeaders.Contains("Authorization"))
+                // {
+                //    object lockobj = new();
 
+                // lock (lockobj)
+                //    {
+                //        client.DefaultRequestHeaders.Clear();
+                //        client.DefaultRequestHeaders.Accept.Clear();
+                //        client.DefaultRequestHeaders.Remove("Authorization");
+                //        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {tokenResponse.Token}");
+                //    }
+                // }
                 fhirResponse = await client.SendAsync(request);
             }
             catch

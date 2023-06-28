@@ -33,6 +33,9 @@ namespace FhirMigrationTool.DeepCheck
             var baseUri = new Uri(_options.SourceFhirUri);
             var desbaseUri = new Uri(_options.DestinationFhirUri);
 
+            string sourceFhirEndpoint = _options.SourceHttpClient;
+            string destinationFhirEndpoint = _options.DestinationHttpClient;
+
             var res = new JObject();
             var passResource = new JArray();
             var errorResource = new JArray();
@@ -45,7 +48,7 @@ namespace FhirMigrationTool.DeepCheck
                     Method = HttpMethod.Get,
                     RequestUri = new Uri(baseUri, string.Format("/?_count={0}", resourceCount)),
                 };
-                HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri);
+                HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
 
                 // var response = srcTask.Result;
                 var objResponse = JObject.Parse(srcTask.Content.ReadAsStringAsync().Result);
@@ -67,7 +70,7 @@ namespace FhirMigrationTool.DeepCheck
                                 RequestUri = new Uri(desbaseUri, string.Format("{0}/{1}", gen1Response.GetValue("resourceType"), gen1Response.GetValue("id"))),
                             };
 
-                            HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, "newToken");
+                            HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, destinationFhirEndpoint);
 
                             // var desResponse = desTask.Result;
                             var gen2Response = JObject.Parse(desTask.Content.ReadAsStringAsync().Result);
