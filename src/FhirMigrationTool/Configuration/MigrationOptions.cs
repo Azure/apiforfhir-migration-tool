@@ -3,6 +3,8 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
+using Azure.Core;
+using Azure.Identity;
 using Newtonsoft.Json;
 
 namespace FhirMigrationTool.Configuration
@@ -49,5 +51,11 @@ namespace FhirMigrationTool.Configuration
 
         [JsonProperty("DestinationHttpClient")]
         public string DestinationHttpClient { get; set; } = "DestinationFhirEndpoint";
+
+        [JsonProperty("TokenCredential")]
+        public TokenCredential TokenCredential { get; set; } = new DefaultAzureCredential();
+
+        [JsonProperty("retryCount")]
+        public int RetryCount { get; set; } = 3;
     }
 }

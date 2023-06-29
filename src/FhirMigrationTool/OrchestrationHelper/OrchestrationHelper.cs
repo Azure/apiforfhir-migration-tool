@@ -15,12 +15,12 @@ namespace FhirMigrationTool.OrchestrationHelper
         {
         }
 
-        public string CreateImportRequest(HttpResponseMessage exportStatusResponse, string importMode)
+        public string CreateImportRequest(string content, string importMode)
         {
             string importRequestJson;
             try
             {
-                JObject objResponse = JObject.Parse(exportStatusResponse.Content.ReadAsStringAsync().Result);
+                JObject objResponse = JObject.Parse(content);
                 var objOutput = objResponse["output"];
                 JObject importRequest = new JObject();
                 importRequest.Add("resourceType", "Parameters");

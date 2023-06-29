@@ -5,6 +5,7 @@
 
 using Azure.Core;
 using Azure.Identity;
+using FhirMigrationTool.Configuration;
 
 namespace FhirMigrationTool.Security
 {
@@ -13,11 +14,11 @@ namespace FhirMigrationTool.Security
         private readonly SemaphoreSlim _semaphoreSlim = new(1, 1);
         private AccessToken? _accessToken = null;
         private DateTimeOffset _accessTokenExpiration;
+        private readonly MigrationOptions _options;
 
-        // private readonly MigrationOptions _options;
-        public BearerTokenHelper()
+        public BearerTokenHelper(MigrationOptions options)
         {
-            // _options = options;
+            _options = options;
         }
 
         public async Task<AccessToken> GetTokenAsync(string[] scopes, CancellationToken cancellationToken, string nullAccessToken = "")
@@ -30,7 +31,7 @@ namespace FhirMigrationTool.Security
             await _semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
             var tokenRefreshOffset = TimeSpan.FromMinutes(5);
             var tokenRefreshRetryDelay = TimeSpan.FromSeconds(30);
-            TokenCredential tokenCredential = new DefaultAzureCredential();
+            TokenCredential tokenCredential = _options.TokenCredential;
 
             try
             {

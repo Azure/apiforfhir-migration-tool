@@ -4,7 +4,6 @@
 // -------------------------------------------------------------------------------------------------
 
 using System.Reflection;
-using FhirMigrationTool;
 using FhirMigrationTool.Configuration;
 using FhirMigrationTool.ExportProcess;
 using FhirMigrationTool.FhirOperation;
@@ -93,7 +92,7 @@ namespace FhirMigrationtool.Tests
         [TestMethod]
         public async Task ExportProcessTest()
         {
-            IExportProcessor exportProcessor = new ExportProcessor(fhirClient, _config, telemetryClient, _loggerExport as ILogger<ExportProcessor>, orchestrationHelper);
+            IExportProcessor exportProcessor = new ExportProcessor(fhirClient, _config, telemetryClient, _loggerExport as ILogger<ExportProcessor>);
 
             try
             {

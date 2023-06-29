@@ -4,6 +4,7 @@
 // -------------------------------------------------------------------------------------------------
 
 using FhirMigrationTool.Configuration;
+using FhirMigrationTool.OrchestrationHelper;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.DurableTask;
@@ -16,18 +17,26 @@ namespace FhirMigrationTool
     {
         private readonly MigrationOptions _options;
         private readonly ILogger _logger;
+        private readonly IOrchestrationHelper _orchestrationHelper;
 
-        public MigrationOrchestrator(MigrationOptions options, ILoggerFactory loggerFactory)
+        public MigrationOrchestrator(MigrationOptions options, ILoggerFactory loggerFactory, IOrchestrationHelper orchestrationHelper)
         {
             _options = options;
             _logger = loggerFactory.CreateLogger<MigrationOrchestrator>();
+            _orchestrationHelper = orchestrationHelper;
         }
 
         [Function(nameof(MigrationOrchestration))]
-        public static async Task<List<string>> MigrationOrchestration(
+        public async Task<List<string>> MigrationOrchestration(
             [OrchestrationTrigger] TaskOrchestrationContext context)
         {
             ILogger logger = context.CreateReplaySafeLogger(nameof(MigrationOrchestration));
+            if (!_orchestrationHelper.ValidateConfig(_options))
+            {
+                logger.LogError("Required configuration values are missing, Please provide all required configurations.");
+                throw new ArgumentException($"Process exiting: Please check all the required configuration values are available.");
+            }
+
             logger.LogInformation("Start MigrationOrchestration.");
             var outputs = new List<string>();
             try
