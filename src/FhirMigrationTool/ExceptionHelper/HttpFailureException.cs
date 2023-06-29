@@ -3,12 +3,22 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
-namespace FhirMigrationTool.ImportProcess
+namespace FhirMigrationTool.ExceptionHelper
 {
-    public interface IImportProcessor
+    internal class HttpFailureException : Exception
     {
-        Task<string> Execute(string requestContent);
+        public HttpFailureException()
+        {
+        }
 
-        Task<HttpResponseMessage> CheckImportStatus(string statusUrl);
+        public HttpFailureException(string message)
+            : base(message)
+        {
+        }
+
+        public HttpFailureException(string message, Exception inner)
+            : base(message, inner)
+        {
+        }
     }
 }

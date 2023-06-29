@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using FhirMigrationTool.Configuration;
+using FhirMigrationTool.ExceptionHelper;
 using FhirMigrationTool.FhirOperation;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Logging;
@@ -67,7 +68,7 @@ namespace FhirMigrationTool.ImportProcess
                 else
                 {
                     _logger?.LogInformation($"Import returned: Unsuccessful. StatusCode: {importResponse.StatusCode}");
-                    throw new Exception($"StatusCode: {importResponse.StatusCode}, Response: {importResponse.Content.ReadAsStringAsync()} ");
+                    throw new HttpFailureException($"StatusCode: {importResponse.StatusCode}, Response: {importResponse.Content.ReadAsStringAsync()} ");
                 }
 
                 _logger?.LogInformation($"Import Function completed.");
@@ -81,9 +82,9 @@ namespace FhirMigrationTool.ImportProcess
             return importStatusUrl;
         }
 
-        public async Task<string> CheckImportStatus(string statusUrl)
+        public async Task<HttpResponseMessage> CheckImportStatus(string statusUrl)
         {
-            string importStatus = string.Empty;
+            HttpResponseMessage importStatusResponse = new HttpResponseMessage();
             var baseUri = new Uri(_options.DestinationFhirUri);
             string destinationFhirEndpoint = _options.DestinationHttpClient;
             _logger?.LogInformation($"Import Status check started.");
@@ -92,34 +93,13 @@ namespace FhirMigrationTool.ImportProcess
             {
                 if (!string.IsNullOrEmpty(statusUrl))
                 {
-                    while (true)
+                    var statusRequest = new HttpRequestMessage
                     {
-                        var statusRequest = new HttpRequestMessage
-                        {
-                            Method = HttpMethod.Get,
-                            RequestUri = new Uri(statusUrl),
-                        };
+                        Method = HttpMethod.Get,
+                        RequestUri = new Uri(statusUrl),
+                    };
 
-                        HttpResponseMessage importStatusResponse = await _fhirClient.Send(statusRequest, baseUri, destinationFhirEndpoint);
-
-                        if (importStatusResponse.StatusCode == HttpStatusCode.OK)
-                        {
-                            _logger?.LogInformation($"Import Status check returned: Success.");
-                            importStatus = "Completed";
-                            break;
-                        }
-                        else if (importStatusResponse.StatusCode == HttpStatusCode.Accepted)
-                        {
-                            _logger?.LogInformation($"Import Status check returned: InProgress.");
-                            Thread.Sleep(TimeSpan.FromMinutes(Convert.ToInt32(_options.ScheduleInterval)));
-                        }
-                        else
-                        {
-                            _logger?.LogInformation($"Import Status check returned: Unsuccessful.");
-                            throw new Exception($"StatusCode: {importStatusResponse.StatusCode}, Response: {importStatusResponse.Content.ReadAsStringAsync()} ");
-                        }
-                    }
-
+                    importStatusResponse = await _fhirClient.Send(statusRequest, baseUri, destinationFhirEndpoint);
                     _logger?.LogInformation($"Import Status check completed.");
                 }
             }
@@ -129,7 +109,7 @@ namespace FhirMigrationTool.ImportProcess
                 throw;
             }
 
-            return importStatus;
+            return importStatusResponse;
         }
     }
 }

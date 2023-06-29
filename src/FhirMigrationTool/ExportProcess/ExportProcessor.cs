@@ -6,8 +6,8 @@
 using System.Net;
 using System.Net.Http.Headers;
 using FhirMigrationTool.Configuration;
+using FhirMigrationTool.ExceptionHelper;
 using FhirMigrationTool.FhirOperation;
-using FhirMigrationTool.OrchestrationHelper;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Logging;
 
@@ -19,24 +19,17 @@ namespace FhirMigrationTool.ExportProcess
         private readonly MigrationOptions _options;
         private readonly IFhirClient _fhirClient;
         private readonly TelemetryClient _telemetryClient;
-        private readonly IOrchestrationHelper _orchestrationHelper;
 
-        public ExportProcessor(IFhirClient fhirClient, MigrationOptions options, TelemetryClient telemetryClient, ILogger<ExportProcessor> logger, IOrchestrationHelper orchestrationHelper)
+        public ExportProcessor(IFhirClient fhirClient, MigrationOptions options, TelemetryClient telemetryClient, ILogger<ExportProcessor> logger)
         {
             _telemetryClient = telemetryClient;
             _options = options;
             _logger = logger;
             _fhirClient = fhirClient;
-            _orchestrationHelper = orchestrationHelper;
         }
 
         public async Task<string> Execute()
         {
-            if (!_orchestrationHelper.ValidateConfig(_options))
-            {
-                throw new Exception($"Process exiting: Please check all the required configuration values are available.");
-            }
-
             var baseUri = new Uri(_options.SourceFhirUri);
             string sourceFhirEndpoint = _options.SourceHttpClient;
             string exportStatusUrl = string.Empty;
@@ -47,7 +40,7 @@ namespace FhirMigrationTool.ExportProcess
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(baseUri, "/$export"),
+                    RequestUri = new Uri(baseUri, "/$export?_type=Patient"),
                     Headers =
                     {
                         { HttpRequestHeader.Accept.ToString(), "application/fhir+json" },
@@ -73,7 +66,7 @@ namespace FhirMigrationTool.ExportProcess
                 else
                 {
                     _logger?.LogInformation($"Export returned: Unsuccessful. StatusCode: {exportResponse.StatusCode}");
-                    throw new Exception($"StatusCode: {exportResponse.StatusCode}, Response: {exportResponse.Content.ReadAsStringAsync()} ");
+                    throw new HttpFailureException($"StatusCode: {exportResponse.StatusCode}, Response: {exportResponse.Content.ReadAsStringAsync()} ");
                 }
 
                 _logger?.LogInformation($"Export Function completed.");
@@ -87,47 +80,24 @@ namespace FhirMigrationTool.ExportProcess
             return exportStatusUrl;
         }
 
-        public async Task<string> CheckExportStatus(string statusUrl)
+        public async Task<HttpResponseMessage> CheckExportStatus(string statusUrl)
         {
-            string import_body = string.Empty;
+            HttpResponseMessage exportStatusResponse = new HttpResponseMessage();
             var baseUri = new Uri(_options.SourceFhirUri);
-
             string sourceFhirEndpoint = _options.SourceHttpClient;
-
             _logger?.LogInformation($"Export Status check started.");
 
             try
             {
                 if (!string.IsNullOrEmpty(statusUrl))
                 {
-                    while (true)
+                    var statusRequest = new HttpRequestMessage
                     {
-                        var statusRequest = new HttpRequestMessage
-                        {
-                            Method = HttpMethod.Get,
-                            RequestUri = new Uri(statusUrl),
-                        };
+                        Method = HttpMethod.Get,
+                        RequestUri = new Uri(statusUrl),
+                    };
 
-                        HttpResponseMessage exportStatusResponse = await _fhirClient.Send(statusRequest, baseUri, sourceFhirEndpoint);
-
-                        if (exportStatusResponse.StatusCode == HttpStatusCode.OK)
-                        {
-                            _logger?.LogInformation($"Export Status check returned: Success.");
-                            import_body = _orchestrationHelper.CreateImportRequest(exportStatusResponse, _options.ImportMode);
-                            break;
-                        }
-                        else if (exportStatusResponse.StatusCode == HttpStatusCode.Accepted)
-                        {
-                            _logger?.LogInformation($"Export Status check returned: InProgress.");
-                            Thread.Sleep(TimeSpan.FromMinutes(Convert.ToInt32(_options.ScheduleInterval)));
-                        }
-                        else
-                        {
-                            _logger?.LogInformation($"Export Status check returned: Unsuccessful.");
-                            throw new Exception($"StatusCode: {exportStatusResponse.StatusCode}, Response: {exportStatusResponse.Content.ReadAsStringAsync()} ");
-                        }
-                    }
-
+                    exportStatusResponse = await _fhirClient.Send(statusRequest, baseUri, sourceFhirEndpoint);
                     _logger?.LogInformation($"Export Status check completed.");
                 }
             }
@@ -137,7 +107,7 @@ namespace FhirMigrationTool.ExportProcess
                 throw;
             }
 
-            return import_body;
+            return exportStatusResponse;
         }
     }
 }

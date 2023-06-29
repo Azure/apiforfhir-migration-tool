@@ -9,6 +9,6 @@ namespace FhirMigrationTool.ExportProcess
     {
         Task<string> Execute();
 
-        Task<string> CheckExportStatus(string statusUrl);
+        Task<HttpResponseMessage> CheckExportStatus(string statusUrl);
     }
 }

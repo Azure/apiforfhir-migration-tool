@@ -9,7 +9,7 @@ namespace FhirMigrationTool.OrchestrationHelper
 {
     public interface IOrchestrationHelper
     {
-        string CreateImportRequest(HttpResponseMessage exportStatusResponse, string importMode);
+        string CreateImportRequest(string content, string importMode);
 
         bool ValidateConfig(MigrationOptions options);
     }
