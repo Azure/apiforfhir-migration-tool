@@ -12,10 +12,13 @@ namespace FhirMigrationTool.Configuration
     public class MigrationOptions
     {
         [JsonProperty("sourceFhirUri")]
-        public string SourceFhirUri { get; set; } = string.Empty;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        public Uri SourceFhirUri { get; set; }
 
         [JsonProperty("destinationFhirUri")]
-        public string DestinationFhirUri { get; set; } = string.Empty;
+        public Uri DestinationFhirUri { get; set; }
+
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         [JsonProperty("stagingStorageAccountName")]
         public string StagingStorageAccountName { get; set; } = string.Empty;
@@ -24,7 +27,7 @@ namespace FhirMigrationTool.Configuration
         public string StagingContainerName { get; set; } = string.Empty;
 
         [JsonProperty("scheduleInterval")]
-        public string ScheduleInterval { get; set; } = string.Empty;
+        public double ScheduleInterval { get; set; }
 
         [JsonProperty("startDate")]
         public string StartDate { get; set; } = string.Empty;
@@ -56,6 +59,27 @@ namespace FhirMigrationTool.Configuration
         public TokenCredential TokenCredential { get; set; } = new DefaultAzureCredential();
 
         [JsonProperty("retryCount")]
-        public int RetryCount { get; set; } = 3;
+        public int RetryCount { get; set; }
+
+        [JsonProperty("waitForRetry")]
+        public double WaitForRetry { get; set; }
+
+        [JsonProperty("debug")]
+        public bool Debug { get; set; }
+
+        public bool ValidateConfig()
+        {
+            try
+            {
+                return SourceFhirUri != null
+                    && DestinationFhirUri != null
+                    && !string.IsNullOrEmpty(ImportMode)
+                    && ScheduleInterval > 0;
+            }
+            catch
+            {
+                throw;
+            }
+        }
     }
 }

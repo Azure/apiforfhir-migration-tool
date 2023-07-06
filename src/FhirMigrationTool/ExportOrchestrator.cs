@@ -4,6 +4,7 @@
 // -------------------------------------------------------------------------------------------------
 
 using System.Net;
+using System.Net.Http.Headers;
 using FhirMigrationTool.Configuration;
 using FhirMigrationTool.ExceptionHelper;
 using FhirMigrationTool.ExportProcess;
@@ -36,27 +37,50 @@ namespace FhirMigrationTool
             logger.LogInformation("Starting export activities.");
             var statusRespose = new HttpResponseMessage();
             var retryCount = 0;
+            var statusUrl = string.Empty;
+            var import_body = string.Empty;
 
             try
             {
-                var statusUrl = await context.CallActivityAsync<string>(nameof(ProcessExport));
+                while (retryCount <= _options.RetryCount)
+                {
+                    ResponseModel exportResponse = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExport));
+                    if (exportResponse.Status == ResponseStatus.Completed)
+                    {
+                        logger?.LogInformation($"Export  returned: Success.");
+                        statusUrl = exportResponse.Content;
+                        break;
+                    }
+                    else if (exportResponse.Status == ResponseStatus.Retry)
+                    {
+                        logger?.LogInformation($"Export Status check returned: 429. Retrying in {_options.WaitForRetry} minutes");
+                        retryCount++;
+                        DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(_options.WaitForRetry));
+                        await context.CreateTimer(waitTime, CancellationToken.None);
+                    }
+                    else
+                    {
+                        logger?.LogInformation($"Export Status check returned: Unsuccessful.");
+                        throw new HttpFailureException($"Response: {exportResponse.Content} ");
+                    }
+                }
+
                 while (true)
                 {
-                    var response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExportStatusCheck), statusUrl);
+                    ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExportStatusCheck), statusUrl);
 
                     if (response.Status == ResponseStatus.Accepted)
                     {
                         logger?.LogInformation($"Export Status check returned: InProgress.");
                         logger?.LogInformation($"Waiting for next status check for {_options.ScheduleInterval} minutes.");
-                        DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(
-                    Convert.ToDouble(_options.ScheduleInterval)));
+                        DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(_options.ScheduleInterval));
                         await context.CreateTimer(waitTime, CancellationToken.None);
                     }
                     else if (response.Status == ResponseStatus.Completed)
                     {
                         logger?.LogInformation($"Export Status check returned: Success.");
-                        var import_body = _helper.CreateImportRequest(response.Content, _options.ImportMode);
-                        return import_body;
+                        import_body = _helper.CreateImportRequest(response.Content, _options.ImportMode);
+                        break;
                     }
                     else if (response.Status == ResponseStatus.Retry)
                     {
@@ -68,7 +92,7 @@ namespace FhirMigrationTool
                         }
                         else
                         {
-                            throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()}. Export status check failed, exiting process");
+                            throw new HttpFailureException($"Response: {response.Content}. Export status check exceeded retry limit, exiting process");
                         }
                     }
                     else
@@ -82,34 +106,60 @@ namespace FhirMigrationTool
             {
                 throw;
             }
+
+            return import_body;
         }
 
         [Function(nameof(ProcessExport))]
-        public async Task<string> ProcessExport([ActivityTrigger] string name, FunctionContext executionContext)
+        public async Task<ResponseModel> ProcessExport([ActivityTrigger] string name, FunctionContext executionContext)
         {
+            HttpResponseMessage exportResponse;
+            var response = new ResponseModel();
+            var exportStatusUrl = string.Empty;
             try
             {
-                string exportStatusUrl = await _exportProcessor.Execute();
+                exportResponse = await _exportProcessor.CallExport();
 
-                return exportStatusUrl;
+                switch (exportResponse.StatusCode)
+                {
+                    case HttpStatusCode.Accepted:
+                        response.Status = ResponseStatus.Accepted;
+                        HttpHeaders headers = exportResponse.Content.Headers;
+                        IEnumerable<string> values;
+                        if (headers.GetValues("Content-Location") != null)
+                        {
+                            values = headers.GetValues("Content-Location");
+                            exportStatusUrl = values.First();
+                        }
+
+                        response.Content = exportStatusUrl;
+                        response.Status = ResponseStatus.Completed;
+                        break;
+                    case HttpStatusCode.TooManyRequests:
+                        response.Status = ResponseStatus.Retry;
+                        break;
+                    default:
+                        response.Status = ResponseStatus.Failed;
+                        break;
+                }
             }
             catch
             {
                 throw;
             }
+
+            return response;
         }
 
         [Function(nameof(ProcessExportStatusCheck))]
         public async Task<ResponseModel> ProcessExportStatusCheck([ActivityTrigger] string exportStatusUrl, FunctionContext executionContext)
         {
-            var exportStatusResponse = new HttpResponseMessage();
-            var response = new ResponseModel();
-            ILogger logger = executionContext.GetLogger(nameof(ProcessExportStatusCheck));
+            ResponseModel response = new ResponseModel();
             try
             {
                 if (!string.IsNullOrEmpty(exportStatusUrl))
                 {
-                    exportStatusResponse = await _exportProcessor.CheckExportStatus(exportStatusUrl);
+                    HttpResponseMessage exportStatusResponse = await _exportProcessor.CheckExportStatus(exportStatusUrl);
                     switch (exportStatusResponse.StatusCode)
                     {
                         case HttpStatusCode.Accepted:

@@ -4,9 +4,7 @@
 // -------------------------------------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Headers;
 using FhirMigrationTool.Configuration;
-using FhirMigrationTool.ExceptionHelper;
 using FhirMigrationTool.FhirOperation;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Logging;
@@ -28,11 +26,11 @@ namespace FhirMigrationTool.ExportProcess
             _fhirClient = fhirClient;
         }
 
-        public async Task<string> Execute()
+        public async Task<HttpResponseMessage> CallExport()
         {
-            var baseUri = new Uri(_options.SourceFhirUri);
+            HttpResponseMessage exportResponse;
+            Uri baseUri = _options.SourceFhirUri;
             string sourceFhirEndpoint = _options.SourceHttpClient;
-            string exportStatusUrl = string.Empty;
             try
             {
                 _logger?.LogInformation($"Export Function start");
@@ -48,27 +46,7 @@ namespace FhirMigrationTool.ExportProcess
                     },
                 };
 
-                HttpResponseMessage exportResponse = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
-
-                if (exportResponse.IsSuccessStatusCode)
-                {
-                    _logger?.LogInformation($"Export Function returned: Success.");
-
-                    HttpHeaders headers = exportResponse.Content.Headers;
-                    IEnumerable<string> values;
-
-                    if (headers.GetValues("Content-Location") != null)
-                    {
-                        values = headers.GetValues("Content-Location");
-                        exportStatusUrl = values.First();
-                    }
-                }
-                else
-                {
-                    _logger?.LogInformation($"Export returned: Unsuccessful. StatusCode: {exportResponse.StatusCode}");
-                    throw new HttpFailureException($"StatusCode: {exportResponse.StatusCode}, Response: {exportResponse.Content.ReadAsStringAsync()} ");
-                }
-
+                exportResponse = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
                 _logger?.LogInformation($"Export Function completed.");
             }
             catch
@@ -77,13 +55,13 @@ namespace FhirMigrationTool.ExportProcess
                 throw;
             }
 
-            return exportStatusUrl;
+            return exportResponse;
         }
 
         public async Task<HttpResponseMessage> CheckExportStatus(string statusUrl)
         {
-            HttpResponseMessage exportStatusResponse = new HttpResponseMessage();
-            var baseUri = new Uri(_options.SourceFhirUri);
+            var exportStatusResponse = new HttpResponseMessage();
+            Uri baseUri = _options.SourceFhirUri;
             string sourceFhirEndpoint = _options.SourceHttpClient;
             _logger?.LogInformation($"Export Status check started.");
 
