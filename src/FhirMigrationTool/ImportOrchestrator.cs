@@ -4,6 +4,7 @@
 // -------------------------------------------------------------------------------------------------
 
 using System.Net;
+using System.Net.Http.Headers;
 using FhirMigrationTool.Configuration;
 using FhirMigrationTool.ExceptionHelper;
 using FhirMigrationTool.ImportProcess;
@@ -33,13 +34,36 @@ namespace FhirMigrationTool
             logger.LogInformation("Starting import activities.");
             var statusRespose = new HttpResponseMessage();
             var retryCount = 0;
+            var statusUrl = string.Empty;
 
             try
             {
-                var statusUrl = await context.CallActivityAsync<string>(nameof(ProcessImport), requestContent);
+                while (retryCount <= _options.RetryCount)
+                {
+                    ResponseModel importResponse = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImport), requestContent);
+                    if (importResponse.Status == ResponseStatus.Completed)
+                    {
+                        logger?.LogInformation($"Import  returned: Success.");
+                        statusUrl = importResponse.Content;
+                        break;
+                    }
+                    else if (importResponse.Status == ResponseStatus.Retry)
+                    {
+                        logger?.LogInformation($"Import Status check returned: 429. Retrying in {_options.WaitForRetry} minutes");
+                        retryCount++;
+                        DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(_options.WaitForRetry));
+                        await context.CreateTimer(waitTime, CancellationToken.None);
+                    }
+                    else
+                    {
+                        logger?.LogInformation($"Import Status check returned: Unsuccessful.");
+                        throw new HttpFailureException($"Response: {importResponse.Content} ");
+                    }
+                }
+
                 while (true)
                 {
-                    var response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImportStatusCheck), statusUrl);
+                    ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImportStatusCheck), statusUrl);
 
                     if (response.Status == ResponseStatus.Accepted)
                     {
@@ -81,31 +105,55 @@ namespace FhirMigrationTool
         }
 
         [Function(nameof(ProcessImport))]
-        public async Task<string> ProcessImport([ActivityTrigger] string requestContent, FunctionContext executionContext)
+        public async Task<ResponseModel> ProcessImport([ActivityTrigger] string requestContent, FunctionContext executionContext)
         {
+            HttpResponseMessage importResponse;
+            var response = new ResponseModel();
+            var importStatusUrl = string.Empty;
             try
             {
-                string importStatusUrl = await _importProcessor.Execute(requestContent);
+                importResponse = await _importProcessor.CallImport(requestContent);
 
-                return importStatusUrl;
+                switch (importResponse.StatusCode)
+                {
+                    case HttpStatusCode.Accepted:
+                        response.Status = ResponseStatus.Accepted;
+                        HttpHeaders headers = importResponse.Content.Headers;
+                        IEnumerable<string> values;
+                        if (headers.GetValues("Content-Location") != null)
+                        {
+                            values = headers.GetValues("Content-Location");
+                            importStatusUrl = values.First();
+                        }
+
+                        response.Content = importStatusUrl;
+                        response.Status = ResponseStatus.Completed;
+                        break;
+                    case HttpStatusCode.TooManyRequests:
+                        response.Status = ResponseStatus.Retry;
+                        break;
+                    default:
+                        response.Status = ResponseStatus.Failed;
+                        break;
+                }
             }
             catch
             {
                 throw;
             }
+
+            return response;
         }
 
         [Function(nameof(ProcessImportStatusCheck))]
         public async Task<ResponseModel> ProcessImportStatusCheck([ActivityTrigger] string importStatusUrl, FunctionContext executionContext)
         {
-            var importStatusResponse = new HttpResponseMessage();
             var response = new ResponseModel();
-            ILogger logger = executionContext.GetLogger(nameof(ProcessImportStatusCheck));
             try
             {
                 if (!string.IsNullOrEmpty(importStatusUrl))
                 {
-                    importStatusResponse = await _importProcessor.CheckImportStatus(importStatusUrl);
+                    HttpResponseMessage importStatusResponse = await _importProcessor.CheckImportStatus(importStatusUrl);
                     switch (importStatusResponse.StatusCode)
                     {
                         case HttpStatusCode.Accepted:

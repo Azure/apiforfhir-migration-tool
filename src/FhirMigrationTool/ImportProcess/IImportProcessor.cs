@@ -7,7 +7,7 @@ namespace FhirMigrationTool.ImportProcess
 {
     public interface IImportProcessor
     {
-        Task<string> Execute(string requestContent);
+        Task<HttpResponseMessage> CallImport(string requestContent);
 
         Task<HttpResponseMessage> CheckImportStatus(string statusUrl);
     }

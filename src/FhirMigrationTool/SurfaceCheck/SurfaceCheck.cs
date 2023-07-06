@@ -36,8 +36,8 @@ namespace FhirMigrationTool.SurfaceCheck
             if (_options.SurfaceCheckResources != null)
             {
                 var surfaceCheckResource = new List<string>(_options.SurfaceCheckResources);
-                var baseUri = new Uri(_options.SourceFhirUri);
-                var desbaseUri = new Uri(_options.DestinationFhirUri);
+                var baseUri = _options.SourceFhirUri;
+                var desbaseUri = _options.DestinationFhirUri;
                 string sourceFhirEndpoint = _options.SourceHttpClient;
                 string destinationFhirEndpoint = _options.DestinationHttpClient;
                 foreach (var item in surfaceCheckResource)

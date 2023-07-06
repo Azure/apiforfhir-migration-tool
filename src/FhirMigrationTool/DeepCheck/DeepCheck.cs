@@ -30,8 +30,8 @@ namespace FhirMigrationTool.DeepCheck
         public async Task<string> Execute()
         {
             int resourceCount = _options.DeepCheckCount;
-            var baseUri = new Uri(_options.SourceFhirUri);
-            var desbaseUri = new Uri(_options.DestinationFhirUri);
+            var baseUri = _options.SourceFhirUri;
+            var desbaseUri = _options.DestinationFhirUri;
 
             string sourceFhirEndpoint = _options.SourceHttpClient;
             string destinationFhirEndpoint = _options.DestinationHttpClient;

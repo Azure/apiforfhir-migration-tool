@@ -11,6 +11,11 @@ namespace FhirMigrationTool.Models
     public enum ResponseStatus
     {
         /// <summary>
+        /// Response Failed
+        /// </summary>
+        Failed,
+
+        /// <summary>
         /// response Ok
         /// </summary>
         Completed,
@@ -19,11 +24,6 @@ namespace FhirMigrationTool.Models
         /// Response Accepted
         /// </summary>
         Accepted,
-
-        /// <summary>
-        /// Response Failed
-        /// </summary>
-        Failed,
 
         /// <summary>
         /// Response 429

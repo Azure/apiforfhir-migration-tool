@@ -31,10 +31,10 @@ namespace FhirMigrationTool
             [OrchestrationTrigger] TaskOrchestrationContext context)
         {
             ILogger logger = context.CreateReplaySafeLogger(nameof(MigrationOrchestration));
-            if (!_orchestrationHelper.ValidateConfig(_options))
+            if (!_options.ValidateConfig())
             {
                 logger.LogError("Required configuration values are missing, Please provide all required configurations.");
-                throw new ArgumentException($"Process exiting: Please check all the required configuration values are available.");
+                throw new ArgumentException($"Process exiting: Please make sure that the required configuration values are available.");
             }
 
             logger.LogInformation("Start MigrationOrchestration.");

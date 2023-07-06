@@ -47,7 +47,7 @@ internal class Program
         {
             services.AddLogging(builder =>
             {
-                builder.AddFilter<ApplicationInsightsLoggerProvider>(string.Empty, Microsoft.Extensions.Logging.LogLevel.Information);
+                builder.AddFilter<ApplicationInsightsLoggerProvider>(string.Empty, config.Debug ? LogLevel.Debug : LogLevel.Information);
                 builder.AddApplicationInsights(op => op.ConnectionString = config.AppInsightConnectionstring, op => op.FlushOnDispose = true);
             });
 
@@ -64,8 +64,6 @@ internal class Program
 
         services.AddTransient<IImportProcessor, ImportProcessor>();
 
-        services.AddScoped<IBearerTokenHelper, BearerTokenHelper>();
-
         services.AddScoped<IFhirClient, FhirClient>();
 
         services.AddTransient<ISurfaceCheck, SurfaceCheck>();
@@ -74,8 +72,8 @@ internal class Program
         services.AddSingleton(config);
 
         var credential = new DefaultAzureCredential();
-        var baseUri = new Uri(config.SourceFhirUri);
-        var desUri = new Uri(config.DestinationFhirUri);
+        var baseUri = config.SourceFhirUri;
+        var desUri = config.DestinationFhirUri;
         string[]? scopes = default;
 
 #pragma warning disable CS8604 // Possible null reference argument.

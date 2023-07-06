@@ -7,7 +7,7 @@ namespace FhirMigrationTool.ExportProcess
 {
     public interface IExportProcessor
     {
-        Task<string> Execute();
+        Task<HttpResponseMessage> CallExport();
 
         Task<HttpResponseMessage> CheckExportStatus(string statusUrl);
     }
