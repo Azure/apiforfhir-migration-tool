@@ -5,10 +5,12 @@
 
 // placeholder file for now
 using System.Reflection;
+using Azure.Data.Tables;
 using Azure.Identity;
 using FhirMigrationTool.Configuration;
 using FhirMigrationTool.DeepCheck;
 using FhirMigrationTool.FhirOperation;
+using FhirMigrationTool.Models;
 using FhirMigrationTool.OrchestrationHelper;
 using FhirMigrationTool.Processors;
 using FhirMigrationTool.Security;
@@ -63,6 +65,10 @@ internal class Program
 
         // services.AddTransient<IExportProcessor, ExportProcessor>();
         // services.AddTransient<IImportProcessor, ImportProcessor>();
+        services.AddTransient<IAzureTableClientFactory, AzureTableClientFactory>();
+        services.AddTransient<IMetadataStore, AzureTableMetadataStore>();
+        services.AddSingleton<TableServiceClient>(new TableServiceClient(new Uri(config.StagingStorageUri), config.TokenCredential));
+
         services.AddTransient<IFhirProcessor, FhirProcessor>();
 
         services.AddScoped<IFhirClient, FhirClient>();

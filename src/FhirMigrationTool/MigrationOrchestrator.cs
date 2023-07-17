@@ -41,10 +41,10 @@ namespace FhirMigrationTool
                 // Run sub orchestration for export
                 var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration");
 
-                string import_body = _orchestrationHelper.CreateImportRequest(exportContent, _options.ImportMode);
+                // string import_body = _orchestrationHelper.CreateImportRequest(exportContent, _options.ImportMode);
 
                 // Run sub orchestration for Import
-                var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", import_body);
+                var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration");
             }
             catch (Exception ex)
             {
@@ -54,23 +54,32 @@ namespace FhirMigrationTool
             return outputs;
         }
 
-        [Function("MigrationOrchestration_HttpStart")]
-        public static async Task<HttpResponseData> HttpStart(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
+        // [Function("MigrationOrchestration_HttpStart")]
+        // public static async Task<HttpResponseData> HttpStart(
+        //    [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
+        //    [DurableClient] DurableTaskClient client,
+        //    FunctionContext executionContext)
+        // {
+        //    ILogger logger = executionContext.GetLogger("MigrationOrchestration_HttpStart");
+
+        // // Function input comes from the request content.
+        //    string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
+        //        nameof(MigrationOrchestration));
+
+        // logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
+
+        // // Returns an HTTP 202 response with an instance management payload.
+        //    // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
+        //    return client.CreateCheckStatusResponse(req, instanceId);
+        // }
+        [Function("TimerOrchestration")]
+        public async Task Run(
+            [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
             [DurableClient] DurableTaskClient client,
             FunctionContext executionContext)
         {
-            ILogger logger = executionContext.GetLogger("MigrationOrchestration_HttpStart");
-
-            // Function input comes from the request content.
-            string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
-                nameof(MigrationOrchestration));
-
-            logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
-
-            // Returns an HTTP 202 response with an instance management payload.
-            // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
-            return client.CreateCheckStatusResponse(req, instanceId);
+            var instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(MigrationOrchestration));
+            _logger.LogInformation("Started: Timed {instanceId}...", instanceId);
         }
 
         [Function(nameof(CountCheckOrchestration))]

@@ -23,6 +23,9 @@ namespace FhirMigrationTool.Configuration
         [JsonProperty("stagingStorageAccountName")]
         public string StagingStorageAccountName { get; set; } = string.Empty;
 
+        [JsonProperty("stagingStorageUri")]
+        public string StagingStorageUri { get; set; } = string.Empty;
+
         [JsonProperty("stagingContainerName")]
         public string StagingContainerName { get; set; } = string.Empty;
 
@@ -66,6 +69,21 @@ namespace FhirMigrationTool.Configuration
 
         [JsonProperty("debug")]
         public bool Debug { get; set; }
+
+        [JsonProperty("exportTableName")]
+        public string ExportTableName { get; set; } = string.Empty;
+
+        [JsonProperty("chunkTableName")]
+        public string ChunkTableName { get; set; } = string.Empty;
+
+        [JsonProperty("ExportChunkTime")]
+        public int ExportChunkTime { get; set; } = 12;
+
+        [JsonProperty("partitionKey")]
+        public string PartitionKey { get; set; } = "mypartitionkey";
+
+        [JsonProperty("rowKey")]
+        public string RowKey { get; set; } = "myrowkey";
 
         public bool ValidateConfig()
         {
