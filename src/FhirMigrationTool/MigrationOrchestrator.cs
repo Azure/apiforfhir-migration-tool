@@ -31,21 +31,20 @@ namespace FhirMigrationTool
             [OrchestrationTrigger] TaskOrchestrationContext context)
         {
             ILogger logger = context.CreateReplaySafeLogger(nameof(MigrationOrchestration));
-            if (!_options.ValidateConfig())
-            {
-                logger.LogError("Required configuration values are missing, Please provide all required configurations.");
-                throw new ArgumentException($"Process exiting: Please make sure that the required configuration values are available.");
-            }
-
-            logger.LogInformation("Start MigrationOrchestration.");
             var outputs = new List<string>();
+
             try
             {
+                _options.ValidateConfig();
+                logger.LogInformation("Start MigrationOrchestration.");
+
                 // Run sub orchestration for export
-                var export = await context.CallSubOrchestratorAsync<string>("ExportOrchestration");
+                var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration");
+
+                string import_body = _orchestrationHelper.CreateImportRequest(exportContent, _options.ImportMode);
 
                 // Run sub orchestration for Import
-                var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", export);
+                var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", import_body);
             }
             catch (Exception ex)
             {

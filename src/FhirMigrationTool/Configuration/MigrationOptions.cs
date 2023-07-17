@@ -13,10 +13,10 @@ namespace FhirMigrationTool.Configuration
     {
         [JsonProperty("sourceFhirUri")]
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        public Uri SourceFhirUri { get; set; }
+        public Uri SourceUri { get; set; }
 
         [JsonProperty("destinationFhirUri")]
-        public Uri DestinationFhirUri { get; set; }
+        public Uri DestinationUri { get; set; }
 
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
@@ -30,7 +30,7 @@ namespace FhirMigrationTool.Configuration
         public double ScheduleInterval { get; set; }
 
         [JsonProperty("startDate")]
-        public string StartDate { get; set; } = string.Empty;
+        public DateTime StartDate { get; set; }
 
         [JsonProperty("endDate")]
         public string EndDate { get; set; } = string.Empty;
@@ -69,16 +69,16 @@ namespace FhirMigrationTool.Configuration
 
         public bool ValidateConfig()
         {
-            try
+            if (SourceUri != null
+                && DestinationUri != null
+                && !string.IsNullOrEmpty(ImportMode)
+                && ScheduleInterval > 0)
             {
-                return SourceFhirUri != null
-                    && DestinationFhirUri != null
-                    && !string.IsNullOrEmpty(ImportMode)
-                    && ScheduleInterval > 0;
+                return true;
             }
-            catch
+            else
             {
-                throw;
+                throw new ArgumentException($"Process exiting: Please make sure that the required configuration values are available.");
             }
         }
     }

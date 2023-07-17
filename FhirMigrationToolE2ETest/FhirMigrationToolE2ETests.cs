@@ -5,10 +5,10 @@
 
 using System.Reflection;
 using FhirMigrationTool.Configuration;
-using FhirMigrationTool.ExportProcess;
 using FhirMigrationTool.FhirOperation;
-using FhirMigrationTool.ImportProcess;
+using FhirMigrationTool.Models;
 using FhirMigrationTool.OrchestrationHelper;
+using FhirMigrationTool.Processors;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
@@ -24,10 +24,12 @@ namespace FhirMigrationToolE2ETest
     {
         private static MigrationOptions? _config;
         private static ILogger<FhirMigrationToolE2ETests>? _logger;
-        private static ILogger? _loggerExport;
+#pragma warning disable CS0649 // Field 'FhirMigrationToolE2ETests._loggerExport' is never assigned to, and will always have its default value null
+        private static readonly ILogger? _loggerExport;
         private static ILogger? _loggerImport;
+#pragma warning restore CS0649 // Field 'FhirMigrationToolE2ETests._loggerExport' is never assigned to, and will always have its default value null
         private static TelemetryClient? telemetryClient;
-        private static IFhirClient? fhirClient;
+        private static IFhirClient? exportFhirClient;
         private static IFhirClient? importFhirClient;
         private static IOrchestrationHelper? orchestrationHelper;
 
@@ -63,7 +65,7 @@ namespace FhirMigrationToolE2ETest
             IHttpClientFactory? httpClientFactory = serviceProvider.GetService<IHttpClientFactory>();
 
             orchestrationHelper = new OrchestrationHelper();
-            fhirClient = new FhirClient(httpClientFactory);
+            exportFhirClient = new FhirClient(httpClientFactory);
             importFhirClient = new FhirClient(httpClientFactory);
 
             using ILoggerFactory loggerFactory = LoggerFactory.Create(loggingBuilder => loggingBuilder
@@ -71,15 +73,13 @@ namespace FhirMigrationToolE2ETest
                 .AddConsole());
 
             _logger = loggerFactory.CreateLogger<FhirMigrationToolE2ETests>();
-            _loggerExport = loggerFactory.CreateLogger<ExportProcessor>();
-            _loggerImport = loggerFactory.CreateLogger<ImportProcessor>();
 
             root.Bind(fhirLogger);
             root.Bind(_logger);
             root.Bind(_loggerExport);
             root.Bind(_loggerImport);
             root.Bind(telemetryClient);
-            root.Bind(fhirClient);
+            root.Bind(exportFhirClient);
             root.Bind(importFhirClient);
             root.Bind(orchestrationHelper);
         }
@@ -87,12 +87,15 @@ namespace FhirMigrationToolE2ETest
         [TestMethod]
         public async Task ExportProcessTest()
         {
-            IExportProcessor exportProcessor = new ExportProcessor(fhirClient, _config, telemetryClient, _loggerExport as ILogger<ExportProcessor>);
+            IFhirProcessor exportProcessor = new FhirProcessor(exportFhirClient, telemetryClient, _loggerExport as ILogger<FhirProcessor>);
 
             try
             {
-                HttpResponseMessage exportResponse = await exportProcessor.CallExport();
-                Assert.IsTrue(exportResponse.IsSuccessStatusCode);
+                var method = HttpMethod.Get;
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                ResponseModel exportResponse = await exportProcessor.CallProcess(method, string.Empty, _config.SourceUri, "/$export", _config.SourceHttpClient);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                Assert.IsTrue(!string.IsNullOrEmpty(exportResponse.Content));
             }
             catch (Exception ex)
             {
@@ -103,12 +106,15 @@ namespace FhirMigrationToolE2ETest
         [TestMethod]
         public async Task ImportProcessTest()
         {
-            IImportProcessor importProcessor = new ImportProcessor(fhirClient, _config, telemetryClient, _loggerImport as ILogger<ImportProcessor>);
+            IFhirProcessor importProcessor = new FhirProcessor(exportFhirClient, telemetryClient, _loggerImport as ILogger<FhirProcessor>);
             try
             {
                 string json = await File.ReadAllTextAsync("../../../import_body.json");
-                HttpResponseMessage response = await importProcessor.CallImport(json);
-                Assert.IsTrue(response.IsSuccessStatusCode);
+                var method = HttpMethod.Post;
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                ResponseModel response = await importProcessor.CallProcess(method, json, _config.DestinationUri, "/$import", _config.DestinationHttpClient);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                Assert.IsTrue(!string.IsNullOrEmpty(response.Content));
             }
             catch (Exception ex)
             {
