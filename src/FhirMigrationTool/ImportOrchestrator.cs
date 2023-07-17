@@ -3,12 +3,10 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
-using System.Net;
-using System.Net.Http.Headers;
 using FhirMigrationTool.Configuration;
 using FhirMigrationTool.ExceptionHelper;
-using FhirMigrationTool.ImportProcess;
 using FhirMigrationTool.Models;
+using FhirMigrationTool.Processors;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
@@ -17,10 +15,10 @@ namespace FhirMigrationTool
 {
     public class ImportOrchestrator
     {
-        private readonly IImportProcessor _importProcessor;
+        private readonly IFhirProcessor _importProcessor;
         private readonly MigrationOptions _options;
 
-        public ImportOrchestrator(IImportProcessor importProcessor, MigrationOptions options)
+        public ImportOrchestrator(IFhirProcessor importProcessor, MigrationOptions options)
         {
             _importProcessor = importProcessor;
             _options = options;
@@ -33,32 +31,20 @@ namespace FhirMigrationTool
             ILogger logger = context.CreateReplaySafeLogger(nameof(ImportOrchestration));
             logger.LogInformation("Starting import activities.");
             var statusRespose = new HttpResponseMessage();
-            var retryCount = 0;
             var statusUrl = string.Empty;
 
             try
             {
-                while (retryCount <= _options.RetryCount)
+                ResponseModel importResponse = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImport), requestContent);
+                if (importResponse.Status == ResponseStatus.Completed)
                 {
-                    ResponseModel importResponse = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImport), requestContent);
-                    if (importResponse.Status == ResponseStatus.Completed)
-                    {
-                        logger?.LogInformation($"Import  returned: Success.");
-                        statusUrl = importResponse.Content;
-                        break;
-                    }
-                    else if (importResponse.Status == ResponseStatus.Retry)
-                    {
-                        logger?.LogInformation($"Import Status check returned: 429. Retrying in {_options.WaitForRetry} minutes");
-                        retryCount++;
-                        DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(_options.WaitForRetry));
-                        await context.CreateTimer(waitTime, CancellationToken.None);
-                    }
-                    else
-                    {
-                        logger?.LogInformation($"Import Status check returned: Unsuccessful.");
-                        throw new HttpFailureException($"Response: {importResponse.Content} ");
-                    }
+                    logger?.LogInformation($"Import  returned: Success.");
+                    statusUrl = importResponse.Content;
+                }
+                else
+                {
+                    logger?.LogInformation($"Import Status check returned: Unsuccessful.");
+                    throw new HttpFailureException($"Response: {importResponse.Content} ");
                 }
 
                 while (true)
@@ -78,19 +64,6 @@ namespace FhirMigrationTool
                         logger?.LogInformation($"Import Status check returned: Success.");
                         return "Completed";
                     }
-                    else if (response.Status == ResponseStatus.Retry)
-                    {
-                        logger?.LogInformation($"Import Status check returned: 429.");
-                        if (retryCount < _options.RetryCount)
-                        {
-                            retryCount++;
-                            continue;
-                        }
-                        else
-                        {
-                            throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()}. Import status check failed, exiting process");
-                        }
-                    }
                     else
                     {
                         logger?.LogInformation($"Import Status check returned: Unsuccessful.");
@@ -107,69 +80,27 @@ namespace FhirMigrationTool
         [Function(nameof(ProcessImport))]
         public async Task<ResponseModel> ProcessImport([ActivityTrigger] string requestContent, FunctionContext executionContext)
         {
-            HttpResponseMessage importResponse;
-            var response = new ResponseModel();
-            var importStatusUrl = string.Empty;
             try
             {
-                importResponse = await _importProcessor.CallImport(requestContent);
-
-                switch (importResponse.StatusCode)
-                {
-                    case HttpStatusCode.Accepted:
-                        response.Status = ResponseStatus.Accepted;
-                        HttpHeaders headers = importResponse.Content.Headers;
-                        IEnumerable<string> values;
-                        if (headers.GetValues("Content-Location") != null)
-                        {
-                            values = headers.GetValues("Content-Location");
-                            importStatusUrl = values.First();
-                        }
-
-                        response.Content = importStatusUrl;
-                        response.Status = ResponseStatus.Completed;
-                        break;
-                    case HttpStatusCode.TooManyRequests:
-                        response.Status = ResponseStatus.Retry;
-                        break;
-                    default:
-                        response.Status = ResponseStatus.Failed;
-                        break;
-                }
+                HttpMethod method = HttpMethod.Post;
+                ResponseModel importResponse = await _importProcessor.CallProcess(method, requestContent, _options.DestinationUri, "/$import",  _options.DestinationHttpClient);
+                return importResponse;
             }
             catch
             {
                 throw;
             }
-
-            return response;
         }
 
         [Function(nameof(ProcessImportStatusCheck))]
         public async Task<ResponseModel> ProcessImportStatusCheck([ActivityTrigger] string importStatusUrl, FunctionContext executionContext)
         {
-            var response = new ResponseModel();
             try
             {
                 if (!string.IsNullOrEmpty(importStatusUrl))
                 {
-                    HttpResponseMessage importStatusResponse = await _importProcessor.CheckImportStatus(importStatusUrl);
-                    switch (importStatusResponse.StatusCode)
-                    {
-                        case HttpStatusCode.Accepted:
-                            response.Status = ResponseStatus.Accepted;
-                            break;
-                        case HttpStatusCode.OK:
-                            response.Content = importStatusResponse.Content.ReadAsStringAsync().Result;
-                            response.Status = ResponseStatus.Completed;
-                            break;
-                        case HttpStatusCode.TooManyRequests:
-                            response.Status = ResponseStatus.Retry;
-                            break;
-                        default:
-                            response.Status = ResponseStatus.Failed;
-                            break;
-                    }
+                    ResponseModel importStatusResponse = await _importProcessor.CheckProcessStatus(importStatusUrl, _options.DestinationUri, _options.DestinationHttpClient);
+                    return importStatusResponse;
                 }
                 else
                 {
@@ -180,8 +111,6 @@ namespace FhirMigrationTool
             {
                 throw;
             }
-
-            return response;
         }
     }
 }

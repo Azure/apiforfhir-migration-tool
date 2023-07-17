@@ -7,11 +7,10 @@ using System.Net;
 using System.Reflection;
 using FhirMigrationTool;
 using FhirMigrationTool.Configuration;
-using FhirMigrationTool.ExportProcess;
 using FhirMigrationTool.FhirOperation;
-using FhirMigrationTool.ImportProcess;
 using FhirMigrationTool.Models;
 using FhirMigrationTool.OrchestrationHelper;
+using FhirMigrationTool.Processors;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
@@ -28,20 +27,26 @@ namespace FhirMigrationtool.Tests
     {
         private static MigrationOptions? _config;
         private static ILogger<FhirMigrationUnitTests>? _logger;
+#pragma warning disable CS0649 // Field 'FhirMigrationUnitTests._loggerExport' is never assigned to, and will always have its default value null
         private static ILogger? _loggerExport;
         private static ILogger? _loggerImport;
+#pragma warning restore CS0649 // Field 'FhirMigrationUnitTests._loggerExport' is never assigned to, and will always have its default value null
+
         private static TelemetryClient? telemetryClient;
         private static IFhirClient? fhirClient;
         private static IOrchestrationHelper? orchestrationHelper;
         private readonly Mock<IFhirClient> _mockClient;
-        private readonly Mock<IExportProcessor> _exportProcessor;
-        private readonly Mock<IImportProcessor> _importProcessor;
+        private readonly Mock<HttpClient> _mockHttpClient;
+        private readonly Mock<IFhirProcessor> _exportProcessor;
+        private readonly Mock<IFhirProcessor> _importProcessor;
 
+        // private readonly Mock<IImportProcessor> _importProcessor;
         public FhirMigrationUnitTests()
         {
             _mockClient = new Mock<IFhirClient>();
-            _exportProcessor = new Mock<IExportProcessor>();
-            _importProcessor = new Mock<IImportProcessor>();
+            _exportProcessor = new Mock<IFhirProcessor>();
+            _importProcessor = new Mock<IFhirProcessor>();
+            _mockHttpClient = new Mock<HttpClient>();
         }
 
         [ClassInitialize]
@@ -86,9 +91,9 @@ namespace FhirMigrationtool.Tests
                         .AddConsole());
 
                     _logger = loggerFactory.CreateLogger<FhirMigrationUnitTests>();
-                    _loggerExport = loggerFactory.CreateLogger<ExportProcessor>();
-                    _loggerImport = loggerFactory.CreateLogger<ImportProcessor>();
 
+                    // _loggerExport = loggerFactory.CreateLogger<ExportProcessor>();
+                    // _loggerImport = loggerFactory.CreateLogger<ImportProcessor>();
                     root.Bind(fhirLogger);
                     root.Bind(_logger);
                     root.Bind(_loggerExport);
@@ -118,19 +123,21 @@ namespace FhirMigrationtool.Tests
             };
 
             _mockClient.Setup(c => c.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(response));
-
             try
             {
+                // _mockHttpClient.Setup(a => a.SendAsync(It.IsAny<HttpRequestMessage>())).Returns(Task.FromResult(response));
+                var httpClient = new HttpClient();
+                var method = HttpMethod.Get;
 #pragma warning disable CS8604 // Possible null reference argument.
-                IExportProcessor exportProcessor = new ExportProcessor(
+                IFhirProcessor exportProcessor = new FhirProcessor(
                     fhirClient: _mockClient.Object,
-                    options: _config,
                     telemetryClient: telemetryClient,
-                    logger: _loggerExport as ILogger<ExportProcessor>);
-                HttpResponseMessage exportResponse = await exportProcessor.CallExport();
-                KeyValuePair<string, IEnumerable<string>> contentLocationHeader = exportResponse.Content.Headers.FirstOrDefault(x => x.Key == "Content-Location");
-                var statusUrl = contentLocationHeader.Value.FirstOrDefault();
-                Assert.IsTrue(exportResponse.IsSuccessStatusCode);
+                    logger: _loggerExport as ILogger<FhirProcessor>);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                ResponseModel exportResponse = await exportProcessor.CallProcess(method, string.Empty, _config.SourceUri, "/$export?_type=Patient", _config.SourceHttpClient);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                var statusUrl = exportResponse.Content;
+                Assert.IsTrue(exportResponse.Status == ResponseStatus.Completed);
                 Assert.AreEqual(statusUrl, exportStatusUrl);
             }
             catch (Exception ex)
@@ -155,13 +162,14 @@ namespace FhirMigrationtool.Tests
             try
             {
 #pragma warning disable CS8604 // Possible null reference argument.
-                IExportProcessor exportProcessor = new ExportProcessor(
+                IFhirProcessor exportProcessor = new FhirProcessor(
                     _mockClient.Object,
-                    options: _config,
                     telemetryClient: telemetryClient,
-                    logger: _loggerExport as ILogger<ExportProcessor>);
-                HttpResponseMessage exportStatusResponse = await exportProcessor.CheckExportStatus(exportStatusUrl);
-                Assert.IsTrue(exportStatusResponse.IsSuccessStatusCode);
+                    logger: _loggerExport as ILogger<FhirProcessor>);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                ResponseModel exportStatusResponse = await exportProcessor.CheckProcessStatus(exportStatusUrl, _config.SourceUri, _config.SourceHttpClient);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                Assert.IsTrue(exportStatusResponse.Status == ResponseStatus.Completed);
             }
             catch (Exception ex)
             {
@@ -174,6 +182,7 @@ namespace FhirMigrationtool.Tests
         public async Task ImportProcessorTestCasePass()
         {
             var importStatusUrl = "fhirserver/import/importId";
+            var method = HttpMethod.Post;
             var response = new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.Accepted,
@@ -192,15 +201,15 @@ namespace FhirMigrationtool.Tests
             try
             {
 #pragma warning disable CS8604 // Possible null reference argument.
-                IImportProcessor importProcessor = new ImportProcessor(
+                IFhirProcessor importProcessor = new FhirProcessor(
                     fhirClient: _mockClient.Object,
-                    options: _config,
                     telemetryClient: telemetryClient,
-                    logger: _loggerImport as ILogger<ImportProcessor>);
-                HttpResponseMessage importResponse = await importProcessor.CallImport(importRequest);
-                KeyValuePair<string, IEnumerable<string>> contentLocationHeader = importResponse.Content.Headers.FirstOrDefault(x => x.Key == "Content-Location");
-                var statusUrl = contentLocationHeader.Value.FirstOrDefault();
-                Assert.IsTrue(importResponse.IsSuccessStatusCode);
+                    logger: _loggerImport as ILogger<FhirProcessor>);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                ResponseModel importResponse = await importProcessor.CallProcess(method, importRequest, _config.DestinationUri, string.Empty, _config.DestinationHttpClient);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                var statusUrl = importResponse.Content;
+                Assert.IsTrue(importResponse.Status == ResponseStatus.Completed);
                 Assert.AreEqual(statusUrl, importStatusUrl);
             }
             catch (Exception ex)
@@ -225,13 +234,14 @@ namespace FhirMigrationtool.Tests
             try
             {
 #pragma warning disable CS8604 // Possible null reference argument.
-                IImportProcessor importProcessor = new ImportProcessor(
+                IFhirProcessor importProcessor = new FhirProcessor(
                     fhirClient: _mockClient.Object,
-                    options: _config,
                     telemetryClient: telemetryClient,
-                    logger: _loggerImport as ILogger<ImportProcessor>);
-                HttpResponseMessage importStatusResponse = await importProcessor.CheckImportStatus(importStatusUrl);
-                Assert.IsTrue(importStatusResponse.IsSuccessStatusCode);
+                    logger: _loggerImport as ILogger<FhirProcessor>);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                ResponseModel importStatusResponse = await importProcessor.CheckProcessStatus(importStatusUrl, _config.DestinationUri, _config.DestinationHttpClient);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                Assert.IsTrue(importStatusResponse.Status == ResponseStatus.Completed);
             }
             catch (Exception ex)
             {
@@ -245,80 +255,62 @@ namespace FhirMigrationtool.Tests
         {
             var exportStatusUrl = "https://azureapiforfhir.azurehealthcareapis.com/_operations/export/container";
             var importStatusUrl = "https://fhirservice.fhir.azurehealthcareapis.com/_operations/import/importId";
-            var exportResponse = new HttpResponseMessage
+            var exportResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.Accepted,
-                ReasonPhrase = "Export request accepted.",
-                Content =
-                {
-                    Headers =
-                    {
-                        { "Content-Location", exportStatusUrl },
-                    },
-                },
+                Status = ResponseStatus.Accepted,
+                Content = exportStatusUrl,
             };
-            var exportStatusResponse = new HttpResponseMessage
+            var exportStatusResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(await File.ReadAllTextAsync("../../../mock_export_status_response.json")),
+                Status = ResponseStatus.Completed,
+                Content = await File.ReadAllTextAsync("../../../mock_export_status_response.json"),
             };
-            var importResponse = new HttpResponseMessage
+            var importResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.Accepted,
-                ReasonPhrase = "Import request accepted.",
-                Content =
-                {
-                    Headers =
-                    {
-                        { "Content-Location", importStatusUrl },
-                    },
-                },
+                Status = ResponseStatus.Accepted,
+                Content = importStatusUrl,
             };
-            var importStatusResponse = new HttpResponseMessage
+            var importStatusResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(await File.ReadAllTextAsync("../../../mock_import_status_response.json")),
+                Status = ResponseStatus.Completed,
+                Content = await File.ReadAllTextAsync("../../../mock_import_status_response.json"),
             };
 
-            _exportProcessor.Setup(x => x.CallExport()).Returns(Task.FromResult(exportResponse));
+            _exportProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(exportResponse));
 
-            _exportProcessor.Setup(x => x.CheckExportStatus(It.IsAny<string>())).Returns(Task.FromResult(exportStatusResponse));
+            _exportProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(exportStatusResponse));
 
-            _importProcessor.Setup(x => x.CallImport(It.IsAny<string>())).Returns(Task.FromResult(importResponse));
+            _importProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(importResponse));
 
-            _importProcessor.Setup(x => x.CheckImportStatus(It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
+            _importProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
 #pragma warning disable CS8604 // Possible null reference argument.
-            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, orchestrationHelper);
+            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config);
             var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config);
-            var importResult = new ResponseModel();
-            var exportResult = new ResponseModel();
-            var importStatusResult = new ResponseModel();
-            var exportStatusResult = new ResponseModel();
 
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-                exportResult = await exportOrchestrator.ProcessExport(null, null);
-                if (exportResult.Status == ResponseStatus.Completed)
+                exportResponse = await exportOrchestrator.ProcessExport(null, null);
+                if (exportResponse.Status == ResponseStatus.Completed)
                 {
-                    exportStatusResult = await exportOrchestrator.ProcessExportStatusCheck(exportResult.Content, null);
-                    if (exportStatusResult.Status == ResponseStatus.Completed)
+                    exportStatusResponse = await exportOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
+                    if (exportStatusResponse.Status == ResponseStatus.Completed)
                     {
-                        string importRequestContent = exportStatusResult.Content;
-                        importResult = await importOrchestrator.ProcessImport(importRequestContent, null);
+                        string importRequestContent = exportStatusResponse.Content;
+                        importResponse = await importOrchestrator.ProcessImport(importRequestContent, null);
 
-                        if (importResult.Status == ResponseStatus.Completed)
+                        if (importResponse.Status == ResponseStatus.Completed)
                         {
-                            importStatusResult = await importOrchestrator.ProcessImportStatusCheck(importResult.Content, null);
+                            importStatusResponse = await importOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
                         }
                     }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
 
-                Assert.IsTrue(exportResult.Status == ResponseStatus.Completed);
-                Assert.IsTrue(exportStatusResult.Status == ResponseStatus.Completed);
-                Assert.IsTrue(importResult.Status == ResponseStatus.Completed);
-                Assert.IsTrue(importStatusResult.Status == ResponseStatus.Completed);
+                Assert.IsTrue(exportResponse.Status == ResponseStatus.Accepted);
+                Assert.IsTrue(exportStatusResponse.Status == ResponseStatus.Completed);
+                Assert.IsTrue(importResponse.Status == ResponseStatus.Accepted);
+                Assert.IsTrue(importStatusResponse.Status == ResponseStatus.Completed);
             }
             catch (Exception ex)
             {
@@ -331,71 +323,58 @@ namespace FhirMigrationtool.Tests
         public async Task MigrationTestExportFail()
         {
             var importStatusUrl = "https://fhirservice.fhir.azurehealthcareapis.com/_operations/import/importId";
-            var exportResponse = new HttpResponseMessage
+            var exportResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.InternalServerError,
-                ReasonPhrase = "Export request failed.",
-                Content = new StringContent("Export Failed."),
+                Status = ResponseStatus.Failed,
             };
-            var exportStatusResponse = new HttpResponseMessage
+            var exportStatusResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(await File.ReadAllTextAsync("../../../mock_export_status_response.json")),
+                Status = ResponseStatus.Completed,
+                Content = await File.ReadAllTextAsync("../../../mock_export_status_response.json"),
             };
-            var importResponse = new HttpResponseMessage
+            var importResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.Accepted,
-                ReasonPhrase = "Import request accepted.",
-                Content =
-                {
-                    Headers =
-                    {
-                        { "Content-Location", importStatusUrl },
-                    },
-                },
+                Status = ResponseStatus.Accepted,
+                Content = importStatusUrl,
             };
-            var importStatusResponse = new HttpResponseMessage
+            var importStatusResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(await File.ReadAllTextAsync("../../../mock_import_status_response.json")),
+                Status = ResponseStatus.Completed,
+                Content = await File.ReadAllTextAsync("../../../mock_import_status_response.json"),
             };
 
-            _exportProcessor.Setup(x => x.CallExport()).Returns(Task.FromResult(exportResponse));
+            _exportProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(exportResponse));
 
-            _exportProcessor.Setup(x => x.CheckExportStatus(It.IsAny<string>())).Returns(Task.FromResult(exportStatusResponse));
+            _exportProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(exportStatusResponse));
 
-            _importProcessor.Setup(x => x.CallImport(It.IsAny<string>())).Returns(Task.FromResult(importResponse));
+            _importProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(importResponse));
 
-            _importProcessor.Setup(x => x.CheckImportStatus(It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
+            _importProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
 #pragma warning disable CS8604 // Possible null reference argument.
-            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, orchestrationHelper);
+            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config);
             var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config);
-            var importResult = new ResponseModel();
-            var exportResult = new ResponseModel();
-            var importStatusResult = new ResponseModel();
-            var exportStatusResult = new ResponseModel();
 
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-                exportResult = await exportOrchestrator.ProcessExport(null, null);
-                if (exportResult.Status == ResponseStatus.Completed)
+                exportResponse = await exportOrchestrator.ProcessExport(null, null);
+                if (exportResponse.Status == ResponseStatus.Completed)
                 {
-                    exportStatusResult = await exportOrchestrator.ProcessExportStatusCheck(exportResult.Content, null);
-                    if (exportStatusResult.Status == ResponseStatus.Completed)
+                    exportStatusResponse = await exportOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
+                    if (exportStatusResponse.Status == ResponseStatus.Completed)
                     {
-                        string importRequestContent = exportStatusResult.Content;
-                        importResult = await importOrchestrator.ProcessImport(importRequestContent, null);
+                        string importRequestContent = exportStatusResponse.Content;
+                        importResponse = await importOrchestrator.ProcessImport(importRequestContent, null);
 
-                        if (importResult.Status == ResponseStatus.Completed)
+                        if (importResponse.Status == ResponseStatus.Completed)
                         {
-                            importStatusResult = await importOrchestrator.ProcessImportStatusCheck(importResult.Content, null);
+                            importStatusResponse = await importOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
                         }
                     }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
 
-                Assert.IsTrue(exportResult.Status == ResponseStatus.Failed);
+                Assert.IsTrue(exportResponse.Status == ResponseStatus.Failed);
             }
             catch (Exception ex)
             {
@@ -409,76 +388,60 @@ namespace FhirMigrationtool.Tests
         {
             var exportStatusUrl = "https://azureapiforfhir.azurehealthcareapis.com/_operations/export/container";
             var importStatusUrl = "https://fhirservice.fhir.azurehealthcareapis.com/_operations/import/importId";
-            var exportResponse = new HttpResponseMessage
+            var exportResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.Accepted,
-                ReasonPhrase = "Export request accepted.",
-                Content =
-                {
-                    Headers =
-                    {
-                        { "Content-Location", exportStatusUrl },
-                    },
-                },
+                Status = ResponseStatus.Accepted,
+                Content = exportStatusUrl,
             };
-            var exportStatusResponse = new HttpResponseMessage
+            var exportStatusResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.InternalServerError,
-                ReasonPhrase = "Export status request failed.",
-                Content = new StringContent("Export status Failed."),
+                Status = ResponseStatus.Failed,
+                Content = await File.ReadAllTextAsync("../../../mock_export_status_response.json"),
             };
-            var importResponse = new HttpResponseMessage
+            var importResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.Accepted,
-                ReasonPhrase = "Import request accepted.",
-                Content =
-                {
-                    Headers =
-                    {
-                        { "Content-Location", importStatusUrl },
-                    },
-                },
+                Status = ResponseStatus.Accepted,
+                Content = importStatusUrl,
             };
-            var importStatusResponse = new HttpResponseMessage
+            var importStatusResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(await File.ReadAllTextAsync("../../../mock_import_status_response.json")),
+                Status = ResponseStatus.Completed,
+                Content = await File.ReadAllTextAsync("../../../mock_import_status_response.json"),
             };
 
-            _exportProcessor.Setup(x => x.CallExport()).Returns(Task.FromResult(exportResponse));
-            _exportProcessor.Setup(x => x.CheckExportStatus(It.IsAny<string>())).Returns(Task.FromResult(exportStatusResponse));
-            _importProcessor.Setup(x => x.CallImport(It.IsAny<string>())).Returns(Task.FromResult(importResponse));
-            _importProcessor.Setup(x => x.CheckImportStatus(It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
+            _exportProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(exportResponse));
+
+            _exportProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(exportStatusResponse));
+
+            _importProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(importResponse));
+
+            _importProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
 #pragma warning disable CS8604 // Possible null reference argument.
-            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, orchestrationHelper);
+            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config);
             var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config);
-            var importResult = new ResponseModel();
-            var exportResult = new ResponseModel();
-            var importStatusResult = new ResponseModel();
-            var exportStatusResult = new ResponseModel();
 
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-                exportResult = await exportOrchestrator.ProcessExport(null, null);
-                if (exportResult.Status == ResponseStatus.Completed)
+                exportResponse = await exportOrchestrator.ProcessExport(null, null);
+                if (exportResponse.Status == ResponseStatus.Completed)
                 {
-                    exportStatusResult = await exportOrchestrator.ProcessExportStatusCheck(exportResult.Content, null);
-                    if (exportStatusResult.Status == ResponseStatus.Completed)
+                    exportStatusResponse = await exportOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
+                    if (exportStatusResponse.Status == ResponseStatus.Completed)
                     {
-                        string importRequestContent = exportStatusResult.Content;
-                        importResult = await importOrchestrator.ProcessImport(importRequestContent, null);
+                        string importRequestContent = exportStatusResponse.Content;
+                        importResponse = await importOrchestrator.ProcessImport(importRequestContent, null);
 
-                        if (importResult.Status == ResponseStatus.Completed)
+                        if (importResponse.Status == ResponseStatus.Completed)
                         {
-                            importStatusResult = await importOrchestrator.ProcessImportStatusCheck(importResult.Content, null);
+                            importStatusResponse = await importOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
                         }
                     }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
 
-                Assert.IsTrue(exportResult.Status == ResponseStatus.Completed);
-                Assert.IsTrue(exportStatusResult.Status == ResponseStatus.Failed);
+                Assert.IsTrue(exportResponse.Status == ResponseStatus.Accepted);
+                Assert.IsTrue(exportStatusResponse.Status == ResponseStatus.Failed);
             }
             catch (Exception ex)
             {
@@ -491,72 +454,61 @@ namespace FhirMigrationtool.Tests
         public async Task MigrationTestImportFail()
         {
             var exportStatusUrl = "https://azureapiforfhir.azurehealthcareapis.com/_operations/export/container";
-            var exportResponse = new HttpResponseMessage
+            var exportResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.Accepted,
-                ReasonPhrase = "Export request accepted.",
-                Content =
-                {
-                    Headers =
-                    {
-                        { "Content-Location", exportStatusUrl },
-                    },
-                },
+                Status = ResponseStatus.Accepted,
+                Content = exportStatusUrl,
             };
-            var exportStatusResponse = new HttpResponseMessage
+            var exportStatusResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(await File.ReadAllTextAsync("../../../mock_export_status_response.json")),
+                Status = ResponseStatus.Completed,
+                Content = await File.ReadAllTextAsync("../../../mock_export_status_response.json"),
             };
-            var importResponse = new HttpResponseMessage
+            var importResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.InternalServerError,
-                ReasonPhrase = "Import request failed.",
+                Status = ResponseStatus.Failed,
+                Content = string.Empty,
             };
-            var importStatusResponse = new HttpResponseMessage
+            var importStatusResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(await File.ReadAllTextAsync("../../../mock_import_status_response.json")),
+                Status = ResponseStatus.Completed,
+                Content = await File.ReadAllTextAsync("../../../mock_import_status_response.json"),
             };
 
-            _exportProcessor.Setup(x => x.CallExport()).Returns(Task.FromResult(exportResponse));
+            _exportProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(exportResponse));
 
-            _exportProcessor.Setup(x => x.CheckExportStatus(It.IsAny<string>())).Returns(Task.FromResult(exportStatusResponse));
+            _exportProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(exportStatusResponse));
 
-            _importProcessor.Setup(x => x.CallImport(It.IsAny<string>())).Returns(Task.FromResult(importResponse));
+            _importProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(importResponse));
 
-            _importProcessor.Setup(x => x.CheckImportStatus(It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
+            _importProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
 #pragma warning disable CS8604 // Possible null reference argument.
-            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, orchestrationHelper);
+            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config);
             var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config);
-            var importResult = new ResponseModel();
-            var exportResult = new ResponseModel();
-            var importStatusResult = new ResponseModel();
-            var exportStatusResult = new ResponseModel();
 
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-                exportResult = await exportOrchestrator.ProcessExport(null, null);
-                if (exportResult.Status == ResponseStatus.Completed)
+                exportResponse = await exportOrchestrator.ProcessExport(null, null);
+                if (exportResponse.Status == ResponseStatus.Completed)
                 {
-                    exportStatusResult = await exportOrchestrator.ProcessExportStatusCheck(exportResult.Content, null);
-                    if (exportStatusResult.Status == ResponseStatus.Completed)
+                    exportStatusResponse = await exportOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
+                    if (exportStatusResponse.Status == ResponseStatus.Completed)
                     {
-                        string importRequestContent = exportStatusResult.Content;
-                        importResult = await importOrchestrator.ProcessImport(importRequestContent, null);
+                        string importRequestContent = exportStatusResponse.Content;
+                        importResponse = await importOrchestrator.ProcessImport(importRequestContent, null);
 
-                        if (importResult.Status == ResponseStatus.Completed)
+                        if (importResponse.Status == ResponseStatus.Completed)
                         {
-                            importStatusResult = await importOrchestrator.ProcessImportStatusCheck(importResult.Content, null);
+                            importStatusResponse = await importOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
                         }
                     }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
 
-                Assert.IsTrue(exportResult.Status == ResponseStatus.Completed);
-                Assert.IsTrue(exportStatusResult.Status == ResponseStatus.Completed);
-                Assert.IsTrue(importResult.Status == ResponseStatus.Failed);
+                Assert.IsTrue(exportResponse.Status == ResponseStatus.Accepted);
+                Assert.IsTrue(exportStatusResponse.Status == ResponseStatus.Completed);
+                Assert.IsTrue(importResponse.Status == ResponseStatus.Failed);
             }
             catch (Exception ex)
             {
@@ -570,80 +522,61 @@ namespace FhirMigrationtool.Tests
         {
             var exportStatusUrl = "https://azureapiforfhir.azurehealthcareapis.com/_operations/export/container";
             var importStatusUrl = "https://fhirservice.fhir.azurehealthcareapis.com/_operations/import/importId";
-            var exportResponse = new HttpResponseMessage
+            var exportResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.Accepted,
-                ReasonPhrase = "Export request accepted.",
-                Content =
-                {
-                    Headers =
-                    {
-                        { "Content-Location", exportStatusUrl },
-                    },
-                },
+                Status = ResponseStatus.Accepted,
+                Content = exportStatusUrl,
             };
-            var exportStatusResponse = new HttpResponseMessage
+            var exportStatusResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(await File.ReadAllTextAsync("../../../mock_export_status_response.json")),
+                Status = ResponseStatus.Completed,
+                Content = await File.ReadAllTextAsync("../../../mock_export_status_response.json"),
             };
-            var importResponse = new HttpResponseMessage
+            var importResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.Accepted,
-                ReasonPhrase = "Import request accepted.",
-                Content =
-                {
-                    Headers =
-                    {
-                        { "Content-Location", importStatusUrl },
-                    },
-                },
+                Status = ResponseStatus.Accepted,
+                Content = importStatusUrl,
             };
-            var importStatusResponse = new HttpResponseMessage
+            var importStatusResponse = new ResponseModel
             {
-                StatusCode = HttpStatusCode.InternalServerError,
-                Content = new StringContent(await File.ReadAllTextAsync("../../../mock_import_status_response.json")),
+                Status = ResponseStatus.Failed,
             };
 
-            _exportProcessor.Setup(x => x.CallExport()).Returns(Task.FromResult(exportResponse));
+            _exportProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(exportResponse));
 
-            _exportProcessor.Setup(x => x.CheckExportStatus(It.IsAny<string>())).Returns(Task.FromResult(exportStatusResponse));
+            _exportProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(exportStatusResponse));
 
-            _importProcessor.Setup(x => x.CallImport(It.IsAny<string>())).Returns(Task.FromResult(importResponse));
+            _importProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(importResponse));
 
-            _importProcessor.Setup(x => x.CheckImportStatus(It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
+            _importProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
 #pragma warning disable CS8604 // Possible null reference argument.
-            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, orchestrationHelper);
+            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config);
             var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config);
-            var importResult = new ResponseModel();
-            var exportResult = new ResponseModel();
-            var importStatusResult = new ResponseModel();
-            var exportStatusResult = new ResponseModel();
 
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-                exportResult = await exportOrchestrator.ProcessExport(null, null);
-                if (exportResult.Status == ResponseStatus.Completed)
+                exportResponse = await exportOrchestrator.ProcessExport(null, null);
+                if (exportResponse.Status == ResponseStatus.Completed)
                 {
-                    exportStatusResult = await exportOrchestrator.ProcessExportStatusCheck(exportResult.Content, null);
-                    if (exportStatusResult.Status == ResponseStatus.Completed)
+                    exportStatusResponse = await exportOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
+                    if (exportStatusResponse.Status == ResponseStatus.Completed)
                     {
-                        string importRequestContent = exportStatusResult.Content;
-                        importResult = await importOrchestrator.ProcessImport(importRequestContent, null);
+                        string importRequestContent = exportStatusResponse.Content;
+                        importResponse = await importOrchestrator.ProcessImport(importRequestContent, null);
 
-                        if (importResult.Status == ResponseStatus.Completed)
+                        if (importResponse.Status == ResponseStatus.Completed)
                         {
-                            importStatusResult = await importOrchestrator.ProcessImportStatusCheck(importResult.Content, null);
+                            importStatusResponse = await importOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
                         }
                     }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
 
-                Assert.IsTrue(exportResult.Status == ResponseStatus.Completed);
-                Assert.IsTrue(exportStatusResult.Status == ResponseStatus.Completed);
-                Assert.IsTrue(importResult.Status == ResponseStatus.Completed);
-                Assert.IsTrue(importStatusResult.Status == ResponseStatus.Completed);
+                Assert.IsTrue(exportResponse.Status == ResponseStatus.Accepted);
+                Assert.IsTrue(exportStatusResponse.Status == ResponseStatus.Completed);
+                Assert.IsTrue(importResponse.Status == ResponseStatus.Accepted);
+                Assert.IsTrue(importStatusResponse.Status == ResponseStatus.Failed);
             }
             catch (Exception ex)
             {

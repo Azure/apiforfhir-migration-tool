@@ -30,4 +30,20 @@ namespace FhirMigrationTool.Models
         /// </summary>
         Retry,
     }
+
+    /// <summary>
+    /// Types of process
+    /// </summary>
+    public enum ProcessType
+    {
+        /// <summary>
+        /// Import
+        /// </summary>
+        Import,
+
+        /// <summary>
+        /// Export
+        /// </summary>
+        Export,
+    }
 }

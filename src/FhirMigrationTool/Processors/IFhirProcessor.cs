@@ -3,12 +3,14 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
-namespace FhirMigrationTool.ImportProcess
-{
-    public interface IImportProcessor
-    {
-        Task<HttpResponseMessage> CallImport(string requestContent);
+using FhirMigrationTool.Models;
 
-        Task<HttpResponseMessage> CheckImportStatus(string statusUrl);
+namespace FhirMigrationTool.Processors
+{
+    public interface IFhirProcessor
+    {
+        Task<ResponseModel> CallProcess(HttpMethod method, string requestContent, Uri baseUri, string queryString, string endpoint);
+
+        Task<ResponseModel> CheckProcessStatus(string statusUrl, Uri baseUri, string endpoint);
     }
 }

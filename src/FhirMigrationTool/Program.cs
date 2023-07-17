@@ -8,10 +8,9 @@ using System.Reflection;
 using Azure.Identity;
 using FhirMigrationTool.Configuration;
 using FhirMigrationTool.DeepCheck;
-using FhirMigrationTool.ExportProcess;
 using FhirMigrationTool.FhirOperation;
-using FhirMigrationTool.ImportProcess;
 using FhirMigrationTool.OrchestrationHelper;
+using FhirMigrationTool.Processors;
 using FhirMigrationTool.Security;
 using FhirMigrationTool.SurfaceCheck;
 using Microsoft.ApplicationInsights;
@@ -22,6 +21,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 using Microsoft.Net.Http.Headers;
+using Polly;
+using Polly.Extensions.Http;
 
 internal class Program
 {
@@ -60,9 +61,9 @@ internal class Program
 
         services.AddTransient<IOrchestrationHelper, OrchestrationHelper>();
 
-        services.AddTransient<IExportProcessor, ExportProcessor>();
-
-        services.AddTransient<IImportProcessor, ImportProcessor>();
+        // services.AddTransient<IExportProcessor, ExportProcessor>();
+        // services.AddTransient<IImportProcessor, ImportProcessor>();
+        services.AddTransient<IFhirProcessor, FhirProcessor>();
 
         services.AddScoped<IFhirClient, FhirClient>();
 
@@ -72,8 +73,8 @@ internal class Program
         services.AddSingleton(config);
 
         var credential = new DefaultAzureCredential();
-        var baseUri = config.SourceFhirUri;
-        var desUri = config.DestinationFhirUri;
+        var baseUri = config.SourceUri;
+        var desUri = config.DestinationUri;
         string[]? scopes = default;
 
 #pragma warning disable CS8604 // Possible null reference argument.
@@ -82,6 +83,7 @@ internal class Program
             httpClient.DefaultRequestHeaders.Add(HeaderNames.UserAgent, config.UserAgent);
             httpClient.BaseAddress = baseUri;
         })
+        .AddPolicyHandler(GetRetryPolicy())
         .AddHttpMessageHandler(x => new BearerTokenHandler(credential, baseUri, scopes));
 
 #pragma warning restore CS8604 // Possible null reference argument.
@@ -92,6 +94,7 @@ internal class Program
             client.DefaultRequestHeaders.Add(HeaderNames.UserAgent, config.UserAgent);
             client.BaseAddress = desUri;
         })
+        .AddPolicyHandler(GetRetryPolicy())
         .AddHttpMessageHandler(x => new BearerTokenHandler(credential, desUri, scopes));
 #pragma warning restore CS8604 // Possible null reference argument.
 
@@ -99,5 +102,13 @@ internal class Program
     .Build();
 
         host.Run();
+    }
+
+    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+    {
+        return HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
     }
 }
