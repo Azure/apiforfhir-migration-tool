@@ -250,19 +250,19 @@ namespace FhirMigrationTool
                 var sinceDate = SinceDate();
                 since_new = sinceDate.Result;
                 since = since_new.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-                var updateSinceDate = since_new.AddHours(_options.ExportChunkTime);
+                var updateSinceDate = since_new.AddDays(_options.ExportChunkTime);
                 till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             }
             else if (string.IsNullOrEmpty(since))
             {
                 since = _options.StartDate.ToString("yyyy-MM-ddTH:mm:ss.fffZ");
-                var updateSinceDate = _options.StartDate.AddHours(_options.ExportChunkTime);
+                var updateSinceDate = _options.StartDate.AddDays(_options.ExportChunkTime);
                 till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             }
             else
             {
                 DateTimeOffset newSince = DateTimeOffset.Parse(since);
-                var updateSinceDate = newSince.AddHours(_options.ExportChunkTime);
+                var updateSinceDate = newSince.AddDays(_options.ExportChunkTime);
                 till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             }
 
