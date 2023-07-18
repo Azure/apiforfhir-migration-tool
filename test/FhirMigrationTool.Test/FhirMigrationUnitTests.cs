@@ -290,14 +290,15 @@ namespace FhirMigrationtool.Tests
 #pragma warning disable CS8604 // Possible null reference argument.
             var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper = new OrchestrationHelper());
             var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
-
+            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper = new OrchestrationHelper());
+            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 exportResponse = await exportOrchestrator.ProcessExport(null, null);
                 if (exportResponse.Status == ResponseStatus.Completed)
                 {
-                    exportStatusResponse = await exportOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
+                    exportStatusResponse = await exportStatusOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
                     if (exportStatusResponse.Status == ResponseStatus.Completed)
                     {
                         string importRequestContent = exportStatusResponse.Content;
@@ -305,7 +306,7 @@ namespace FhirMigrationtool.Tests
 
                         if (importResponse.Status == ResponseStatus.Completed)
                         {
-                            importStatusResponse = await importOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
+                            importStatusResponse = await importStatusOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
                         }
                     }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -357,14 +358,15 @@ namespace FhirMigrationtool.Tests
 #pragma warning disable CS8604 // Possible null reference argument.
             var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper = new OrchestrationHelper());
             var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
-
+            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper = new OrchestrationHelper());
+            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 exportResponse = await exportOrchestrator.ProcessExport(null, null);
                 if (exportResponse.Status == ResponseStatus.Completed)
                 {
-                    exportStatusResponse = await exportOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
+                    exportStatusResponse = await exportStatusOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
                     if (exportStatusResponse.Status == ResponseStatus.Completed)
                     {
                         string importRequestContent = exportStatusResponse.Content;
@@ -372,7 +374,7 @@ namespace FhirMigrationtool.Tests
 
                         if (importResponse.Status == ResponseStatus.Completed)
                         {
-                            importStatusResponse = await importOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
+                            importStatusResponse = await importStatusOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
                         }
                     }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -423,14 +425,15 @@ namespace FhirMigrationtool.Tests
 #pragma warning disable CS8604 // Possible null reference argument.
             var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper = new OrchestrationHelper());
             var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
-
+            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper = new OrchestrationHelper());
+            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 exportResponse = await exportOrchestrator.ProcessExport(null, null);
                 if (exportResponse.Status == ResponseStatus.Completed)
                 {
-                    exportStatusResponse = await exportOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
+                    exportStatusResponse = await exportStatusOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
                     if (exportStatusResponse.Status == ResponseStatus.Completed)
                     {
                         string importRequestContent = exportStatusResponse.Content;
@@ -438,7 +441,7 @@ namespace FhirMigrationtool.Tests
 
                         if (importResponse.Status == ResponseStatus.Completed)
                         {
-                            importStatusResponse = await importOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
+                            importStatusResponse = await importStatusOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
                         }
                     }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -489,14 +492,15 @@ namespace FhirMigrationtool.Tests
 #pragma warning disable CS8604 // Possible null reference argument.
             var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper = new OrchestrationHelper());
             var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
-
+            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper = new OrchestrationHelper());
+            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 exportResponse = await exportOrchestrator.ProcessExport(null, null);
                 if (exportResponse.Status == ResponseStatus.Completed)
                 {
-                    exportStatusResponse = await exportOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
+                    exportStatusResponse = await exportStatusOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
                     if (exportStatusResponse.Status == ResponseStatus.Completed)
                     {
                         string importRequestContent = exportStatusResponse.Content;
@@ -504,7 +508,7 @@ namespace FhirMigrationtool.Tests
 
                         if (importResponse.Status == ResponseStatus.Completed)
                         {
-                            importStatusResponse = await importOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
+                            importStatusResponse = await importStatusOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
                         }
                     }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -556,14 +560,15 @@ namespace FhirMigrationtool.Tests
 #pragma warning disable CS8604 // Possible null reference argument.
             var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper = new OrchestrationHelper());
             var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
-
+            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper = new OrchestrationHelper());
+            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 exportResponse = await exportOrchestrator.ProcessExport(null, null);
                 if (exportResponse.Status == ResponseStatus.Completed)
                 {
-                    exportStatusResponse = await exportOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
+                    exportStatusResponse = await exportStatusOrchestrator.ProcessExportStatusCheck(exportResponse.Content, null);
                     if (exportStatusResponse.Status == ResponseStatus.Completed)
                     {
                         string importRequestContent = exportStatusResponse.Content;
@@ -571,7 +576,7 @@ namespace FhirMigrationtool.Tests
 
                         if (importResponse.Status == ResponseStatus.Completed)
                         {
-                            importStatusResponse = await importOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
+                            importStatusResponse = await importStatusOrchestrator.ProcessImportStatusCheck(importResponse.Content, null);
                         }
                     }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
