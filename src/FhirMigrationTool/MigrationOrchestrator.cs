@@ -3,7 +3,10 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
+using Azure;
+using Azure.Data.Tables;
 using FhirMigrationTool.Configuration;
+using FhirMigrationTool.Models;
 using FhirMigrationTool.OrchestrationHelper;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -18,12 +21,14 @@ namespace FhirMigrationTool
         private readonly MigrationOptions _options;
         private readonly ILogger _logger;
         private readonly IOrchestrationHelper _orchestrationHelper;
+        private readonly IAzureTableClientFactory _azureTableClientFactory;
 
-        public MigrationOrchestrator(MigrationOptions options, ILoggerFactory loggerFactory, IOrchestrationHelper orchestrationHelper)
+        public MigrationOrchestrator(MigrationOptions options, ILoggerFactory loggerFactory, IOrchestrationHelper orchestrationHelper, IAzureTableClientFactory azureTableClientFactory)
         {
             _options = options;
             _logger = loggerFactory.CreateLogger<MigrationOrchestrator>();
             _orchestrationHelper = orchestrationHelper;
+            _azureTableClientFactory = azureTableClientFactory;
         }
 
         [Function(nameof(MigrationOrchestration))]
@@ -37,14 +42,35 @@ namespace FhirMigrationTool
             {
                 _options.ValidateConfig();
                 logger.LogInformation("Start MigrationOrchestration.");
+                TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
 
                 // Run sub orchestration for export
-                var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration");
+                Pageable<TableEntity> jobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Running" || ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running" || ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Not Started");
+                if (jobList.Count() <= 0)
+                {
+                    var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration");
+                }
+
+                Pageable<TableEntity> exportRunningjobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsExportRunning") == "Running");
+                if (exportRunningjobList.Count() > 0)
+                {
+                    var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration");
+                }
 
                 // string import_body = _orchestrationHelper.CreateImportRequest(exportContent, _options.ImportMode);
 
                 // Run sub orchestration for Import
-                var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration");
+                Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") != string.Empty && ent.GetString("IsImportRunning") == "Not Started");
+                if (jobListimport.Count() > 0)
+                {
+                    var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration");
+                }
+
+                Pageable<TableEntity> jobListimportRunning = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running");
+                if (jobListimportRunning.Count() > 0)
+                {
+                    var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration");
+                }
             }
             catch (Exception ex)
             {
@@ -56,9 +82,9 @@ namespace FhirMigrationTool
 
         // [Function("MigrationOrchestration_HttpStart")]
         // public static async Task<HttpResponseData> HttpStart(
-        //    [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
-        //    [DurableClient] DurableTaskClient client,
-        //    FunctionContext executionContext)
+        //   [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
+        //   [DurableClient] DurableTaskClient client,
+        //   FunctionContext executionContext)
         // {
         //    ILogger logger = executionContext.GetLogger("MigrationOrchestration_HttpStart");
 
@@ -74,11 +100,13 @@ namespace FhirMigrationTool
         // }
         [Function("TimerOrchestration")]
         public async Task Run(
-            [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
-            [DurableClient] DurableTaskClient client,
-            FunctionContext executionContext)
+           [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
+           [DurableClient] DurableTaskClient client,
+           FunctionContext executionContext)
         {
-            var instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(MigrationOrchestration));
+            string instanceId_new = "FhirMigrationTool";
+            StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
+            var instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(MigrationOrchestration), options);
             _logger.LogInformation("Started: Timed {instanceId}...", instanceId);
         }
 

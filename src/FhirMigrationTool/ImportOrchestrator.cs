@@ -31,7 +31,7 @@ namespace FhirMigrationTool
         }
 
         [Function(nameof(ImportOrchestration))]
-        public async Task ImportOrchestration(
+        public async Task<string> ImportOrchestration(
             [OrchestrationTrigger] TaskOrchestrationContext context, string requestContent)
         {
             ILogger logger = context.CreateReplaySafeLogger(nameof(ImportOrchestration));
@@ -75,49 +75,7 @@ namespace FhirMigrationTool
                 throw;
             }
 
-            try
-            {
-                Pageable<TableEntity> jobListimportRunning = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running");
-                if (jobListimportRunning.Count() > 0)
-                {
-                    foreach (TableEntity item in jobListimportRunning)
-                    {
-                        while (true)
-                        {
-                            ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImportStatusCheck), item.GetString("importContentLocation"));
-
-                            if (response.Status == ResponseStatus.Accepted)
-                            {
-                                logger?.LogInformation($"Import Status check returned: InProgress.");
-                                logger?.LogInformation($"Waiting for next status check for {_options.ScheduleInterval} minutes.");
-                                DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(
-                            Convert.ToDouble(_options.ScheduleInterval)));
-                                TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
-                                exportEntity["IsImportRunning"] = "Running";
-                                _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
-                                await context.CreateTimer(waitTime, CancellationToken.None);
-                            }
-                            else if (response.Status == ResponseStatus.Completed)
-                            {
-                                logger?.LogInformation($"Import Status check returned: Success.");
-                                TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
-                                exportEntity["IsImportComplete"] = true;
-                                exportEntity["IsImportRunning"] = "Completed";
-                                _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
-                            }
-                            else
-                            {
-                                logger?.LogInformation($"Import Status check returned: Unsuccessful.");
-                                throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
-                            }
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                throw;
-            }
+            return "completed";
         }
 
         [Function(nameof(ProcessImport))]
@@ -128,27 +86,6 @@ namespace FhirMigrationTool
                 HttpMethod method = HttpMethod.Post;
                 ResponseModel importResponse = await _importProcessor.CallProcess(method, requestContent, _options.DestinationUri, "/$import",  _options.DestinationHttpClient);
                 return importResponse;
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
-        [Function(nameof(ProcessImportStatusCheck))]
-        public async Task<ResponseModel> ProcessImportStatusCheck([ActivityTrigger] string importStatusUrl, FunctionContext executionContext)
-        {
-            try
-            {
-                if (!string.IsNullOrEmpty(importStatusUrl))
-                {
-                    ResponseModel importStatusResponse = await _importProcessor.CheckProcessStatus(importStatusUrl, _options.DestinationUri, _options.DestinationHttpClient);
-                    return importStatusResponse;
-                }
-                else
-                {
-                    throw new ArgumentException($"Url to check import status was empty.");
-                }
             }
             catch
             {
