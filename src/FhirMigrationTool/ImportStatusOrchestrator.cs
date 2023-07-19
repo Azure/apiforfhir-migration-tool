@@ -35,7 +35,7 @@ namespace FhirMigrationTool
             [OrchestrationTrigger] TaskOrchestrationContext context, string requestContent)
         {
             ILogger logger = context.CreateReplaySafeLogger(nameof(ImportStatusOrchestration));
-            logger.LogInformation("Starting import activities.");
+            logger.LogInformation("Starting import status activities.");
             var statusRespose = new HttpResponseMessage();
             var statusUrl = string.Empty;
             TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
@@ -47,34 +47,31 @@ namespace FhirMigrationTool
                 {
                     foreach (TableEntity item in jobListimportRunning)
                     {
-                        while (true)
-                        {
-                            ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImportStatusCheck), item.GetString("importContentLocation"));
+                        ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImportStatusCheck), item.GetString("importContentLocation"));
 
-                            if (response.Status == ResponseStatus.Accepted)
-                            {
-                                logger?.LogInformation($"Import Status check returned: InProgress.");
-                                logger?.LogInformation($"Waiting for next status check for {_options.ScheduleInterval} minutes.");
-                                DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(
-                            Convert.ToDouble(_options.ScheduleInterval)));
-                                TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
-                                exportEntity["IsImportRunning"] = "Running";
-                                _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
-                                await context.CreateTimer(waitTime, CancellationToken.None);
-                            }
-                            else if (response.Status == ResponseStatus.Completed)
-                            {
-                                logger?.LogInformation($"Import Status check returned: Success.");
-                                TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
-                                exportEntity["IsImportComplete"] = true;
-                                exportEntity["IsImportRunning"] = "Completed";
-                                _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
-                            }
-                            else
-                            {
-                                logger?.LogInformation($"Import Status check returned: Unsuccessful.");
-                                throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
-                            }
+                        if (response.Status == ResponseStatus.Accepted)
+                        {
+                            logger?.LogInformation($"Import Status check returned: InProgress.");
+                            logger?.LogInformation($"Waiting for next status check for {_options.ScheduleInterval} minutes.");
+                            DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(
+                        Convert.ToDouble(_options.ScheduleInterval)));
+                            TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
+                            exportEntity["IsImportRunning"] = "Running";
+                            _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                            await context.CreateTimer(waitTime, CancellationToken.None);
+                        }
+                        else if (response.Status == ResponseStatus.Completed)
+                        {
+                            logger?.LogInformation($"Import Status check returned: Success.");
+                            TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
+                            exportEntity["IsImportComplete"] = true;
+                            exportEntity["IsImportRunning"] = "Completed";
+                            _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                        }
+                        else
+                        {
+                            logger?.LogInformation($"Import Status check returned: Unsuccessful.");
+                            throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
                         }
                     }
                 }

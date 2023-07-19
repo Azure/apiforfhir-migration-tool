@@ -56,60 +56,55 @@ namespace FhirMigrationTool
                 {
                     foreach (TableEntity item in exportRunningjobList)
                     {
-                        while (true)
+                        string? statusUrl_new = item.GetString("exportContentLocation");
+                        ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExportStatusCheck), statusUrl_new);
+                        if (response.Status == ResponseStatus.Accepted)
                         {
-                            string? statusUrl_new = item.GetString("exportContentLocation");
-                            ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExportStatusCheck), statusUrl_new);
-                            if (response.Status == ResponseStatus.Accepted)
+                            logger?.LogInformation($"Export Status check returned: InProgress.");
+                            logger?.LogInformation($"Waiting for next status check for {_options.ScheduleInterval} minutes.");
+                            DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(_options.ScheduleInterval));
+                            TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
+                            exportEntity["IsExportComplete"] = false;
+                            exportEntity["IsExportRunning"] = "Running";
+                            _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                            await context.CreateTimer(waitTime, CancellationToken.None);
+                        }
+                        else if (response.Status == ResponseStatus.Completed)
+                        {
+                            logger?.LogInformation($"Export Status check returned: Success.");
+                            import_body = response.Content;
+                            string? resContent = response.Content;
+                            if (!string.IsNullOrEmpty(resContent))
                             {
-                                logger?.LogInformation($"Export Status check returned: InProgress.");
-                                logger?.LogInformation($"Waiting for next status check for {_options.ScheduleInterval} minutes.");
-                                DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(_options.ScheduleInterval));
-                                TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
-                                exportEntity["IsExportComplete"] = false;
-                                exportEntity["IsExportRunning"] = "Running";
-                                _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
-                                await context.CreateTimer(waitTime, CancellationToken.None);
-                            }
-                            else if (response.Status == ResponseStatus.Completed)
-                            {
-                                logger?.LogInformation($"Export Status check returned: Success.");
-                                import_body = response.Content;
-                                string? resContent = response.Content;
-                                if (!string.IsNullOrEmpty(resContent))
+                                JObject objResponse = JObject.Parse(resContent);
+                                var objOutput = objResponse["output"];
+                                if (objOutput != null && objOutput.Any())
                                 {
-                                    JObject objResponse = JObject.Parse(resContent);
-                                    var objOutput = objResponse["output"];
-                                    if (objOutput != null && objOutput.Any())
-                                    {
-                                        import_body = _orchestrationHelper.CreateImportRequest(resContent, _options.ImportMode);
-                                        TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
-                                        exportEntity["IsExportComplete"] = true;
-                                        exportEntity["IsExportRunning"] = "Completed";
-                                        exportEntity["ImportRequest"] = import_body;
-                                        _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
-                                    }
-                                    else
-                                    {
-                                        logger?.LogInformation($"Output is null. No Output content in export:{statusUrl_new}");
-                                        import_body = string.Empty;
-                                        TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
-                                        exportEntity["IsExportComplete"] = true;
-                                        exportEntity["IsExportRunning"] = "Completed";
-                                        exportEntity["IsImportComplete"] = true;
-                                        exportEntity["IsImportRunning"] = "Completed";
-                                        exportEntity["ImportRequest"] = import_body;
-                                        _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
-                                    }
+                                    import_body = _orchestrationHelper.CreateImportRequest(resContent, _options.ImportMode);
+                                    TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
+                                    exportEntity["IsExportComplete"] = true;
+                                    exportEntity["IsExportRunning"] = "Completed";
+                                    exportEntity["ImportRequest"] = import_body;
+                                    _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                 }
-
-                                break;
+                                else
+                                {
+                                    logger?.LogInformation($"Output is null. No Output content in export:{statusUrl_new}");
+                                    import_body = string.Empty;
+                                    TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
+                                    exportEntity["IsExportComplete"] = true;
+                                    exportEntity["IsExportRunning"] = "Completed";
+                                    exportEntity["IsImportComplete"] = true;
+                                    exportEntity["IsImportRunning"] = "Completed";
+                                    exportEntity["ImportRequest"] = import_body;
+                                    _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                }
                             }
-                            else
-                            {
-                                logger?.LogInformation($"Export Status check returned: Unsuccessful.");
-                                throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
-                            }
+                        }
+                        else
+                        {
+                            logger?.LogInformation($"Export Status check returned: Unsuccessful.");
+                            throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
                         }
                     }
                 }
@@ -119,7 +114,7 @@ namespace FhirMigrationTool
                 throw;
             }
 
-            return import_body;
+            return "Completed";
         }
 
         [Function(nameof(ProcessExportStatusCheck))]
