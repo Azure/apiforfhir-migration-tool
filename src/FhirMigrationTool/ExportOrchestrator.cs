@@ -89,7 +89,7 @@ namespace FhirMigrationTool
                 {
                     statusUrl = exportResponse.Content;
 
-                    TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, "mypartitionkey", "myrowkey");
+                    TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                     int jobId = (int)qEntity["JobId"];
                     string rowKey = _options.RowKey + jobId++;
 
@@ -106,14 +106,14 @@ namespace FhirMigrationTool
                                 { "Till", tillValue },
                             };
                     _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
-                    TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, "mypartitionkey", "myrowkey");
+                    TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                     qEntitynew["since"] = tillValue;
                     qEntitynew["JobId"] = jobId++;
                     _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
                 }
                 else
                 {
-                    TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, "mypartitionkey", "myrowkey");
+                    TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                     int jobId = (int)qEntity["JobId"];
                     string rowKey = _options.RowKey + jobId++;
 
@@ -128,7 +128,7 @@ namespace FhirMigrationTool
                                 { "ImportRequest", string.Empty },
                             };
                     _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
-                    TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, "mypartitionkey", "myrowkey");
+                    TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                     qEntitynew["JobId"] = jobId++;
 
                     _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
@@ -149,9 +149,10 @@ namespace FhirMigrationTool
             var since = string.Empty;
             var till = string.Empty;
             var since_new = default(DateTimeOffset);
+            var updateSinceDate = default(DateTimeOffset);
             TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
             TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
-            TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, "mypartitionkey", "myrowkey");
+            TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
             since = (string)qEntity["since"];
 
             if (_options.StartDate == DateTime.MinValue && string.IsNullOrEmpty(since))
@@ -159,22 +160,25 @@ namespace FhirMigrationTool
                 var sinceDate = SinceDate();
                 since_new = sinceDate.Result;
                 since = since_new.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-                var updateSinceDate = since_new.AddDays(_options.ExportChunkTime);
-                till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                updateSinceDate = since_new.AddDays(_options.ExportChunkTime);
             }
             else if (string.IsNullOrEmpty(since))
             {
                 since = _options.StartDate.ToString("yyyy-MM-ddTH:mm:ss.fffZ");
-                var updateSinceDate = _options.StartDate.AddDays(_options.ExportChunkTime);
-                till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                updateSinceDate = _options.StartDate.AddDays(_options.ExportChunkTime);
             }
             else
             {
                 DateTimeOffset newSince = DateTimeOffset.Parse(since);
-                var updateSinceDate = newSince.AddDays(_options.ExportChunkTime);
-                till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                updateSinceDate = newSince.AddDays(_options.ExportChunkTime);
             }
 
+            if (updateSinceDate > DateTimeOffset.UtcNow)
+            {
+                updateSinceDate = DateTimeOffset.UtcNow;
+            }
+
+            till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             string query = string.Format("?_since={0}&_till={1}", since, till);
 
             return $"/$export{query}";

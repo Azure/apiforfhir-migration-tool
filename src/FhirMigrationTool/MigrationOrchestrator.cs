@@ -57,8 +57,6 @@ namespace FhirMigrationTool
                     var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration");
                 }
 
-                // string import_body = _orchestrationHelper.CreateImportRequest(exportContent, _options.ImportMode);
-
                 // Run sub orchestration for Import
                 Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") != string.Empty && ent.GetString("IsImportRunning") == "Not Started");
                 if (jobListimport.Count() > 0)
@@ -80,29 +78,11 @@ namespace FhirMigrationTool
             return outputs;
         }
 
-        // [Function("MigrationOrchestration_HttpStart")]
-        // public static async Task<HttpResponseData> HttpStart(
-        //   [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
-        //   [DurableClient] DurableTaskClient client,
-        //   FunctionContext executionContext)
-        // {
-        //    ILogger logger = executionContext.GetLogger("MigrationOrchestration_HttpStart");
-
-        // // Function input comes from the request content.
-        //    string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
-        //        nameof(MigrationOrchestration));
-
-        // logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
-
-        // // Returns an HTTP 202 response with an instance management payload.
-        //    // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
-        //    return client.CreateCheckStatusResponse(req, instanceId);
-        // }
         [Function("TimerOrchestration")]
         public async Task Run(
-           [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
-           [DurableClient] DurableTaskClient client,
-           FunctionContext executionContext)
+          [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
+          [DurableClient] DurableTaskClient client,
+          FunctionContext executionContext)
         {
             string instanceId_new = "FhirMigrationTool";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
