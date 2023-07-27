@@ -1,0 +1,55 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceId": {
+            "type": "string",
+            "metadata": {
+                "description": "resource Id for role assignment"
+            }
+        },
+        "roleId": {
+            "type": "string",
+            "metadata": {
+                "description": "role Id for role assignmentription"
+            }
+        },
+        "principalId": {
+            "type": "string",
+            "metadata": {
+                "description": "principal Id for role assignment"
+            }
+        },
+        "principalType": {
+            "type": "string",
+            "defaultValue": "ServicePrincipal",
+            "metadata": {
+                "description": "principal type for role assignment"
+            }
+        }
+    },
+    "functions": [],
+    "variables": {
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Authorization/roleDefinitions",
+            "apiVersion": "2018-01-01-preview",
+            "name": "[parameters('roleId')]",
+            "properties": {
+                "assignableScopes": "[subscription()]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[guid(parameters('resourceId'), parameters('principalId'), resourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId')))]",
+            "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId'))]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "[parameters('principalType')]"
+            }
+        }
+    ],
+    "outputs": {}
+}

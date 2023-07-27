@@ -1,0 +1,104 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "metadata": {
+                "description": "Name of the the environment which is used to generate a short unique hash used in all resources."
+            }
+        },
+        "location": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Primary location for all resources"
+            }
+        },
+        "fhirServiceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the FHIR Service to import resources into. Format is \"workspace/fhirService\"."
+            }
+        },
+        "apiForFhirName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the API for FHIR to export resources from."
+            }
+        },
+        "storageAccount": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the storage account."
+            }
+        },
+        "existingResourceGroupName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name of your existing resource group (leave blank to create a new one)"
+            }
+        }
+    },
+    "functions": [],
+    "variables": {
+        "envRandomString": "[toLower(uniqueString(subscription().id, parameters('name'), parameters('existingResourceGroupName'), parameters('location')))]",
+        "nameShort": "[if(greaterOrEquals(length(parameters('name')), 11), substring(parameters('name'), 0, 11), parameters('name'))]",
+        "resourcePrefix": "[concat(variables('nameShort'), '-', substring(variables('envRandomString'), 0, 5))]",
+        "createResourceGroup": "[if(greater(length(parameters('existingResourceGroupName')), 0), 'true', 'false')]",
+        "appTags": {"app-id": "fhir-migration-tool"}
+    },
+    "resources":  [
+        {
+            "condition": "[equals(variables('createResourceGroup'), 'true')]",
+            "type": "Microsoft.Resources/resourceGroups",
+            "name": "[concat(parameters('name'), '-rg')]",
+            "apiVersion": "2022-09-01",
+            "location": "[parameters('location')]",
+            "tags": "[variables('appTags')]",
+            "resources":[
+                {
+                    "type": "Microsoft.Resources/deployments",
+                    "apiVersion": "2022-09-01",
+                    "name": "coreDeploy",
+                    "properties": {
+                        "mode": "Incremental",
+                        "templateLink": {
+                        "relativePath": "core.json"
+                        },
+                    "parameters": {
+                        "prefixName": {
+                            "value": "[variables('resourcePrefix')]"
+                        },
+                        "apiForFhirName": {
+                            "value": "[parameters('apiForFhirName')]"
+                        },
+                        "fhirServiceName": {
+                            "value": "[parameters('fhirServiceName')]"
+                        },
+                        "location": {
+                            "value": "[parameters('location')]"
+                        },
+                        "appTags": {
+                            "value": "[variables('appTags')]"
+                        }
+                    }
+                }
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "location": {
+            "type": "string",
+            "value": "[parameters('location')]"
+        },
+        "Azure_FunctionURL": {
+            "type": "string",
+            "value": "[reference('coreDeploy').outputs.Azure_FunctionURL.value]"
+        }
+    }
+}

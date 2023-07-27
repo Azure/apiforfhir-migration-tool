@@ -1,0 +1,139 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "prefixName": {
+            "type": "string",
+            "defaultValue":"[concat('migtool', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Prefix for resources deployed by this solution (App Service, Function App, monitoring, etc)"
+            }
+        },
+        "fhirServiceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the FHIR service to deploy or use."
+            }
+        },
+        "apiForFhirName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the API for FHIR to export resources from."
+            }
+        },
+        "logAnalyticsName": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('prefixName'),'-la')]",
+            "metadata": {
+                "description": "Name of the Log Analytics workspace to deploy or use. Leave blank to skip deployment"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location to deploy resources"
+            }
+        },
+        "appTags": {
+            "type": "object",
+            "metadata": {
+                "description": "Tags"
+            }
+        },
+        "functioAppCustomSettings": {
+            "type": "object",
+            "metadata": {
+                "description": "Any custom function app settings"
+            }
+        }
+    },
+    "functions": [],
+    "variables": {
+        "tenantId": "[subscription().tenantId]",
+        "appInsightsName": "[concat(parameters('prefixName'), '-appins')]",
+        "fhirServiceNameUrl": "[concat('https://', replace(parameters('fhirServiceName'), '/', '-'), '.fhir.azurehealthcareapis.com')]",
+        "apiForFhirNameUrl": "[concat('https://', parameters('apiForFhirName'),'.azurehealthcareapis.com')]",
+        "appServiceName": "[concat(parameters('prefixName'), '-appserv')]",
+        "functionAppName": "[concat(parameters('prefixName'), '-func')]",
+        "funcStorName": "[concat(replace(parameters('prefixName'), '-', ''), 'funcsa')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "name": "monitoringDeploy",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "relativePath": "monitoring.json"
+                },
+                "parameters": {
+                    "logAnalyticsName": {
+                        "value": "[parameters('logAnalyticsName')]"
+                    },
+                    "appInsightsName": {
+                        "value": "[variables('appInsightsName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "appTags": {
+                        "value": "[parameters('appTags')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "name": "functionDeploy",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "relativePath": "azureFunction.json"
+                },
+                "parameters": {
+                    "appServiceName": {
+                        "value": "[variables('appServiceName')]"
+                    },
+                    "functionAppName": {
+                        "value": "[variables('functionAppName')]"
+                    },
+                    "storageAccountName": {
+                        "value": "[variables('funcStorName')]"
+                    },
+                    "fhirServiceName": {
+                        "value": "[parameters('fhirServiceName')]"
+                    },
+                    "apiForFhirName": {
+                        "value": "[reference('monitoringDeploy').outputs.appInsightsInstrumentationString.value]"
+                    },
+                    "appInsightsInstrumentationKey": {
+                        "value": "[variables('appInsightsName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "appTags": {
+                        "value": "[parameters('appTags')]"
+                    },
+                    "functionSettings": {
+                        // "value": "[union({"AZURE_FhirServiceUrl": "[variables('fhirServiceNameUrl')]", "AZURE_ApiForFhirUrl": "[variables('apiForFhirNameUrl')]", "AZURE_InstrumentationKey": "[reference('monitoringDeploy').outputs.appInsightsInstrumentationString.value]"}, "[parameters('functioAppCustomSettings')]")]",
+                        "value": {
+                            "AZURE_FhirServiceUrl": "[variables('fhirServiceNameUrl')]",
+                            "AZURE_ApiForFhirUrl": "[variables('apiForFhirNameUrl')]",
+                            "AZURE_InstrumentationKey": "[reference('monitoringDeploy').outputs.appInsightsInstrumentationString.value]"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "Azure_FunctionUrl": {
+            "type": "string",
+            "value": "[reference('functioDeploy').outputs.functionBaseUrl.value]"
+        }
+    }
+}
