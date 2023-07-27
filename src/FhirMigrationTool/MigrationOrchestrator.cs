@@ -82,16 +82,16 @@ namespace FhirMigrationTool
             return outputs;
         }
 
-        [Function("MigrationSP_HttpStart")]
-        public static async Task<HttpResponseData> SearchParamStart(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
-            [DurableClient] DurableTaskClient client,
-            FunctionContext executionContext)
+        [Function("TimerOrchestration")]
+        public async Task Run(
+          [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
+          [DurableClient] DurableTaskClient client,
+          FunctionContext executionContext)
         {
             string instanceId_new = "FhirMigrationTool";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
             var instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(MigrationOrchestration), options);
-            return client.CreateCheckStatusResponse(req, instanceId);
+            _logger.LogInformation("Started: Timed {instanceId}...", instanceId);
         }
 
         [Function(nameof(CountCheckOrchestration))]
