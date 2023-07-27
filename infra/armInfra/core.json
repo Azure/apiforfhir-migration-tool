@@ -120,11 +120,15 @@
                     },
                     "functionSettings": {
                         // "value": "[union({"AZURE_FhirServiceUrl": "[variables('fhirServiceNameUrl')]", "AZURE_ApiForFhirUrl": "[variables('apiForFhirNameUrl')]", "AZURE_InstrumentationKey": "[reference('monitoringDeploy').outputs.appInsightsInstrumentationString.value]"}, "[parameters('functioAppCustomSettings')]")]",
+                        "value": {
+                            "AZURE_FhirServiceUrl": "[variables('fhirServiceNameUrl')]",
+                            "AZURE_ApiForFhirUrl": "[variables('apiForFhirNameUrl')]",
+                            "AZURE_InstrumentationKey": "[reference('monitoringDeploy').outputs.appInsightsInstrumentationString.value]"
+                        }
                     }
                 }
             }
         }
-        
     ],
     "outputs": {
         "Azure_FunctionUrl": {
