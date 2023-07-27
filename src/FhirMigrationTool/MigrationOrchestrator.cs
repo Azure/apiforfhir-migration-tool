@@ -42,12 +42,16 @@ namespace FhirMigrationTool
             {
                 _options.ValidateConfig();
                 logger.LogInformation("Start MigrationOrchestration.");
+
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
 
                 // Run sub orchestration for export
                 Pageable<TableEntity> jobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Running" || ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running" || ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Not Started");
                 if (jobList.Count() <= 0)
                 {
+                    // Run Get and Post activity for search parameter
+                    await context.CallActivityAsync("SearchParameterMigration");
+
                     var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration");
                 }
 
@@ -78,16 +82,16 @@ namespace FhirMigrationTool
             return outputs;
         }
 
-        [Function("TimerOrchestration")]
-        public async Task Run(
-          [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
-          [DurableClient] DurableTaskClient client,
-          FunctionContext executionContext)
+        [Function("MigrationSP_HttpStart")]
+        public static async Task<HttpResponseData> SearchParamStart(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
+            [DurableClient] DurableTaskClient client,
+            FunctionContext executionContext)
         {
             string instanceId_new = "FhirMigrationTool";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
             var instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(MigrationOrchestration), options);
-            _logger.LogInformation("Started: Timed {instanceId}...", instanceId);
+            return client.CreateCheckStatusResponse(req, instanceId);
         }
 
         [Function(nameof(CountCheckOrchestration))]
