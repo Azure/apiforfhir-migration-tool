@@ -13,6 +13,7 @@ using FhirMigrationTool.FhirOperation;
 using FhirMigrationTool.Models;
 using FhirMigrationTool.OrchestrationHelper;
 using FhirMigrationTool.Processors;
+using FhirMigrationTool.SearchParameterOperation;
 using FhirMigrationTool.Security;
 using FhirMigrationTool.SurfaceCheck;
 using Microsoft.ApplicationInsights;
@@ -76,6 +77,7 @@ internal class Program
         services.AddTransient<ISurfaceCheck, SurfaceCheck>();
 
         services.AddTransient<IDeepCheck, DeepCheck>();
+        services.AddTransient<ISearchParameterOperation, SearchParameterOperation>();
         services.AddSingleton(config);
 
         var credential = new DefaultAzureCredential();
