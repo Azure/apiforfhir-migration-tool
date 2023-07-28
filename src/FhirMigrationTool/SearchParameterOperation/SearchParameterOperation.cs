@@ -54,8 +54,9 @@ namespace FhirMigrationTool.SearchParameterOperation
                     throw new HttpFailureException($"Status: {response.StatusCode} Response: {response.Content.ReadAsStringAsync()} ");
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError($"GetSearchParameters() Exception: {ex.Message}");
                 throw;
             }
         }
@@ -96,8 +97,9 @@ namespace FhirMigrationTool.SearchParameterOperation
 
                 return searchParameterObject.ToString();
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError($"TransformObject() Exception: {ex.Message}");
                 throw;
             }
         }
@@ -125,9 +127,12 @@ namespace FhirMigrationTool.SearchParameterOperation
                 {
                     throw new HttpFailureException($"Status: {response.StatusCode} Response: {response.Content.ReadAsStringAsync()} ");
                 }
+
+                _logger.LogInformation($"PostSearchParameters Finished");
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError($"PostSearchParameters() Exception: {ex.Message}");
                 throw;
             }
         }

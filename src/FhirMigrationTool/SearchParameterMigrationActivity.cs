@@ -40,8 +40,9 @@ namespace FhirMigrationTool
                     await _searchParameterOperation.PostSearchParameters(transformedObject);
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError($"SearchParameterMigration() Exception:  {ex.Message}");
                 throw;
             }
 
