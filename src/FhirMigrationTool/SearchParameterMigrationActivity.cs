@@ -33,7 +33,7 @@ namespace FhirMigrationTool
                 // If resource present in bundle then transform it into batch and Post to Gen2
                 if (jObjectResponse.ContainsKey("entry"))
                 {
-                    // Transform to batch
+                    // Transform to batch and add request object
                     string transformedObject = _searchParameterOperation.TransformObject(jObjectResponse);
 
                     // Post serach parametes to Gen2
