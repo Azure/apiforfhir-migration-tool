@@ -9,6 +9,7 @@ using FhirMigrationTool.SurfaceCheck;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace FhirMigrationTool
 {
@@ -41,11 +42,12 @@ namespace FhirMigrationTool
         }
 
         [Function(nameof(Count))]
-        public async Task<string> Count([ActivityTrigger] FunctionContext executionContext)
+        public async Task<string> Count([ActivityTrigger] string query)
         {
             try
             {
-                var surfacecheckstatus = await _surfaceCheck.Execute();
+                var surfacecheckstatus = await _surfaceCheck.Execute(query);
+
                 return surfacecheckstatus;
             }
             catch

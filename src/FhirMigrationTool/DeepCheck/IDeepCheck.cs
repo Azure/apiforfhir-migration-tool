@@ -7,6 +7,6 @@ namespace FhirMigrationTool.DeepCheck
 {
     public interface IDeepCheck
     {
-        Task<string> Execute();
+        Task<string> Execute(string query);
     }
 }

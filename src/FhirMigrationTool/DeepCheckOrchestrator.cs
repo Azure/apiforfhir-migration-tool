@@ -40,9 +40,10 @@ namespace FhirMigrationTool
         }
 
         [Function(nameof(DeepResourceCheck))]
-        public async Task<string> DeepResourceCheck([ActivityTrigger] FunctionContext executionContext)
+        public async Task<string> DeepResourceCheck([ActivityTrigger] string query)
         {
-            var deepcheckstatus = await _deepCheck.Execute();
+            var deepcheckstatus = await _deepCheck.Execute(query);
+
             return deepcheckstatus;
         }
     }
