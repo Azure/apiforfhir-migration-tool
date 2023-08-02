@@ -27,7 +27,7 @@ namespace FhirMigrationTool.DeepCheck
             _fhirClient = fhirClient;
         }
 
-        public async Task<string> Execute()
+        public async Task<string> Execute(string query)
         {
             int resourceCount = _options.DeepCheckCount;
             var baseUri = _options.SourceUri;
@@ -46,7 +46,7 @@ namespace FhirMigrationTool.DeepCheck
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(baseUri, string.Format("/?_count={0}", resourceCount)),
+                    RequestUri = new Uri(baseUri, string.Format("/{0}{1}", query, resourceCount)),
                 };
                 HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
 

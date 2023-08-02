@@ -27,7 +27,7 @@ namespace FhirMigrationTool.SurfaceCheck
             _fhirClient = fhirClient;
         }
 
-        public async Task<string> Execute()
+        public async Task<string> Execute(string query)
         {
             var res = new JObject();
             var passResource = new JArray();
@@ -48,7 +48,7 @@ namespace FhirMigrationTool.SurfaceCheck
                         var request = new HttpRequestMessage
                         {
                             Method = HttpMethod.Get,
-                            RequestUri = new Uri(baseUri, string.Format("{0}?_summary=Count", item)),
+                            RequestUri = new Uri(baseUri, string.Format("{0}{1}", item, query)),
                         };
                         HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
 
@@ -59,7 +59,7 @@ namespace FhirMigrationTool.SurfaceCheck
                         var desrequest = new HttpRequestMessage
                         {
                             Method = HttpMethod.Get,
-                            RequestUri = new Uri(desbaseUri, string.Format("{0}?_summary=Count", item)),
+                            RequestUri = new Uri(desbaseUri, string.Format("{0}{1}", item, query)),
                         };
 
                         HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, destinationFhirEndpoint);

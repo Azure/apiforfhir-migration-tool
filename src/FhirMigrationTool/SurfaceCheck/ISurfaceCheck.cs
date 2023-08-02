@@ -7,6 +7,6 @@ namespace FhirMigrationTool.SurfaceCheck
 {
     public interface ISurfaceCheck
     {
-        Task<string> Execute();
+        Task<string> Execute(string query);
     }
 }
