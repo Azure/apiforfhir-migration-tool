@@ -88,17 +88,18 @@ namespace FhirMigrationTool
             return outputs;
         }
 
-        // [Function("TimerOrchestration")]
-        // public async Task Run(
-        //  [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
-        //  [DurableClient] DurableTaskClient client,
-        //  FunctionContext executionContext)
-        // {
-        //    string instanceId_new = "FhirMigrationTool";
-        //    StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
-        //    var instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(MigrationOrchestration), options);
-        //    _logger.LogInformation("Started: Timed {instanceId}...", instanceId);
-        // }
+        [Function("TimerOrchestration")]
+        public async Task Run(
+         [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
+         [DurableClient] DurableTaskClient client,
+         FunctionContext executionContext)
+        {
+            string instanceId_new = "FhirMigrationTool";
+            StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
+            var instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(MigrationOrchestration), options);
+            _logger.LogInformation("Started: Timed {instanceId}...", instanceId);
+        }
+
         [Function(nameof(E2ETestOrchestration))]
         public async Task<string> E2ETestOrchestration(
             [OrchestrationTrigger] TaskOrchestrationContext context)
