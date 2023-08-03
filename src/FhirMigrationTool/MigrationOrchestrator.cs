@@ -58,6 +58,9 @@ namespace FhirMigrationTool
                 Pageable<TableEntity> jobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Running" || ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running" || ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Not Started");
                 if (jobList.Count() <= 0)
                 {
+                    // Run Get and Post activity for search parameter
+                    await context.CallActivityAsync("SearchParameterMigration");
+
                     var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration");
                 }
 
