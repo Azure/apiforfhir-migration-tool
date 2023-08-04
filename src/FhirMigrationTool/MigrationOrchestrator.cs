@@ -6,13 +6,17 @@
 using Azure;
 using Azure.Data.Tables;
 using FhirMigrationTool.Configuration;
+using FhirMigrationTool.FhirOperation;
 using FhirMigrationTool.Models;
 using FhirMigrationTool.OrchestrationHelper;
+using FhirMigrationTool.Processors;
+using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.DurableTask;
 using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace FhirMigrationTool
 {
@@ -22,13 +26,19 @@ namespace FhirMigrationTool
         private readonly ILogger _logger;
         private readonly IOrchestrationHelper _orchestrationHelper;
         private readonly IAzureTableClientFactory _azureTableClientFactory;
+        private readonly IFhirProcessor _exportProcessor;
+        private readonly IFhirClient _fhirClient;
+        private readonly TelemetryClient _telemetryClient;
 
-        public MigrationOrchestrator(MigrationOptions options, ILoggerFactory loggerFactory, IOrchestrationHelper orchestrationHelper, IAzureTableClientFactory azureTableClientFactory)
+        public MigrationOrchestrator(MigrationOptions options, ILoggerFactory loggerFactory, IOrchestrationHelper orchestrationHelper, IAzureTableClientFactory azureTableClientFactory, IFhirProcessor exportProcessor, IFhirClient fhirClient, TelemetryClient telemetryClient)
         {
             _options = options;
             _logger = loggerFactory.CreateLogger<MigrationOrchestrator>();
             _orchestrationHelper = orchestrationHelper;
             _azureTableClientFactory = azureTableClientFactory;
+            _exportProcessor = exportProcessor;
+            _fhirClient = fhirClient;
+            _telemetryClient = telemetryClient;
         }
 
         [Function(nameof(MigrationOrchestration))]
@@ -48,6 +58,9 @@ namespace FhirMigrationTool
                 Pageable<TableEntity> jobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Running" || ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running" || ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Not Started");
                 if (jobList.Count() <= 0)
                 {
+                    // Run Get and Post activity for search parameter
+                    await context.CallActivityAsync("SearchParameterMigration");
+
                     var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration");
                 }
 
@@ -80,9 +93,9 @@ namespace FhirMigrationTool
 
         [Function("TimerOrchestration")]
         public async Task Run(
-          [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
-          [DurableClient] DurableTaskClient client,
-          FunctionContext executionContext)
+         [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
+         [DurableClient] DurableTaskClient client,
+         FunctionContext executionContext)
         {
             string instanceId_new = "FhirMigrationTool";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
@@ -90,64 +103,96 @@ namespace FhirMigrationTool
             _logger.LogInformation("Started: Timed {instanceId}...", instanceId);
         }
 
-        [Function(nameof(CountCheckOrchestration))]
-        public static async Task<string> CountCheckOrchestration(
+        [Function(nameof(E2ETestOrchestration))]
+        public async Task<string> E2ETestOrchestration(
             [OrchestrationTrigger] TaskOrchestrationContext context)
         {
-            ILogger logger = context.CreateReplaySafeLogger(nameof(CountCheckOrchestration));
-            logger.LogInformation("Start SurfaceCheckOrchestration.");
-            var outputs = new List<string>();
-            outputs.Add("Start Surface Check");
+            ILogger logger = context.CreateReplaySafeLogger(nameof(E2ETestOrchestration));
+            logger.LogInformation("Start E2E Test.");
 
-            var surfaceCheck = await context.CallSubOrchestratorAsync<string>("SurfaceCheckOrchestration");
+            int count = 0;
+            var resSurface = new JArray();
+            var resDeep = new JArray();
 
-            return surfaceCheck;
+            string? externalInput = context.GetInput<string>();
+            if (!string.IsNullOrEmpty(externalInput))
+            {
+                JObject jsonObject = JObject.Parse(externalInput);
+
+                // Get the specific value by property name
+                if (jsonObject != null)
+                {
+                    count = (int)jsonObject["Count"]!;
+                }
+            }
+
+            try
+            {
+                if (count == 2 || count == 3)
+                {
+                    string e2eImportGen1 = await context.CallActivityAsync<string>("E2ETestActivity", count);
+                }
+
+                var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
+                        maxNumberOfAttempts: 3,
+                        firstRetryInterval: TimeSpan.FromSeconds(5)));
+
+                var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
+                logger.LogInformation("E2E Test for export completed.");
+
+                var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
+                logger.LogInformation("E2E Test for export status completed.");
+
+                var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
+                logger.LogInformation("E2E Test for import completed.");
+
+                var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
+                logger.LogInformation("E2E Test for import status completed.");
+                if (_options.QuerySurface != null)
+                {
+                    var surfaceCheckQuery = new List<string>(_options.QuerySurface);
+
+                    foreach (var item in surfaceCheckQuery)
+                    {
+                        // Run Surface test
+                        var surfaceCheck = await context.CallActivityAsync<string>("Count", item);
+                        JObject jsonObject = JObject.Parse(surfaceCheck);
+                        resSurface.Add(jsonObject);
+                    }
+                }
+
+                if (_options.QueryDeep != null)
+                {
+                    var deepCheckQuery = new List<string>(_options.QueryDeep);
+                    foreach (var item in deepCheckQuery)
+                    {
+                        // Run Deep Check test
+                        var deepCheck = await context.CallActivityAsync<string>("DeepResourceCheck", item);
+                        JObject jsonObject = JObject.Parse(deepCheck);
+                        resDeep.Add(jsonObject);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+
+            return "completed";
         }
 
-        [Function(nameof(DeepCheckOrc))]
-        public static async Task<string> DeepCheckOrc(
-            [OrchestrationTrigger] TaskOrchestrationContext context)
-        {
-            ILogger logger = context.CreateReplaySafeLogger(nameof(DeepCheckOrc));
-            logger.LogInformation("Start DeepCheckOrchestration.");
-            var outputs = new List<string>();
-            outputs.Add("Start Deep Check");
-
-            string deepCheck = await context.CallSubOrchestratorAsync<string>("DeepCheckOrchestration");
-
-            return deepCheck;
-        }
-
-        [Function("SurfaceCheckOrchestration_HttpStart")]
-        public static async Task<HttpResponseData> SurfaceHttpCheck(
+        [Function("E2ETest_Http")]
+        public static async Task<HttpResponseData> E2ETest_Http(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
             [DurableClient] DurableTaskClient client,
             FunctionContext executionContext)
         {
-            ILogger logger = executionContext.GetLogger("SurfaceCheckOrchestration_HttpStart");
+            ILogger logger = executionContext.GetLogger("E2ETest_Http");
 
             // Function input comes from the request content.
+            string body = await new StreamReader(req.Body).ReadToEndAsync();
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
-                nameof(CountCheckOrchestration));
-
-            logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
-
-            // Returns an HTTP 202 response with an instance management payload.
-            // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
-            return client.CreateCheckStatusResponse(req, instanceId);
-        }
-
-        [Function("DeepCheckOrchestration_HttpStart")]
-        public static async Task<HttpResponseData> DeepHttpCheck(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
-            [DurableClient] DurableTaskClient client,
-            FunctionContext executionContext)
-        {
-            ILogger logger = executionContext.GetLogger("DeepCheckOrchestration_HttpStart");
-
-            // Function input comes from the request content.
-            string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
-                nameof(DeepCheckOrc));
+                nameof(E2ETestOrchestration), body);
 
             logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
 
