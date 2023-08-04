@@ -75,6 +75,10 @@ namespace FhirMigrationTool
                             else
                             {
                                 logger?.LogInformation($"Import Status check returned: Unsuccessful.");
+                                TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
+                                exportEntity["IsImportComplete"] = true;
+                                exportEntity["IsImportRunning"] = "Failed";
+                                _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                 isComplete = true;
                                 throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
                             }

@@ -3,7 +3,6 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
-using Azure;
 using Azure.Data.Tables;
 using FhirMigrationTool.Configuration;
 using FhirMigrationTool.FhirOperation;
@@ -52,34 +51,20 @@ namespace FhirMigrationTool
                 logger.LogInformation("Start MigrationOrchestration.");
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
 
-                // Run sub orchestration for export
-                Pageable<TableEntity> jobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Running" || ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running" || ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Not Started");
-                if (jobList.Count() <= 0)
-                {
-                    // Run Get and Post activity for search parameter
-                    await context.CallActivityAsync("SearchParameterMigration");
+                var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
+                        maxNumberOfAttempts: 3,
+                        firstRetryInterval: TimeSpan.FromSeconds(5)));
 
-                    var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration");
-                }
+                // Run Activity for Search Parameter
+                await context.CallActivityAsync("SearchParameterMigration");
 
-                Pageable<TableEntity> exportRunningjobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsExportRunning") == "Running");
-                if (exportRunningjobList.Count() > 0)
-                {
-                    var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration");
-                }
+                // Run sub orchestration for export and export status
+                var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
+                var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
 
-                // Run sub orchestration for Import
-                Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") != string.Empty && ent.GetString("IsImportRunning") == "Not Started");
-                if (jobListimport.Count() > 0)
-                {
-                    var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration");
-                }
-
-                Pageable<TableEntity> jobListimportRunning = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running");
-                if (jobListimportRunning.Count() > 0)
-                {
-                    var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration");
-                }
+                // Run sub orchestration for Import and Import status
+                var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
+                var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
             }
             catch (Exception ex)
             {
@@ -97,8 +82,15 @@ namespace FhirMigrationTool
         {
             string instanceId_new = "FhirMigrationTool";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
-            var instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(MigrationOrchestration), options);
-            _logger.LogInformation("Started: Timed {instanceId}...", instanceId);
+            try
+            {
+                var instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(MigrationOrchestration), options);
+                _logger.LogInformation("Started: Timed {instanceId}...", instanceId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation($"Error in starting instance due to {ex.Message}");
+            }
         }
     }
 }
