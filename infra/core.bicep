@@ -7,6 +7,9 @@ param fhirServiceName string
 @description('Name of the API for FHIR to export resources from.')
 param apiForFhirName string
 
+@description('Name of the new storage account.')
+param storeagAccountNew string
+
 @description('Name of the Log Analytics workspace to deploy or use. Leave blank to skip deployment')
 param logAnalyticsName string = '${prefixName}-la'
 

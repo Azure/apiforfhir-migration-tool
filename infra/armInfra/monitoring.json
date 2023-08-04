@@ -45,13 +45,16 @@
             }
         },
         {
-           "type": "microsoft.Insights/guestDiagnosticSettings",
-           "apiVersion": "2018-06-01-preview",
+           "type": "Microsoft.Insights/diagnosticSettings",
+           "apiVersion": "2021-05-01-preview",
+           "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsName'))]"
+            ],
            "location": "[parameters('location')]",
-           "name": "diagnosticSettings",
-           "scope": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('logAnalyticsName'))]",
+           "name": "settingsMig",
+           "scope": "[format('Microsoft.OperationalInsights/workspaces/{0}', parameters('logAnalyticsName'))]",
            "properties": {
-                "workspaceId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('logAnalyticsName'))]",
+                "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsName'))]",
                 "logs": [
                     {
                         "category": "Audit",
@@ -66,31 +69,34 @@
                         "retentionInDays": 30
                     }
                 ]
-           }
-
+            }
         },
         {
             "type": "Microsoft.Insights/components",
             "apiVersion": "2020-02-02-preview",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsName'))]"
+            ],
             "name": "[parameters('appInsightsName')]",
             "location": "[parameters('location')]",
             "kind": "web",
             "properties": {
                 "Application_Type": "web",
-                "WorkspaceResourceId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('logAnalyticsName'))]",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsName'))]",
                 "publicNetworkAccessForIngestion": "Enabled",
                 "publicNetworkAccessForQuery": "Enabled"
             },
             "tags": "[parameters('appTags')]"
-        }],
+        }
+    ],
     "outputs": {
         "appInsightsInstrumentationKey": {
             "type": "string",
-            "value": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName'))).properties.appInsightsInstrumentationKey]"
+            "value": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName')), '2020-02-02-preview', 'Full').properties.InstrumentationKey]"
         },
         "appInsightsInstrumentationString": {
             "type": "string",
-            "value": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName'))).properties.appInsightsInstrumentationString]"
+            "value": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName')), '2020-02-02-preview', 'Full').properties.ConnectionString]"
         }
     }
 }
