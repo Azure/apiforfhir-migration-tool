@@ -17,6 +17,25 @@
                             }
                         },
                         {
+                            "name": "prefix",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "Prefix for Migration tool resources.",
+                            "defaultValue": "",
+                            "toolTip": "Provide a prefix value.",
+                            "placeholder": "",
+                            "multiLine": false,
+                            "constraints": {
+                              "required": true,
+                              "validations": [
+                                {
+                                    "regex": "^[a-z0-9A-Z]{1,6}$",
+                                    "message": "Only alphanumeric characters are allowed, and the value must be 1-6 characters long."
+                                }
+                            ]
+                            },
+                            "visible": true
+                        },
+                        {
                             "name": "fhirServiceName",
                             "label": "Select a FHIR Services inside an Azure Health Data Services workspace",
                             "type": "Microsoft.Solutions.ResourceSelector",
@@ -34,7 +53,7 @@
                         },
                         {
                             "name": "apiForFhirName",
-                            "label": "Selct an API for FHIR resource",
+                            "label": "Select an API for FHIR resource",
                             "type": "Microsoft.Solutions.ResourceSelector",
                             "resourceType": "Microsoft.HealthcareApis/services",
                             "options": {
@@ -113,9 +132,10 @@
             "location": "[steps('basics').resourceScope.location.name]",
             "subscriptionId": "[steps('basics').resourceScope.subscription.id]",
             "parameters": {
-                "fhirServiceName": "[steps('basics').fhirServiceName]",
-                "apiForFhirName": "[steps('basics').apiForFhirName]",
-                "storageAccount": "[steps('basics').storageAccount]",
+                "prefix": "[steps('basics').prefix]",
+                "fhirServiceName": "[steps('basics').fhirServiceName.name]",
+                "apiForFhirName": "[steps('basics').apiForFhirName.name]",
+                "storageAccount": "[steps('basics').storageAccount.name]",
                 "storageAccountNew": "[steps('basics').nameStorageAccount]"
             }
         }

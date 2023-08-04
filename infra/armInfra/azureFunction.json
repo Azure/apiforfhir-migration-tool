@@ -4,14 +4,9 @@
     "parameters": {
         "storageAccountName": {
             "type": "string",
+            "defaultValue": "migfuncsa",
             "metadata": {
                 "description": "Name of storage account"
-            }
-        },
-        "createStorageAccount": {
-            "type": "bool",
-            "metadata": {
-                "description": ""
             }
         },
         "appServiceName": {
@@ -30,6 +25,12 @@
             "type": "string",
             "metadata": {
                 "description": "App Insights Key"
+            }
+        },
+        "appInsightsInstrumentationString": {
+            "type": "string",
+            "metadata": {
+                "description": "App Insights string"
             }
         },
         "location": {
@@ -74,9 +75,45 @@
     "variables": {},
     "resources": [
         {
+            "condition": false,
+            "type": "Microsoft.HealthcareApis/workspaces",
+            "apiVersion": "2022-10-01-preview",
+            "name": "[split(parameters('fhirServiceName'), '/')[0]]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('appTags')]",
+            "resources": [
+                {
+                    "condition": false,
+                    "type": "fhirservices",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.HealthcareApis/workspaces', split(parameters('fhirServiceName'), '/')[0])]"
+                    ],
+                    "apiVersion": "2021-06-01-preview",
+                    "name": "[split(parameters('fhirServiceName'), '/')[1]]",
+                    "location": "[parameters('location')]",
+                    "kind": "fhir-R4"
+                }
+            ]
+        },
+        {
+            "condition": false,
+            "type": "Microsoft.HealthcareApis/services",
+            "apiVersion": "2021-11-01",
+            "name": "[parameters('apiForFhirName')]",
+            "location": "[parameters('location')]",
+            "kind": "fhir-R4",
+            "properties": {
+                "cosmosDbConfiguration": {
+                    "offerThroughput": 99500
+                },
+            "exportConfiguration": {
+                    "storageAccountName": ""
+                }
+            }
+        },
+        {
             "type": "Microsoft.Storage/storageAccounts",
             "location": "[parameters('location')]",
-            "condition": "[equals(parameters('storageAccountName'), true())]",
             "name": "[parameters('storageAccountName')]",
             "apiVersion": "2021-08-01",
             "tags": "[parameters('appTags')]",
@@ -88,6 +125,9 @@
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2021-03-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ],
             "name": "[parameters('appServiceName')]",
             "location": "[parameters('location')]",
             "tags": "[parameters('appTags')]",
@@ -103,6 +143,9 @@
         {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2021-03-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('appServiceName'))]"
+            ],
             "name": "[parameters('functionAppName')]",
             "location": "[parameters('location')]",
             "kind": "functionapp,linux",
@@ -112,7 +155,7 @@
             "properties": {
                 "httpsOnly": true,
                 "enabled": true,
-                "serverFarmId": "[resourceId('Microsoft.Insights/components', parameters('appServiceName'))]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServiceName'))]",
                 "clientAffinityEnabled": true,
                 "siteConfig": {
                     "linuxFxVersion":"dotnet-isolated|7.0",
@@ -125,6 +168,9 @@
                     "type": "basicPublishingCredentialsPolicies",
                     "name": "ftp",
                     "apiVersion": "2022-09-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+                    ],
                     "location": "[parameters('location')]",
                     "properties": {
                         "allow": false
@@ -134,92 +180,97 @@
                     "type": "basicPublishingCredentialsPolicies",
                     "name": "scm",
                     "apiVersion": "2022-09-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+                    ],
                     "location": "[parameters('location')]",
                     "properties": {
                         "allow": false
                     }
-                }
+                },
+                {
+                    "type": "config",
+                    "apiVersion": "2020-12-01",
+                    "name": "appSettings",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+                    ],
+                    "properties": {
+                        "DestinationFhirUri": "[format('https://{0}.fhir.azurehealthcareapis.com', replace(parameters('fhirServiceName'), '/', '-'))]",
+                        "SourceFhirUri": "[format('https://{0}.azurehealthcareapis.com', parameters('apiForFhirName'))]",
+                        "StartDate": "1970-01-01",
+                        "ScheduleInterval": 5,
+                        "AppInsightConnectionKey": "[parameters('appInsightsInstrumentationKey')]",
+                        "AppInsightConnectionString": "[parameters('appInsightsInstrumentationString')]",
+                        "ImportMode": "IncrementalLoad",
+                        "SurfaceCheckResources": "",
+                        "DeepCheckCount": "",
+                        "UserAgent": "FhirMigrationTool",
+                        "SourceHttpClient": "SourceFhirEndpoint",
+                        "DestinationHttpClient": "DestinationFhirEndpoint",
+                        "TokenCredential":"",
+                        "RetryCount": 3,
+                        "WaitForRetry": 1,
+                        "Debug": true,
+                        "ExportTableName": "export",
+                        "ChunkTableName": "doChunk",
+                        "ExportChunkTime": 12,
+                        "PartitionKey": "partitionkey",
+                        "RowKey": "rowkey"
+                    }
+                } 
             ]
-        },
-        {
-            "type": "Microsoft.Web/sites/config",
-            "apiVersion": "2020-12-01",
-            "name": "appSettings",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
-            ],
-            "properties": {
-                "DestinationFhirUri": "[format('https://{0}.fhir.azurehealthcareapis.com', replace(parameters('fhirServiceName'), '/', '-'))]",
-                "SourceFhirUri": "[format('https://{0}.azurehealthcareapis.com', parameters('apiForFhirName'))]",
-                "StartDate": "1970-01-01",
-                "ScheduleInterval": 5,
-                "AppInsightConnectionString": "InstrumentationKey=93ceca89-212a-47ce-9ff6-ee73a70e39bb;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/",
-                "ImportMode": "IncrementalLoad",
-                "SurfaceCheckResources": "",
-                "DeepCheckCount": "",
-                "UserAgent": "FhirMigrationTool",
-                "SourceHttpClient": "SourceFhirEndpoint",
-                "DestinationHttpClient": "DestinationFhirEndpoint",
-                "TokenCredential":"",
-                "RetryCount": 3,
-                "WaitForRetry": 1,
-                "Debug": true,
-                "ExportTableName": "export",
-                "ChunkTableName": "doChunk",
-                "ExportChunkTime": 12,
-                "PartitionKey": "partitionkey",
-                "RowKey": "rowkey"
-            }
-        },
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2022-09-01",
-            "name": "functionFhirServiceRoleAssignment",
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "relativePath": "roleAssignment.json"
-                },
-                "parameters": {
-                    "resourceId": {
-                        "value": "[resourceId('Microsoft.Insights/components', parameters('apiForFhirName'))]"
-                    },
-                    "roleId": {
-                        "value": "4465e953-8ced-4406-a58e-0f6e3f3b530b"
-                    },
-                    "principalId": {
-                        "value": "[reference(resourceId('Microsoft.Insights/components', parameters('functionAppName'))).identity.principalId]"
-                    }
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2022-09-01",
-            "name": "bulk-import-function-fhir-managed-id-role-assignment",
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "relativePath": "roleAssignment.json"
-                },
-                "parameters": {
-                    "resourceId": {
-                        "value": "[resourceId('Microsoft.Insights/components', parameters('fhirServiceName'))]"
-                    },
-                    "roleId": {
-                        "value": "3db33094-8700-4567-8da5-1501d4e7e843"
-                    },
-                    "principalId": {
-                        "value": "[reference(resourceId('Microsoft.Insights/components', parameters('functionAppName'))).identity.principalId]"
-                    }
-                }
-            }
         }
+        // ,
+        // {
+        //     "type": "Microsoft.Resources/deployments",
+        //     "apiVersion": "2022-09-01",
+        //     "name": "functionFhirServiceRoleAssignment",
+        //     "properties": {
+        //         "mode": "Incremental",
+        //         "templateLink": {
+        //             "relativePath": "roleAssignment.json"
+        //         },
+        //         "parameters": {
+        //             "resourceId": {
+        //                 "value": "[resourceId('Microsoft.HealthcareApis/services', parameters('apiForFhirName'))]"
+        //             },
+        //             "roleId": {
+        //                 "value": "4465e953-8ced-4406-a58e-0f6e3f3b530b"
+        //             },
+        //             "principalId": {
+        //                 "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName'))).identity.principalId]"
+        //             }
+        //         }
+        //     }
+        // },
+        // {
+        //     "type": "Microsoft.Resources/deployments",
+        //     "apiVersion": "2022-09-01",
+        //     "name": "bulk-import-function-fhir-managed-id-role-assignment",
+        //     "properties": {
+        //         "mode": "Incremental",
+        //         "templateLink": {
+        //             "relativePath": "roleAssignment.json"
+        //         },
+        //         "parameters": {
+        //             "resourceId": {
+        //                 "value": "[resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', parameters('fhirServiceName'))]"
+        //             },
+        //             "roleId": {
+        //                 "value": "3db33094-8700-4567-8da5-1501d4e7e843"
+        //             },
+        //             "principalId": {
+        //                 "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName'))).identity.principalId]"
+        //             }
+        //         }
+        //     }
+        // }
     ],
     "outputs": {
         "functionAppKey": {
             "type": "string",
-            "value": "[listKeys(resourceId('Microsoft.Insights/components', parameters('fhirServiceName')), '2016-08-01').functionKeys.default]"
+            "value": "[listKeys(concat(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '/host/default'), '2016-08-01').functionKeys.default]"
         },
         "functionAppName": {
             "type": "string",
@@ -227,7 +278,7 @@
         },
         "functionAppPrincipalId": {
             "type": "string",
-            "value": "reference(resourceId('Microsoft.Insights/components', parameters('functionAppName'))).identity.principalId"
+            "value": "reference(resourceId('Microsoft.Web/sites', parameters('functionAppName'))).identity.principalId"
         },
         "hostName": {
             "type": "string",
@@ -235,7 +286,7 @@
         },
         "functionBaseUrl": {
             "type": "string",
-            "value": "[concat('https://', reference(resourceId('Microsoft.Insights/components', parameters('functionAppName'))).identity.properties.defaultHostName)]"
+            "value": "[concat('https://', reference(resourceId('Microsoft.Web/sites', parameters('functionAppName'))).identity.properties.defaultHostName)]"
         }
     }
 }
