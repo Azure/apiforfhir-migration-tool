@@ -15,11 +15,11 @@ namespace FhirMigrationTool.Processors
 {
     public class FhirProcessor : IFhirProcessor
     {
-        private readonly ILogger _logger;
+        private readonly ILogger<FhirProcessor>? _logger;
         private readonly IFhirClient _fhirClient;
-        private readonly TelemetryClient _telemetryClient;
+        private readonly TelemetryClient? _telemetryClient;
 
-        public FhirProcessor(IFhirClient fhirClient, TelemetryClient telemetryClient, ILogger<FhirProcessor> logger)
+        public FhirProcessor(IFhirClient fhirClient, TelemetryClient? telemetryClient, ILogger<FhirProcessor>? logger)
         {
             _logger = logger;
             _fhirClient = fhirClient;

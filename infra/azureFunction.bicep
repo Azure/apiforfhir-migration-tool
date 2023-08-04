@@ -97,7 +97,7 @@ resource functionAppSettings 'Microsoft.Web/sites/config@2020-12-01' = {
 }
 
 
-resource fhirService 'Microsoft.HealthcareApis/workspaces/fhirservices@2021-06-01-preview' existing = if (createRoleAssignment == true) {
+resource fhirService 'Microsoft.HealthcareApis/workspaces/fhirservices@2022-06-01' existing = if (createRoleAssignment == true) {
   //#disable-next-line prefer-interpolation
   name: fhirServiceName
 }
