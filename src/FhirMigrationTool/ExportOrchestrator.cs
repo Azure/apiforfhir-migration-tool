@@ -6,7 +6,6 @@
 using Azure;
 using Azure.Data.Tables;
 using FhirMigrationTool.Configuration;
-using FhirMigrationTool.ExceptionHelper;
 using FhirMigrationTool.FhirOperation;
 using FhirMigrationTool.Models;
 using FhirMigrationTool.OrchestrationHelper;
@@ -69,11 +68,12 @@ namespace FhirMigrationTool
         [Function(nameof(ProcessExport))]
         public async Task<ResponseModel> ProcessExport([ActivityTrigger] string name, FunctionContext executionContext)
         {
+            ResponseModel exportResponse = new ResponseModel();
             try
             {
                 HttpMethod method = HttpMethod.Get;
                 string query = GetQueryStringForExport();
-                ResponseModel exportResponse = await _exportProcessor.CallProcess(method, string.Empty, _options.SourceUri, query, _options.SourceHttpClient);
+                exportResponse = await _exportProcessor.CallProcess(method, string.Empty, _options.SourceUri, query, _options.SourceHttpClient);
 
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
@@ -133,15 +133,15 @@ namespace FhirMigrationTool
 
                     _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
 
-                    throw new HttpFailureException($"Status: {exportResponse.Status} Response: {exportResponse.Content} ");
+                    // throw new HttpFailureException($"Status: {exportResponse.Status} Response: {exportResponse.Content} ");
                 }
-
-                return exportResponse;
             }
             catch
             {
                 throw;
             }
+
+            return exportResponse;
         }
 
         private string GetQueryStringForExport()
@@ -190,6 +190,7 @@ namespace FhirMigrationTool
             Uri baseUri = _options.SourceUri;
             string sourceFhirEndpoint = _options.SourceHttpClient;
             var firstResource = new object();
+            var sinceDate = default(DateTimeOffset);
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
@@ -197,33 +198,36 @@ namespace FhirMigrationTool
             };
             HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
 
-            var objResponse = JObject.Parse(srcTask.Content.ReadAsStringAsync().Result);
-            JToken? entry = objResponse["entry"];
-
-            if (entry != null)
+            if (srcTask != null)
             {
-                foreach (JToken item in entry)
+                var objResponse = JObject.Parse(srcTask.Content.ReadAsStringAsync().Result);
+                JToken? entry = objResponse["entry"];
+
+                if (entry != null)
                 {
-                    var gen1Response = (JObject?)item["resource"];
-                    if (gen1Response is not null)
+                    foreach (JToken item in entry)
                     {
-                        var meta = (JObject?)gen1Response.GetValue("meta");
-                        if (meta is not null)
+                        var gen1Response = (JObject?)item["resource"];
+                        if (gen1Response is not null)
                         {
-                            firstResource = meta["lastUpdated"];
+                            var meta = (JObject?)gen1Response.GetValue("meta");
+                            if (meta is not null)
+                            {
+                                firstResource = meta["lastUpdated"];
+                            }
                         }
                     }
                 }
+
+                var settings = new JsonSerializerSettings
+                {
+                    DateFormatString = "yyyy-MM-ddTH:mm:ss.fffZ",
+                    DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+                };
+
+                var firstTimestamp = JsonConvert.SerializeObject(firstResource, settings).Trim('"');
+                sinceDate = DateTimeOffset.ParseExact(firstTimestamp, "yyyy-MM-ddTH:mm:ss.fffZ", null);
             }
-
-            var settings = new JsonSerializerSettings
-            {
-                DateFormatString = "yyyy-MM-ddTH:mm:ss.fffZ",
-                DateTimeZoneHandling = DateTimeZoneHandling.Utc,
-            };
-
-            var firstTimestamp = JsonConvert.SerializeObject(firstResource, settings).Trim('"');
-            var sinceDate = DateTimeOffset.ParseExact(firstTimestamp, "yyyy-MM-ddTH:mm:ss.fffZ", null);
 
             // since = sinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             return sinceDate;

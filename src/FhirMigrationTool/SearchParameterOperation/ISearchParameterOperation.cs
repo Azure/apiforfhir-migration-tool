@@ -3,10 +3,16 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
-namespace FhirMigrationTool.DeepCheck
+using Newtonsoft.Json.Linq;
+
+namespace FhirMigrationTool.SearchParameterOperation
 {
-    public interface IDeepCheck
+    public interface ISearchParameterOperation
     {
-        Task<string> Execute(string query);
+        Task<JObject> GetSearchParameters();
+
+        string TransformObject(JObject searchParameterObject);
+
+        Task PostSearchParameters(string requestContent);
     }
 }

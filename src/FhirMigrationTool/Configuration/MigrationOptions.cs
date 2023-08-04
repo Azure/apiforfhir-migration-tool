@@ -46,6 +46,10 @@ namespace FhirMigrationTool.Configuration
 
         public List<string>? SurfaceCheckResources { get; set; }
 
+        public List<string>? QuerySurface { get; set; }
+
+        public List<string>? QueryDeep { get; set; }
+
         [JsonProperty("DeepCheckCount")]
         public int DeepCheckCount { get; set; }
 
@@ -77,7 +81,7 @@ namespace FhirMigrationTool.Configuration
         public string ChunkTableName { get; set; } = string.Empty;
 
         [JsonProperty("ExportChunkTime")]
-        public int ExportChunkTime { get; set; } = 12;
+        public int ExportChunkTime { get; set; } = 30;
 
         [JsonProperty("partitionKey")]
         public string PartitionKey { get; set; } = "mypartitionkey";
