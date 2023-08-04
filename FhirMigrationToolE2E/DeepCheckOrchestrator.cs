@@ -3,14 +3,14 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
-using FhirMigrationTool.Configuration;
-using FhirMigrationTool.DeepCheck;
-using FhirMigrationTool.FhirOperation;
+using FhirMigrationToolE2E.Configuration;
+using FhirMigrationToolE2E.DeepCheck;
+using FhirMigrationToolE2E.FhirOperation;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 
-namespace FhirMigrationTool
+namespace FhirMigrationToolE2E
 {
     public class DeepCheckOrchestrator
     {

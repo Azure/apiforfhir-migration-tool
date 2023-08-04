@@ -5,15 +5,15 @@
 
 using Azure;
 using Azure.Data.Tables;
-using FhirMigrationTool.Configuration;
-using FhirMigrationTool.ExceptionHelper;
-using FhirMigrationTool.Models;
-using FhirMigrationTool.Processors;
+using FhirMigrationToolE2E.Configuration;
+using FhirMigrationToolE2E.ExceptionHelper;
+using FhirMigrationToolE2E.Models;
+using FhirMigrationToolE2E.Processors;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 
-namespace FhirMigrationTool
+namespace FhirMigrationToolE2E
 {
     public class ImportStatusOrchestrator
     {

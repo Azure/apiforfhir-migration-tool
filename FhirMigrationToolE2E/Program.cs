@@ -7,13 +7,15 @@
 using System.Reflection;
 using Azure.Data.Tables;
 using Azure.Identity;
-using FhirMigrationTool.Configuration;
-using FhirMigrationTool.FhirOperation;
-using FhirMigrationTool.Models;
-using FhirMigrationTool.OrchestrationHelper;
-using FhirMigrationTool.Processors;
-using FhirMigrationTool.SearchParameterOperation;
-using FhirMigrationTool.Security;
+using FhirMigrationToolE2E.Configuration;
+using FhirMigrationToolE2E.DeepCheck;
+using FhirMigrationToolE2E.FhirOperation;
+using FhirMigrationToolE2E.Models;
+using FhirMigrationToolE2E.OrchestrationHelper;
+using FhirMigrationToolE2E.Processors;
+using FhirMigrationToolE2E.SearchParameterOperation;
+using FhirMigrationToolE2E.Security;
+using FhirMigrationToolE2E.SurfaceCheck;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
@@ -72,6 +74,9 @@ internal class Program
 
         services.AddScoped<IFhirClient, FhirClient>();
 
+        services.AddTransient<ISurfaceCheck, SurfaceCheck>();
+
+        services.AddTransient<IDeepCheck, DeepCheck>();
         services.AddTransient<ISearchParameterOperation, SearchParameterOperation>();
         services.AddSingleton(config);
 
