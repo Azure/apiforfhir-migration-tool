@@ -6,6 +6,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FhirMigrationTool", "src\Fh
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FhirMigrationTool.Test", "test\FhirMigrationTool.Test\FhirMigrationTool.Test.csproj", "{2E63DF62-4D10-4154-8285-F0128A5D3E4B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FhirMigrationToolE2ETest", "FhirMigrationToolE2ETest\FhirMigrationToolE2ETest.csproj", "{CE411084-F3CC-46F9-844F-34C819B7DC17}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{2E63DF62-4D10-4154-8285-F0128A5D3E4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E63DF62-4D10-4154-8285-F0128A5D3E4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E63DF62-4D10-4154-8285-F0128A5D3E4B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE411084-F3CC-46F9-844F-34C819B7DC17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE411084-F3CC-46F9-844F-34C819B7DC17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE411084-F3CC-46F9-844F-34C819B7DC17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE411084-F3CC-46F9-844F-34C819B7DC17}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
