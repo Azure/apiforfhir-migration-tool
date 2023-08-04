@@ -37,14 +37,15 @@ namespace FhirMigrationtool.Tests
 
         private static TelemetryClient? telemetryClient;
         private static IFhirClient? fhirClient;
-        private static IOrchestrationHelper? orchestrationHelper;
+        private readonly Mock<IOrchestrationHelper> orchestrationHelper;
         private readonly Mock<IFhirClient> _mockClient;
         private readonly Mock<HttpClient> _mockHttpClient;
         private readonly Mock<IFhirProcessor> _exportProcessor;
         private readonly Mock<IFhirProcessor> _importProcessor;
-        private static IAzureTableClientFactory? _azureTableClientFactory;
-        private static IMetadataStore? _azureTableMetadataStore;
-        private static TableServiceClient? _tableServiceClient;
+        private readonly Mock<IAzureTableClientFactory> _azureTableClientFactory;
+        private readonly Mock<IMetadataStore> _azureTableMetadataStore;
+        private readonly Mock<TableClient> _azureTableClient;
+        private static TableEntity? _azureTableEntity;
         private readonly Mock<ISearchParameterOperation> _mockSearchParameterOperation;
         private static ILogger<SearchParameterMigrationActivity>? _loggerSearchParameter;
         private static ILogger<SearchParameterOperation>? _loggerSearchParameterOperation;
@@ -57,6 +58,10 @@ namespace FhirMigrationtool.Tests
             _importProcessor = new Mock<IFhirProcessor>();
             _mockHttpClient = new Mock<HttpClient>();
             _mockSearchParameterOperation = new Mock<ISearchParameterOperation>();
+            _azureTableClientFactory = new Mock<IAzureTableClientFactory>();
+            _azureTableMetadataStore = new Mock<IMetadataStore>();
+            _azureTableClient = new Mock<TableClient>();
+            orchestrationHelper = new Mock<IOrchestrationHelper>();
         }
 
         [ClassInitialize]
@@ -96,13 +101,7 @@ namespace FhirMigrationtool.Tests
                 var fhirLogger = factory.CreateLogger<FhirClient>();
                 var httpClientFactory = serviceProvider.GetService<IHttpClientFactory>();
 
-                orchestrationHelper = new OrchestrationHelper();
-
-                _tableServiceClient = serviceProvider.GetService<TableServiceClient>()!;
-                _azureTableClientFactory = new AzureTableClientFactory(_tableServiceClient);
-
-                _azureTableMetadataStore = new AzureTableMetadataStore();
-
+                _azureTableEntity = new TableEntity();
                 if (httpClientFactory is not null)
                 {
                     fhirClient = new FhirClient(httpClientFactory);
@@ -115,17 +114,12 @@ namespace FhirMigrationtool.Tests
                     _loggerSearchParameter = loggerFactory.CreateLogger<SearchParameterMigrationActivity>();
                     _loggerSearchParameterOperation = loggerFactory.CreateLogger<SearchParameterOperation>();
 
-                    // _loggerExport = loggerFactory.CreateLogger<ExportProcessor>();
-                    // _loggerImport = loggerFactory.CreateLogger<ImportProcessor>();
                     root.Bind(fhirLogger);
                     root.Bind(_logger);
                     root.Bind(_loggerExport);
                     root.Bind(_loggerImport);
                     root.Bind(telemetryClient);
                     root.Bind(fhirClient);
-                    root.Bind(orchestrationHelper);
-                    root.Bind(_azureTableClientFactory);
-                    root.Bind(_azureTableMetadataStore);
                     root.Bind(_loggerSearchParameter);
                     root.Bind(_loggerSearchParameterOperation);
                 }
@@ -310,11 +304,19 @@ namespace FhirMigrationtool.Tests
             _importProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(importResponse));
 
             _importProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
+
+            _azureTableClientFactory.Setup(x => x.Create(It.IsAny<string>())).Returns(_azureTableClient.Object);
+
+            _azureTableMetadataStore.Setup(x => x.GetEntity(It.IsAny<TableClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(_azureTableEntity!);
+
+            _azureTableMetadataStore.Setup(x => x.AddEntity(It.IsAny<TableClient>(), It.IsAny<TableEntity>(), It.IsAny<CancellationToken>())).Returns(true);
+
+            _azureTableMetadataStore.Setup(x => x.UpdateEntity(It.IsAny<TableClient>(), It.IsAny<TableEntity>(), It.IsAny<CancellationToken>())).Returns(true);
 #pragma warning disable CS8604 // Possible null reference argument.
-            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, _mockClient.Object, orchestrationHelper);
-            var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, orchestrationHelper);
-            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, _mockClient.Object, orchestrationHelper);
-            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore);
+            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper.Object);
+            var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, orchestrationHelper.Object);
+            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper.Object);
+            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -378,11 +380,20 @@ namespace FhirMigrationtool.Tests
             _importProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(importResponse));
 
             _importProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
+
+            _azureTableClientFactory.Setup(x => x.Create(It.IsAny<string>())).Returns(_azureTableClient.Object);
+
+            _azureTableMetadataStore.Setup(x => x.GetEntity(It.IsAny<TableClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(_azureTableEntity!);
+
+            _azureTableMetadataStore.Setup(x => x.AddEntity(It.IsAny<TableClient>(), It.IsAny<TableEntity>(), It.IsAny<CancellationToken>())).Returns(true);
+
+            _azureTableMetadataStore.Setup(x => x.UpdateEntity(It.IsAny<TableClient>(), It.IsAny<TableEntity>(), It.IsAny<CancellationToken>())).Returns(true);
+
 #pragma warning disable CS8604 // Possible null reference argument.
-            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, _mockClient.Object, orchestrationHelper);
-            var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, orchestrationHelper);
-            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, _mockClient.Object, orchestrationHelper);
-            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore);
+            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper.Object);
+            var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, orchestrationHelper.Object);
+            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper.Object);
+            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -445,11 +456,20 @@ namespace FhirMigrationtool.Tests
             _importProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(importResponse));
 
             _importProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
+
+            _azureTableClientFactory.Setup(x => x.Create(It.IsAny<string>())).Returns(_azureTableClient.Object);
+
+            _azureTableMetadataStore.Setup(x => x.GetEntity(It.IsAny<TableClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(_azureTableEntity!);
+
+            _azureTableMetadataStore.Setup(x => x.AddEntity(It.IsAny<TableClient>(), It.IsAny<TableEntity>(), It.IsAny<CancellationToken>())).Returns(true);
+
+            _azureTableMetadataStore.Setup(x => x.UpdateEntity(It.IsAny<TableClient>(), It.IsAny<TableEntity>(), It.IsAny<CancellationToken>())).Returns(true);
+
 #pragma warning disable CS8604 // Possible null reference argument.
-            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, _mockClient.Object, orchestrationHelper);
-            var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, orchestrationHelper);
-            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, _mockClient.Object, orchestrationHelper);
-            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore);
+            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper.Object);
+            var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, orchestrationHelper.Object);
+            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper.Object);
+            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -512,11 +532,19 @@ namespace FhirMigrationtool.Tests
             _importProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(importResponse));
 
             _importProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
+
+            _azureTableClientFactory.Setup(x => x.Create(It.IsAny<string>())).Returns(_azureTableClient.Object);
+
+            _azureTableMetadataStore.Setup(x => x.GetEntity(It.IsAny<TableClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(_azureTableEntity!);
+
+            _azureTableMetadataStore.Setup(x => x.AddEntity(It.IsAny<TableClient>(), It.IsAny<TableEntity>(), It.IsAny<CancellationToken>())).Returns(true);
+
+            _azureTableMetadataStore.Setup(x => x.UpdateEntity(It.IsAny<TableClient>(), It.IsAny<TableEntity>(), It.IsAny<CancellationToken>())).Returns(true);
 #pragma warning disable CS8604 // Possible null reference argument.
-            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, _mockClient.Object, orchestrationHelper);
-            var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, orchestrationHelper);
-            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, _mockClient.Object, orchestrationHelper);
-            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore);
+            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper.Object);
+            var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, orchestrationHelper.Object);
+            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper.Object);
+            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -580,11 +608,19 @@ namespace FhirMigrationtool.Tests
             _importProcessor.Setup(x => x.CallProcess(It.IsAny<HttpMethod>(), It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(importResponse));
 
             _importProcessor.Setup(x => x.CheckProcessStatus(It.IsAny<string>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(importStatusResponse));
+
+            _azureTableClientFactory.Setup(x => x.Create(It.IsAny<string>())).Returns(_azureTableClient.Object);
+
+            _azureTableMetadataStore.Setup(x => x.GetEntity(It.IsAny<TableClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(_azureTableEntity!);
+
+            _azureTableMetadataStore.Setup(x => x.AddEntity(It.IsAny<TableClient>(), It.IsAny<TableEntity>(), It.IsAny<CancellationToken>())).Returns(true);
+
+            _azureTableMetadataStore.Setup(x => x.UpdateEntity(It.IsAny<TableClient>(), It.IsAny<TableEntity>(), It.IsAny<CancellationToken>())).Returns(true);
 #pragma warning disable CS8604 // Possible null reference argument.
-            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, _mockClient.Object, orchestrationHelper);
-            var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, orchestrationHelper);
-            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore, _mockClient.Object, orchestrationHelper);
-            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory, _azureTableMetadataStore);
+            var exportOrchestrator = new ExportOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper.Object);
+            var importOrchestrator = new ImportOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, orchestrationHelper.Object);
+            var exportStatusOrchestrator = new ExportStatusOrchestrator(_exportProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object, _mockClient.Object, orchestrationHelper.Object);
+            var importStatusOrchestrator = new ImportStatusOrchestrator(_importProcessor.Object, options: _config, _azureTableClientFactory.Object, _azureTableMetadataStore.Object);
             try
             {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.

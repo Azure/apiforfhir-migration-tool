@@ -6,6 +6,7 @@
 using Azure;
 using Azure.Data.Tables;
 using FhirMigrationTool.Configuration;
+using FhirMigrationTool.ExceptionHelper;
 using FhirMigrationTool.FhirOperation;
 using FhirMigrationTool.Models;
 using FhirMigrationTool.OrchestrationHelper;
@@ -114,10 +115,11 @@ namespace FhirMigrationTool
                 else
                 {
                     TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
-                    int jobId = (int)qEntity["JobId"];
-                    string rowKey = _options.RowKey + jobId++;
-
-                    var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
+                    if (qEntity["JobId"] != null)
+                    {
+                        int jobId = (int)qEntity["JobId"];
+                        string rowKey = _options.RowKey + jobId++;
+                        var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
                             {
                                 { "exportContentLocation", statusUrl },
                                 { "importContentLocation", string.Empty },
@@ -127,13 +129,14 @@ namespace FhirMigrationTool
                                 { "IsImportRunning", "Not Started" },
                                 { "ImportRequest", string.Empty },
                             };
-                    _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
-                    TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
-                    qEntitynew["JobId"] = jobId++;
+                        _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
+                        TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                        qEntitynew["JobId"] = jobId++;
 
-                    _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                        _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
 
-                    // throw new HttpFailureException($"Status: {exportResponse.Status} Response: {exportResponse.Content} ");
+                        throw new HttpFailureException($"Status: {exportResponse.Status} Response: {exportResponse.Content} ");
+                    }
                 }
             }
             catch
