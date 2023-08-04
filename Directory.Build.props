@@ -11,9 +11,9 @@
     <HighEntropyVA>true</HighEntropyVA>
     <LangVersion>latest</LangVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Product>Azure FHIR Migration Tool</Product>
+    <Product>Azure API for FHIR Migration Tool</Product>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <RepositoryUrl>https://github.com/azure/fhir-migration-tool/</RepositoryUrl>
+    <RepositoryUrl>https://github.com/azure/apiforfhir-migration-tool/</RepositoryUrl>
     <IsPackable>false</IsPackable>
     <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -39,21 +39,14 @@
           <PropertyGroup>
             <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)/CustomAnalysisRules.Test.ruleset</CodeAnalysisRuleSet>
           </PropertyGroup>
-          
           <ItemGroup>
             <PackageReference Include="coverlet.collector" Version="3.1.2" PrivateAssets="all" IncludeAssets="Runtime;Build;Native;contentFiles;Analyzers" />
-            <AdditionalFiles Include="$(MSBuildThisFileDirectory)/CustomAnalysisRules.ruleset" Link="CustomAnalysisRules.ruleset" />
-            <AdditionalFiles Include="$(MSBuildThisFileDirectory)/CustomAnalysisRules.Test.ruleset" Link="CustomAnalysisRules.Test.ruleset" />
           </ItemGroup>
         </When>
         <Otherwise>
           <PropertyGroup>
             <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)/CustomAnalysisRules.ruleset</CodeAnalysisRuleSet>
           </PropertyGroup>
-
-          <ItemGroup>
-            <AdditionalFiles Include="$(MSBuildThisFileDirectory)/CustomAnalysisRules.ruleset" Link="CustomAnalysisRules.ruleset" />
-          </ItemGroup>
         </Otherwise>
       </Choose>
     </When>
