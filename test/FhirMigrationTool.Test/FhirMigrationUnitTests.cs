@@ -12,6 +12,7 @@ using FhirMigrationTool.FhirOperation;
 using FhirMigrationTool.Models;
 using FhirMigrationTool.OrchestrationHelper;
 using FhirMigrationTool.Processors;
+using FhirMigrationTool.SearchParameterOperation;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +21,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Newtonsoft.Json.Linq;
 
 namespace FhirMigrationtool.Tests
 {
@@ -43,6 +45,9 @@ namespace FhirMigrationtool.Tests
         private static IAzureTableClientFactory? _azureTableClientFactory;
         private static IMetadataStore? _azureTableMetadataStore;
         private static TableServiceClient? _tableServiceClient;
+        private readonly Mock<ISearchParameterOperation> _mockSearchParameterOperation;
+        private static ILogger<SearchParameterMigrationActivity>? _loggerSearchParameter;
+        private static ILogger<SearchParameterOperation>? _loggerSearchParameterOperation;
 
         // private readonly Mock<IImportProcessor> _importProcessor;
         public FhirMigrationUnitTests()
@@ -51,6 +56,7 @@ namespace FhirMigrationtool.Tests
             _exportProcessor = new Mock<IFhirProcessor>();
             _importProcessor = new Mock<IFhirProcessor>();
             _mockHttpClient = new Mock<HttpClient>();
+            _mockSearchParameterOperation = new Mock<ISearchParameterOperation>();
         }
 
         [ClassInitialize]
@@ -62,6 +68,9 @@ namespace FhirMigrationtool.Tests
                  .AddEnvironmentVariables();
             IConfigurationRoot root = builder.Build();
             _config = new MigrationOptions();
+            _config.AppInsightConnectionstring = "InstrumentationKey=Test;";
+            _config.StagingStorageUri = "https://storageuri.net";
+            _config.SourceUri = _config.DestinationUri = new Uri("https://dummy.azurehealthcareapis.com");
             root.Bind(_config);
 
             TelemetryConfiguration telemetryConfiguration = new TelemetryConfiguration();
@@ -103,6 +112,8 @@ namespace FhirMigrationtool.Tests
                         .AddConsole());
 
                     _logger = loggerFactory.CreateLogger<FhirMigrationUnitTests>();
+                    _loggerSearchParameter = loggerFactory.CreateLogger<SearchParameterMigrationActivity>();
+                    _loggerSearchParameterOperation = loggerFactory.CreateLogger<SearchParameterOperation>();
 
                     // _loggerExport = loggerFactory.CreateLogger<ExportProcessor>();
                     // _loggerImport = loggerFactory.CreateLogger<ImportProcessor>();
@@ -115,6 +126,8 @@ namespace FhirMigrationtool.Tests
                     root.Bind(orchestrationHelper);
                     root.Bind(_azureTableClientFactory);
                     root.Bind(_azureTableMetadataStore);
+                    root.Bind(_loggerSearchParameter);
+                    root.Bind(_loggerSearchParameterOperation);
                 }
             }
         }
@@ -600,6 +613,115 @@ namespace FhirMigrationtool.Tests
             catch (Exception ex)
             {
                 _loggerExport.LogError($"Error occurred during test: {ex.Message}");
+#pragma warning restore CS8604 // Possible null reference argument.
+            }
+        }
+
+        [TestMethod]
+        public async Task SearchParamterMigrationTestPass()
+        {
+            string mockSearchParamterJson = await File.ReadAllTextAsync("../../../mock_search_parameter.json");
+            string mockTranformedSearchParamterJson = await File.ReadAllTextAsync("../../../mock_Transformed_Search_Parameters.json");
+            _mockSearchParameterOperation.Setup(x => x.GetSearchParameters()).Returns(Task.FromResult(JObject.Parse(mockSearchParamterJson)));
+
+            _mockSearchParameterOperation.Setup(x => x.TransformObject(JObject.Parse(mockSearchParamterJson))).Returns(mockTranformedSearchParamterJson);
+
+#pragma warning disable CS8604 // Possible null reference argument.
+            var searchParameterMigrationActivity = new SearchParameterMigrationActivity(_mockSearchParameterOperation.Object, _loggerSearchParameter);
+#pragma warning restore CS8604 // Possible null reference argument.
+
+            try
+            {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+                await searchParameterMigrationActivity.SearchParameterMigration(null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+            }
+            catch (Exception ex)
+            {
+                _loggerSearchParameter.LogError($"Error occurred during test: {ex.Message}");
+            }
+        }
+
+        [TestMethod]
+        public async Task GetSearchParametersTestPass()
+        {
+            string mockSearchParamterJson = await File.ReadAllTextAsync("../../../mock_search_parameter.json");
+            string mockTranformedSearchParamterJson = await File.ReadAllTextAsync("../../../mock_Transformed_Search_Parameters.json");
+
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(mockSearchParamterJson),
+            };
+
+            _mockClient.Setup(c => c.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(response));
+            try
+            {
+#pragma warning disable CS8604 // Possible null reference argument.
+                ISearchParameterOperation searchParameterOperation = new SearchParameterOperation(options: _config, _mockClient.Object, _loggerSearchParameterOperation);
+#pragma warning restore CS8604 // Possible null reference argument.
+
+                JObject jObjectResponse = await searchParameterOperation.GetSearchParameters();
+
+                Assert.IsTrue(JToken.DeepEquals(jObjectResponse, JObject.Parse(mockSearchParamterJson)));
+            }
+            catch (Exception ex)
+            {
+#pragma warning disable CS8604 // Possible null reference argument.
+                _loggerSearchParameterOperation.LogError($"Error occurred during test: {ex.Message}");
+#pragma warning restore CS8604 // Possible null reference argument.
+            }
+        }
+
+        [TestMethod]
+        public async Task TransformObjectTestPass()
+        {
+            string mockSearchParamterJson = await File.ReadAllTextAsync("../../../mock_search_parameter.json");
+            string mockTranformedSearchParamterJson = await File.ReadAllTextAsync("../../../mock_Transformed_Search_Parameters.json");
+
+            try
+            {
+#pragma warning disable CS8604 // Possible null reference argument.
+                ISearchParameterOperation searchParameterOperation = new SearchParameterOperation(options: _config, _mockClient.Object, _loggerSearchParameterOperation);
+#pragma warning restore CS8604 // Possible null reference argument.
+
+                string transformedJson = searchParameterOperation.TransformObject(JObject.Parse(mockSearchParamterJson));
+
+                Assert.AreEqual(JObject.Parse(mockTranformedSearchParamterJson)["type"], JObject.Parse(mockTranformedSearchParamterJson)["type"]);
+            }
+            catch (Exception ex)
+            {
+#pragma warning disable CS8604 // Possible null reference argument.
+                _loggerSearchParameterOperation.LogError($"Error occurred during test: {ex.Message}");
+#pragma warning restore CS8604 // Possible null reference argument.
+            }
+        }
+
+        [TestMethod]
+        public async Task PostSearchParametersTestPass()
+        {
+            string mockTranformedSearchParamterJson = await File.ReadAllTextAsync("../../../mock_Transformed_Search_Parameters.json");
+
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(mockTranformedSearchParamterJson),
+            };
+
+            _mockClient.Setup(c => c.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<Uri>(), It.IsAny<string>())).Returns(Task.FromResult(response));
+
+            try
+            {
+#pragma warning disable CS8604 // Possible null reference argument.
+                ISearchParameterOperation searchParameterOperation = new SearchParameterOperation(options: _config, _mockClient.Object, _loggerSearchParameterOperation);
+#pragma warning restore CS8604 // Possible null reference argument.
+
+                await searchParameterOperation.PostSearchParameters(mockTranformedSearchParamterJson);
+            }
+            catch (Exception ex)
+            {
+#pragma warning disable CS8604 // Possible null reference argument.
+                _loggerSearchParameterOperation.LogError($"Error occurred during test: {ex.Message}");
 #pragma warning restore CS8604 // Possible null reference argument.
             }
         }

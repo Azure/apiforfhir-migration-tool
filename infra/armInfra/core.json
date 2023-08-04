@@ -133,7 +133,7 @@
     "outputs": {
         "Azure_FunctionUrl": {
             "type": "string",
-            "value": "[reference('functioDeploy').outputs.functionBaseUrl.value]"
+            "value": "[reference('functionDeploy').outputs.functionBaseUrl.value]"
         }
     }
 }
