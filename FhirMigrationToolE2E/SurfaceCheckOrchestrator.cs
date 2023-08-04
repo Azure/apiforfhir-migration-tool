@@ -3,15 +3,14 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
-using FhirMigrationTool.Configuration;
-using FhirMigrationTool.FhirOperation;
-using FhirMigrationTool.SurfaceCheck;
+using FhirMigrationToolE2E.Configuration;
+using FhirMigrationToolE2E.FhirOperation;
+using FhirMigrationToolE2E.SurfaceCheck;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 
-namespace FhirMigrationTool
+namespace FhirMigrationToolE2E
 {
     public class SurfaceCheckOrchestrator
     {

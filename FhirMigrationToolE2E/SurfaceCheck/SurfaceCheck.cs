@@ -3,14 +3,14 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
-using FhirMigrationTool.Configuration;
-using FhirMigrationTool.FhirOperation;
+using FhirMigrationToolE2E.Configuration;
+using FhirMigrationToolE2E.FhirOperation;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace FhirMigrationTool.SurfaceCheck
+namespace FhirMigrationToolE2E.SurfaceCheck
 {
     public class SurfaceCheck : ISurfaceCheck
     {

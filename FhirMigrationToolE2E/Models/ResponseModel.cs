@@ -3,10 +3,12 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
-namespace FhirMigrationTool.SurfaceCheck
+namespace FhirMigrationToolE2E.Models
 {
-    public interface ISurfaceCheck
+    public class ResponseModel
     {
-        Task<string> Execute(string query);
+        public ResponseStatus Status { get; set; }
+
+        public string Content { get; set; } = string.Empty;
     }
 }

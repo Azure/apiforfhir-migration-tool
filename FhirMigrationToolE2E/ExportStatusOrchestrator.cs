@@ -5,18 +5,18 @@
 
 using Azure;
 using Azure.Data.Tables;
-using FhirMigrationTool.Configuration;
-using FhirMigrationTool.ExceptionHelper;
-using FhirMigrationTool.FhirOperation;
-using FhirMigrationTool.Models;
-using FhirMigrationTool.OrchestrationHelper;
-using FhirMigrationTool.Processors;
+using FhirMigrationToolE2E.Configuration;
+using FhirMigrationToolE2E.ExceptionHelper;
+using FhirMigrationToolE2E.FhirOperation;
+using FhirMigrationToolE2E.Models;
+using FhirMigrationToolE2E.OrchestrationHelper;
+using FhirMigrationToolE2E.Processors;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 
-namespace FhirMigrationTool
+namespace FhirMigrationToolE2E
 {
     public class ExportStatusOrchestrator
     {

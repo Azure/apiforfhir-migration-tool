@@ -5,14 +5,14 @@
 
 using System.Net;
 using System.Text;
-using FhirMigrationTool.Configuration;
-using FhirMigrationTool.FhirOperation;
-using FhirMigrationTool.OrchestrationHelper;
-using FhirMigrationTool.Processors;
+using FhirMigrationToolE2E.Configuration;
+using FhirMigrationToolE2E.FhirOperation;
+using FhirMigrationToolE2E.OrchestrationHelper;
+using FhirMigrationToolE2E.Processors;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
-namespace FhirMigrationTool.E2E
+namespace FhirMigrationToolE2E.E2E
 {
     public class E2ETest
     {

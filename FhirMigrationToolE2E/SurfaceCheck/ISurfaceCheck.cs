@@ -3,9 +3,9 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
-namespace FhirMigrationTool.DeepCheck
+namespace FhirMigrationToolE2E.SurfaceCheck
 {
-    public interface IDeepCheck
+    public interface ISurfaceCheck
     {
         Task<string> Execute(string query);
     }
