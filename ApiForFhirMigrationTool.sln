@@ -6,7 +6,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Fun
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Function.UnitTests", "src\ApiForFhirMigrationTool.Function.UnitTests\ApiForFhirMigrationTool.Function.UnitTests.csproj", "{2E63DF62-4D10-4154-8285-F0128A5D3E4B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Tests.E2E", "test\ApiForFhirMigrationTool.Tests.E2E\ApiForFhirMigrationTool.Tests.E2E.csproj", "{D4A731F1-CD92-4718-A2BE-DB930603E74B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Function.Tests.E2E", "test\ApiForFhirMigrationTool.Function.Tests.E2E\ApiForFhirMigrationTool.Function.Tests.E2E.csproj", "{D4A731F1-CD92-4718-A2BE-DB930603E74B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AEC3D6E6-BD18-4F2C-8264-480F4CD7F57F}"
 EndProject
