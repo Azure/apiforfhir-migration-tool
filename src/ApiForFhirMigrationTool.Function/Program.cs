@@ -24,7 +24,7 @@ using Microsoft.Net.Http.Headers;
 using Polly;
 using Polly.Extensions.Http;
 
-internal class Program
+public class Program
 {
     private static void Main(string[] args)
     {
