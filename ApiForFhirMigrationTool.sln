@@ -2,11 +2,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33530.505
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool", "src\ApiForFhirMigrationTool\ApiForFhirMigrationTool.csproj", "{A43CA601-3729-4E8F-B8B2-31DC84C410F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Function", "src\ApiForFhirMigrationTool.Function\ApiForFhirMigrationTool.Function.csproj", "{A43CA601-3729-4E8F-B8B2-31DC84C410F5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Tests.Unit", "test\FhirMigrationTool.Tests.Unit\ApiForFhirMigrationTool.Tests.Unit.csproj", "{2E63DF62-4D10-4154-8285-F0128A5D3E4B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Function.UnitTests", "src\ApiForFhirMigrationTool.Function.UnitTests\ApiForFhirMigrationTool.Function.UnitTests.csproj", "{2E63DF62-4D10-4154-8285-F0128A5D3E4B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Tests.E2E", "test\FhirMigrationTool.Tests.E2E\ApiForFhirMigrationTool.Tests.E2E.csproj", "{D4A731F1-CD92-4718-A2BE-DB930603E74B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Tests.E2E", "test\ApiForFhirMigrationTool.Tests.E2E\ApiForFhirMigrationTool.Tests.E2E.csproj", "{D4A731F1-CD92-4718-A2BE-DB930603E74B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AEC3D6E6-BD18-4F2C-8264-480F4CD7F57F}"
 EndProject
@@ -45,7 +45,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A43CA601-3729-4E8F-B8B2-31DC84C410F5} = {AEC3D6E6-BD18-4F2C-8264-480F4CD7F57F}
-		{2E63DF62-4D10-4154-8285-F0128A5D3E4B} = {D2E913EA-7506-48B5-A80F-83642B6C8261}
+		{2E63DF62-4D10-4154-8285-F0128A5D3E4B} = {AEC3D6E6-BD18-4F2C-8264-480F4CD7F57F}
 		{D4A731F1-CD92-4718-A2BE-DB930603E74B} = {D2E913EA-7506-48B5-A80F-83642B6C8261}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
