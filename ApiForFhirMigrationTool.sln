@@ -1,0 +1,54 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33530.505
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Function", "src\ApiForFhirMigrationTool.Function\ApiForFhirMigrationTool.Function.csproj", "{A43CA601-3729-4E8F-B8B2-31DC84C410F5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Function.UnitTests", "src\ApiForFhirMigrationTool.Function.UnitTests\ApiForFhirMigrationTool.Function.UnitTests.csproj", "{2E63DF62-4D10-4154-8285-F0128A5D3E4B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Function.Tests.E2E", "test\ApiForFhirMigrationTool.Function.Tests.E2E\ApiForFhirMigrationTool.Function.Tests.E2E.csproj", "{D4A731F1-CD92-4718-A2BE-DB930603E74B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AEC3D6E6-BD18-4F2C-8264-480F4CD7F57F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D2E913EA-7506-48B5-A80F-83642B6C8261}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{404C6C33-DB00-4182-BD90-F10A8B17C321}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		CustomAnalysisRules.ruleset = CustomAnalysisRules.ruleset
+		CustomAnalysisRules.Test.ruleset = CustomAnalysisRules.Test.ruleset
+		Directory.Build.props = Directory.Build.props
+		global.json = global.json
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A43CA601-3729-4E8F-B8B2-31DC84C410F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A43CA601-3729-4E8F-B8B2-31DC84C410F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A43CA601-3729-4E8F-B8B2-31DC84C410F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A43CA601-3729-4E8F-B8B2-31DC84C410F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E63DF62-4D10-4154-8285-F0128A5D3E4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E63DF62-4D10-4154-8285-F0128A5D3E4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E63DF62-4D10-4154-8285-F0128A5D3E4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E63DF62-4D10-4154-8285-F0128A5D3E4B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4A731F1-CD92-4718-A2BE-DB930603E74B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4A731F1-CD92-4718-A2BE-DB930603E74B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4A731F1-CD92-4718-A2BE-DB930603E74B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4A731F1-CD92-4718-A2BE-DB930603E74B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A43CA601-3729-4E8F-B8B2-31DC84C410F5} = {AEC3D6E6-BD18-4F2C-8264-480F4CD7F57F}
+		{2E63DF62-4D10-4154-8285-F0128A5D3E4B} = {AEC3D6E6-BD18-4F2C-8264-480F4CD7F57F}
+		{D4A731F1-CD92-4718-A2BE-DB930603E74B} = {D2E913EA-7506-48B5-A80F-83642B6C8261}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6CF1AD2F-10B7-45B0-A854-934BF7402B68}
+	EndGlobalSection
+EndGlobal
