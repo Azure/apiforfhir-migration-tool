@@ -107,7 +107,7 @@
                               "required": "[equals('', steps('basics').storageAccount)]",
                               "validations": [
                                 {
-                                  "regex": "^[a-z]{3,24}$",
+                                  "regex": "^[a-z0-9]{3,24}$",
                                   "message": "Allowed: Length between 3 and 24 characters with only lowercase letters and numbers."
                                 }
                               ]

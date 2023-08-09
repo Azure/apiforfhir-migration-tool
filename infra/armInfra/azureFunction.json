@@ -220,52 +220,51 @@
                     }
                 } 
             ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "name": "functionFhirServiceRoleAssignment",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "relativePath": "roleAssignment.json"
+                },
+                "parameters": {
+                    "resourceId": {
+                        "value": "[resourceId('Microsoft.HealthcareApis/services', parameters('apiForFhirName'))]"
+                    },
+                    "roleId": {
+                        "value": "4465e953-8ced-4406-a58e-0f6e3f3b530b"
+                    },
+                    "principalId": {
+                        "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName'))).identity.principalId]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "name": "bulk-import-function-fhir-managed-id-role-assignment",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "relativePath": "roleAssignment.json"
+                },
+                "parameters": {
+                    "resourceId": {
+                        "value": "[resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', parameters('fhirServiceName'))]"
+                    },
+                    "roleId": {
+                        "value": "3db33094-8700-4567-8da5-1501d4e7e843"
+                    },
+                    "principalId": {
+                        "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName'))).identity.principalId]"
+                    }
+                }
+            }
         }
-        // ,
-        // {
-        //     "type": "Microsoft.Resources/deployments",
-        //     "apiVersion": "2022-09-01",
-        //     "name": "functionFhirServiceRoleAssignment",
-        //     "properties": {
-        //         "mode": "Incremental",
-        //         "templateLink": {
-        //             "relativePath": "roleAssignment.json"
-        //         },
-        //         "parameters": {
-        //             "resourceId": {
-        //                 "value": "[resourceId('Microsoft.HealthcareApis/services', parameters('apiForFhirName'))]"
-        //             },
-        //             "roleId": {
-        //                 "value": "4465e953-8ced-4406-a58e-0f6e3f3b530b"
-        //             },
-        //             "principalId": {
-        //                 "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName'))).identity.principalId]"
-        //             }
-        //         }
-        //     }
-        // },
-        // {
-        //     "type": "Microsoft.Resources/deployments",
-        //     "apiVersion": "2022-09-01",
-        //     "name": "bulk-import-function-fhir-managed-id-role-assignment",
-        //     "properties": {
-        //         "mode": "Incremental",
-        //         "templateLink": {
-        //             "relativePath": "roleAssignment.json"
-        //         },
-        //         "parameters": {
-        //             "resourceId": {
-        //                 "value": "[resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', parameters('fhirServiceName'))]"
-        //             },
-        //             "roleId": {
-        //                 "value": "3db33094-8700-4567-8da5-1501d4e7e843"
-        //             },
-        //             "principalId": {
-        //                 "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName'))).identity.principalId]"
-        //             }
-        //         }
-        //     }
-        // }
     ],
     "outputs": {
         "functionAppKey": {

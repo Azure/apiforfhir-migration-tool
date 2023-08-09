@@ -13,6 +13,7 @@
         "location": {
             "type": "string",
             "minLength": 1,
+            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Primary location for all resources"
             }
@@ -57,7 +58,7 @@
             "properties": {
             "mode": "Incremental",
             "templateLink": {
-                "relativePath": "core.json"
+                "relativePath": "./core.json"
             },
             "parameters": {
                 "prefixName": {
@@ -88,7 +89,17 @@
             "kind": "StorageV2",
             "sku": {
                 "name": "Standard_LRS"
-            }
+            },
+            "resources": [
+                {
+                    "type": "containers",
+                    "apiVersion": "2021-08-01",
+                    "name": "migration",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', concat('store', variables('prefixNameCleanShort')))]"
+                    ]
+                }
+            ]
         },
         {
             "condition": false,
@@ -109,21 +120,10 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', concat('store', variables('prefixNameCleanShort')))]"
             ]
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-            "apiVersion": "2021-08-01",
-            "name": "migration",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', concat('store', variables('prefixNameCleanShort')))]"
-            ]
         }
+        
     ],
     "outputs": {
-        "location": {
-            "type": "string",
-            "value": "[parameters('location')]"
-        },
         "Azure_FunctionURL": {
             "type": "string",
             "value": "[reference('coreDeploy').outputs.Azure_FunctionURL.value]"
