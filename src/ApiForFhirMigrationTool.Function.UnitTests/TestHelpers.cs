@@ -5,11 +5,15 @@
 using System.Net;
 using ApiForFhirMigrationTool.Function.Configuration;
 using ApiForFhirMigrationTool.Function.FhirOperation;
+using ApiForFhirMigrationTool.Function.Migration;
 using ApiForFhirMigrationTool.Function.Models;
 using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
+using ApiForFhirMigrationTool.Function.SearchParameterOperation;
 using Azure.Data.Tables;
+using Microsoft.Extensions.Logging;
 using Moq;
+using Newtonsoft.Json.Linq;
 
 namespace ApiForFhirMigrationTool.Function.UnitTests
 {
@@ -25,6 +29,10 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
         internal static string MockImportStatusResponse => File.ReadAllText("../../../TestFiles/mock_import_status_response.json");
 
         internal static string TestImportBody => File.ReadAllText("../../../TestFiles/import_body.json");
+
+        internal static string MockSearchParamterJson => File.ReadAllText("../../../TestFiles/mock_search_parameter.json");
+
+        internal static string MockTranformedSearchParamterJson => File.ReadAllText("../../../TestFiles/mock_Transformed_Search_Parameters.json");
 
         internal static Mock<IAzureTableClientFactory> GetMockAzureTableClientFactory()
         {
@@ -316,6 +324,56 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
             .Returns(Task.FromResult(importResponse));
 
             return importProcessor;
+        }
+
+        internal static SearchParameterMigrationActivity GetTestSearchParameterActivity(ISearchParameterOperation searchParameterOperation)
+        {
+            var loggerMock = new Mock<ILogger<SearchParameterMigrationActivity>>();
+
+            return new SearchParameterMigrationActivity(searchParameterOperation, loggerMock.Object);
+        }
+
+        internal static Mock<ISearchParameterOperation> SetupSearchParameterOperationResponse(this Mock<ISearchParameterOperation> searchParamterOperationClient)
+        {
+            searchParamterOperationClient.Setup(x => x.GetSearchParameters()).Returns(Task.FromResult(JObject.Parse(MockSearchParamterJson)));
+
+            searchParamterOperationClient.Setup(x => x.TransformObject(It.IsAny<JObject>())).Returns(MockTranformedSearchParamterJson);
+
+            searchParamterOperationClient.Setup(x => x.PostSearchParameters(It.IsAny<string>()));
+
+            return searchParamterOperationClient;
+        }
+
+        internal static Mock<IFhirClient> SetupSuccessfulGetSearchParameterOperationResponse(this Mock<IFhirClient> fhirClient)
+        {
+            fhirClient.Setup(c => c.Send(
+                It.IsAny<HttpRequestMessage>(),
+                It.IsAny<Uri>(),
+                It.IsAny<string>()))
+            .Returns(Task.FromResult(
+                 new HttpResponseMessage
+                 {
+                     StatusCode = HttpStatusCode.OK,
+                     Content = new StringContent(MockSearchParamterJson),
+                 }));
+
+            return fhirClient;
+        }
+
+        internal static Mock<IFhirClient> SetupSuccessfulPostSearchParameterOperationResponse(this Mock<IFhirClient> fhirClient)
+        {
+            fhirClient.Setup(c => c.Send(
+                It.IsAny<HttpRequestMessage>(),
+                It.IsAny<Uri>(),
+                It.IsAny<string>()))
+            .Returns(Task.FromResult(
+                 new HttpResponseMessage
+                 {
+                     StatusCode = HttpStatusCode.OK,
+                     Content = new StringContent(MockTranformedSearchParamterJson),
+                 }));
+
+            return fhirClient;
         }
     }
 }
