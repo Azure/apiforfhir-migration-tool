@@ -30,13 +30,15 @@
     },
     "functions": [],
     "variables": {
+        "permission": ["Microsoft.Storage"]
     },
     "resources": [
         {
+            "condition": false,
             "type": "Microsoft.Authorization/roleDefinitions",
             "apiVersion": "2022-04-01",
-            "name": "[parameters('roleId')]",
-            "scope": "[subscription().id]"            
+            "name": "[parameters('roleId')]"
+                        
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
