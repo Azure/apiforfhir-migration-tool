@@ -1,0 +1,64 @@
+{
+    "resourceType": "Bundle",
+    "id": "4d6b84f5f7a8ae18c38979e16e3c6faf",
+    "meta": {
+        "lastUpdated": "2023-07-26T05:14:34.6028379+00:00"
+    },
+    "type": "searchset",
+    "link": [
+        {
+            "relation": "self",
+            "url": "https://demofhirsearch.azurehealthcareapis.com/SearchParameter"
+        }
+    ],
+    "entry": [
+        {
+            "fullUrl": "https://demofhirsearch.azurehealthcareapis.com/SearchParameter/f1c646a4-88ef-40fe-97e8-7e704a808736",
+            "resource": {
+                "resourceType": "SearchParameter",
+                "id": "f1c646a4-88ef-40fe-97e8-7e704a808736",
+                "meta": {
+                    "versionId": "1",
+                    "lastUpdated": "2023-07-18T02:51:05.436+00:00"
+                },
+                "url": "http://hl7.org/fhir/us/core/SearchParameter/us-core-ethnicity",
+                "version": "3.1.1",
+                "name": "USCoreEthnicity",
+                "status": "active",
+                "date": "2023-01-18",
+                "publisher": "US Realm Steering Committee",
+                "contact": [
+                    {
+                        "telecom": [
+                            {
+                                "system": "other",
+                                "value": "http://www.healthit.gov/"
+                            }
+                        ]
+                    }
+                ],
+                "description": "Returns patients with a ethnicity extension matching the specified code.",
+                "jurisdiction": [
+                    {
+                        "coding": [
+                            {
+                                "system": "urn:iso:std:iso:3166",
+                                "code": "US",
+                                "display": "United States of America"
+                            }
+                        ]
+                    }
+                ],
+                "code": "ethnicity",
+                "base": [
+                    "Patient"
+                ],
+                "type": "token",
+                "expression": "Patient.extension.where(url = 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity').extension.value.code"
+            },
+            "search": {
+                "mode": "match"
+            }
+        }
+    ]
+}
