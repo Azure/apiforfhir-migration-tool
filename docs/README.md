@@ -6,7 +6,7 @@ API for FHIR migration tool is an [Azure durable function](https://learn.microso
 
 ## Architecture Overview
 
-![Architecture](Aimages/Migration-tool-V1.2-Architecture.png)
+![Architecture](images/Migration-tool-V1.2-Architecture.png)
 
 # Prerequisites needed
 1.	Microsoft work or school account
