@@ -8,10 +8,12 @@ using ApiForFhirMigrationTool.Function.FhirOperation;
 using ApiForFhirMigrationTool.Function.Models;
 using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
+using ApiForFhirMigrationTool.Function.SearchParameterOperation;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace ApiForFhirMigrationTool.Function.UnitTests
@@ -23,6 +25,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
         private readonly Mock<FunctionContext> _mockFunctionContext;
         private readonly Mock<IMetadataStore> _azureTableMetadataStore;
         private readonly Mock<IOrchestrationHelper> _orchestrationHelper;
+        private readonly Mock<ISearchParameterOperation> _mockSearchParameterOperation;
 
         public FhirMigrationUnitTests()
         {
@@ -30,6 +33,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
             _mockFunctionContext = new Mock<FunctionContext>();
             _azureTableMetadataStore = new Mock<IMetadataStore>();
             _orchestrationHelper = new Mock<IOrchestrationHelper>();
+            _mockSearchParameterOperation = new Mock<ISearchParameterOperation>();
 
             _config = new MigrationOptions
             {
@@ -154,7 +158,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
 
             Assert.Equal(ResponseStatus.Accepted, exportResponse.Status);
             Assert.Equal(ResponseStatus.Failed, exportStatusResponse.Status);
-    }
+        }
 
         [Fact]
         public async Task GivenAMigrationWorkflow_WhenImportOperationFails_OrchestratorReturnCorrectStatusCodes()
@@ -202,6 +206,60 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
             Assert.Equal(ResponseStatus.Completed, exportStatusResponse.Status);
             Assert.Equal(ResponseStatus.Accepted, importResponse.Status);
             Assert.Equal(ResponseStatus.Failed, importStatusResponse.Status);
+        }
+
+        [Fact]
+        public async Task GivenSearchParameterMigrationRequest_WhenMigrationSuccess_ShouldReturnNoException()
+        {
+            var searchParameterMigrationProcessor = new Mock<ISearchParameterOperation>()
+                                    .SetupSearchParameterOperationResponse();
+
+            await TestHelpers.GetTestSearchParameterActivity(searchParameterMigrationProcessor.Object)
+                                        .SearchParameterMigration(_mockFunctionContext.Object);
+
+            searchParameterMigrationProcessor.Verify(x => x.GetSearchParameters(), Times.Once());
+            searchParameterMigrationProcessor.Verify(x => x.TransformObject(It.IsAny<JObject>()), Times.Once());
+            searchParameterMigrationProcessor.Verify(x => x.PostSearchParameters(It.IsAny<string>()), Times.Once());
+        }
+
+        [Fact]
+        public async Task GivenSearchParameterMigrationRequest_WhenFhirReturnsSearchParameter_ShouldReturnResponseWithSuccess()
+        {
+            _mockClient.SetupSuccessfulGetSearchParameterOperationResponse();
+
+            var loggerMock = new Mock<ILogger<SearchParameterOperation.SearchParameterOperation>>();
+
+            ISearchParameterOperation searchParameterOperation = new SearchParameterOperation.SearchParameterOperation(_config, _mockClient.Object, loggerMock.Object);
+
+            JObject searchParameters = await searchParameterOperation.GetSearchParameters();
+
+            Assert.True(JToken.DeepEquals(searchParameters, JObject.Parse(TestHelpers.MockSearchParamterJson)));
+        }
+
+        [Fact]
+        public void GivenSearchParameterMigrationRequest_WhenSearchParameterBundleTransformed_ShouldReturnTransformedBundle()
+        {
+            var loggerMock = new Mock<ILogger<SearchParameterOperation.SearchParameterOperation>>();
+
+            ISearchParameterOperation searchParameterOperation = new SearchParameterOperation.SearchParameterOperation(_config, _mockClient.Object, loggerMock.Object);
+
+            string transformedJson = searchParameterOperation.TransformObject(JObject.Parse(TestHelpers.MockSearchParamterJson));
+
+            Assert.Equal("batch", JObject.Parse(transformedJson)["type"]);
+        }
+
+        [Fact]
+        public void GivenSearchParameterMigrationRequest_WhenPostSearchParameterBundle_ShouldReturnNoException()
+        {
+            _mockClient.SetupSuccessfulPostSearchParameterOperationResponse();
+
+            var loggerMock = new Mock<ILogger<SearchParameterOperation.SearchParameterOperation>>();
+
+            ISearchParameterOperation searchParameterOperation = new SearchParameterOperation.SearchParameterOperation(_config, _mockClient.Object, loggerMock.Object);
+
+            searchParameterOperation.PostSearchParameters(TestHelpers.MockTranformedSearchParamterJson);
+
+            _mockClient.Verify(x => x.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<Uri>(), It.IsAny<string>()), Times.Once());
         }
     }
 }
