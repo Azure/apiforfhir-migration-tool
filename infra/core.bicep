@@ -8,10 +8,10 @@ param fhirServiceName string
 param apiForFhirName string
 
 @description('Name of the new storage account.')
-param storeagAccountNew string
+param storageAccountExisting string
 
-@description('Name of the Log Analytics workspace to deploy or use. Leave blank to skip deployment')
-param logAnalyticsName string = '${prefixName}-la'
+@description('Name of the new storage account.')
+param storageAccountNew string
 
 @description('Location to deploy resources')
 param location string = resourceGroup().location
@@ -21,6 +21,9 @@ param appTags object = {}
 
 @description('Any custom function app settings')
 param functionAppCustomSettings object = {}
+
+@description('Name of the Log Analytics workspace to deploy or use. Leave blank to skip deployment')
+var logAnalyticsName = '${prefixName}-la'
 
 @description('Tenant ID where resources are deployed')
 var tenantId  = subscription().tenantId

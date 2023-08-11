@@ -1,0 +1,167 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+    "handler": "Microsoft.Azure.CreateUIDef",
+    "version": "0.1.2-preview",
+    "parameters": {
+        "resourceTypes": [
+            "Microsoft.Storage/storageAccounts",
+            "Microsoft.Web/sites",
+            "Microsoft.Insights/components",
+            "Microsoft.HealthcareApis/workspaces",
+            "Microsoft.HealthcareApis/services",
+            "Microsoft.Web/serverfarms",
+            "Microsoft.Resources/deployments",
+            "Microsoft.OperationalInsights/workspaces",
+            "Microsoft.Insights/diagnosticSettings",
+            "Microsoft.Authorization/roleDefinitions",
+            "Microsoft.Authorization/roleAssignments"
+        ],
+        "config": {
+            "isWizard": true,
+            "basics": { 
+                "description": "**FHIR Migration Tool Deployment",
+                "subscription": {
+                    "resourceProviders": [
+                        "Microsoft.EventGrid",
+                        "Microsoft.Insights",
+                        "Microsoft.ManagedIdentity",
+                        "Microsoft.Storage",
+                        "Microsoft.Web",
+                        "Microsoft.Resources",
+                        "Microsoft.HealthcareApis",
+                        "Microsoft.Authorization"
+                    ]
+                }
+            }
+        },
+        "basics": [
+            {
+                "name": "basicsConfigurationSection",
+                "type": "Microsoft.Common.Section",
+                "label": "Resource Configuration",
+                "elements": [
+                    {
+                        "name": "prefix",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Prefix for FHIR Migration Tool resources.",
+                        "defaultValue": "mig",
+                        "constraints": {
+                            "required": true,
+                            "validations": [
+                                {
+                                    "regex": "^[a-z0-9A-Z]{1,6}$",
+                                    "message": "Only alphanumeric characters are allowed, and the value must be 1-6 characters long."
+                                }
+                            ]
+                        },
+                        "visible": true
+                    }
+                ],
+                "visible": true
+            }
+        ],
+        "steps": [
+            {
+                "name": "fhirSelection",
+                "bladeTitle": "Fhir Selection",
+                "label": "Fhir Selection",
+                "subLabel": {
+                    "preValidation": "Select source and destination",
+                    "postValidation": "Done"
+                },
+                "elements": [
+                    {
+                        "name": "fhirSection",
+                        "type": "Microsoft.Common.Section",
+                        "label": "FHIR Connection",
+                        "elements": [
+                            {
+                                "name": "fhirServiceSelector",
+                                "label": "Select a FHIR Services inside an Azure Health Data Services workspace",
+                                "type": "Microsoft.Solutions.ResourceSelector",
+                                "resourceType": "Microsoft.HealthcareApis/workspaces/fhirservices",
+                                "options": {
+                                    "filter": {
+                                        "subscription": "onBasics",
+                                        "location": "onBasics"
+                                    }
+                                },
+                                "constraints": {
+                                    "required": "[equals('FhirService', steps('appSettings').fhirSection.fhirType)]"
+                                },
+                                "visible": "[equals('FhirService', steps('appSettings').fhirSection.fhirType)]"
+                            },
+                            {
+                                "name": "apiForFhirSelector",
+                                "label": "Select an API for FHIR resource",
+                                "type": "Microsoft.Solutions.ResourceSelector",
+                                "resourceType": "Microsoft.HealthcareApis/services",
+                                "options": {
+                                    "filter": {
+                                        "subscription": "onBasics",
+                                        "location": "onBasics"
+                                    }
+                                },
+                                "constraints": {
+                                    "required": "[equals('APIforFhir', steps('appSettings').fhirSection.fhirType)]"
+                                },
+                                "visible": "[equals('APIforFhir', steps('appSettings').fhirSection.fhirType)]"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "storageSelection",
+                "bladeTitle": "Storage Selection",
+                "label": "Storage Selection",
+                "subLabel": {
+                    "preValidation": "Select Storage Account",
+                    "postValidation": "Done"
+                },
+                "elements": [
+                    {
+                        "name": "storageSection",
+                        "type": "Microsoft.Common.Section",
+                        "label": "storage Connection",
+                        "elements": [
+                            {
+                                "name": "storageAccountSelector",
+                                "label": "Select an Existing storage account",
+                                "type": "Microsoft.Solutions.ResourceSelector",
+                                "resourceType": "Microsoft.Storage/storageAccounts",
+                                "options": {
+                                    "filter": {
+                                        "subscription": "onBasics",
+                                        "location": "onBasics"
+                                    }
+                                },
+                                "constraints": {
+                                    "required": false
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "newStorageAccount",
+                                "label": "Name for new Storage Account",
+                                "type": "Microsoft.Common.TextBox",
+                                "constraints": {
+                                    "required": false
+                                },
+                                "visible": true
+                            }
+                        ]
+                    }
+                ]
+            }
+         ],
+        "outputs": { 
+            "prefix": "[basics('basicsConfigurationSection').prefix]",
+            "location": "[location()]",
+            "fhirServiceName": "[steps('fhirSelection').fhirSection.fhirServiceSelector.name]",
+            "apiForFhirName": "[steps('fhirSelection').fhirSection.apiForFhirSelector.name]",
+            "storageAccount": "[steps('storageSelection').storageSection.storageAccountSelector.name]",
+            "storageAccountNew": "[steps('storageSelection').storageSection.newStorageAccount]"
+        }
+    }
+}

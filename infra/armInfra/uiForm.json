@@ -133,6 +133,7 @@
             "subscriptionId": "[steps('basics').resourceScope.subscription.id]",
             "parameters": {
                 "prefix": "[steps('basics').prefix]",
+                "location": "[steps('basics').resourceScope.location.name]",
                 "fhirServiceName": "[steps('basics').fhirServiceName.name]",
                 "apiForFhirName": "[steps('basics').apiForFhirName.name]",
                 "storageAccount": "[steps('basics').storageAccount.name]",
