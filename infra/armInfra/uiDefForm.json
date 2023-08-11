@@ -87,9 +87,9 @@
                                     }
                                 },
                                 "constraints": {
-                                    "required": "[equals('FhirService', steps('appSettings').fhirSection.fhirType)]"
+                                    "required": false
                                 },
-                                "visible": "[equals('FhirService', steps('appSettings').fhirSection.fhirType)]"
+                                "visible": true
                             },
                             {
                                 "name": "apiForFhirSelector",
@@ -103,9 +103,9 @@
                                     }
                                 },
                                 "constraints": {
-                                    "required": "[equals('APIforFhir', steps('appSettings').fhirSection.fhirType)]"
+                                    "required": false
                                 },
-                                "visible": "[equals('APIforFhir', steps('appSettings').fhirSection.fhirType)]"
+                                "visible": true
                             }
                         ]
                     }

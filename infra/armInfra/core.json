@@ -40,13 +40,13 @@
             "metadata": {
                 "description": "Tags"
             }
-        },
-        "functioAppCustomSettings": {
-            "type": "object",
-            "metadata": {
-                "description": "Any custom function app settings"
-            }
         }
+        // "functioAppCustomSettings": {
+        //     "type": "object",
+        //     "metadata": {
+        //         "description": "Any custom function app settings"
+        //     }
+        // }
     },
     "functions": [],
     "variables": {
@@ -63,6 +63,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2022-09-01",
             "name": "monitoringDeploy",
+            "location": "[parameters('location')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -88,6 +89,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2022-09-01",
             "name": "functionDeploy",
+            "location": "[parameters('location')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {

@@ -229,6 +229,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2022-09-01",
             "name": "functionFhirServiceRoleAssignment",
+            "location": "[parameters('location')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -251,6 +252,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2022-09-01",
             "name": "bulk-import-function-fhir-managed-id-role-assignment",
+            "location": "[parameters('location')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {

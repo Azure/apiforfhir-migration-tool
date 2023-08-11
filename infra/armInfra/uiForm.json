@@ -47,9 +47,9 @@
                                 }
                             },
                             "constraints": {
-                                "required": true
+                                "required": false
                             },
-                            "visible": "[equals('FhirService', steps('appSettings').fhirSection.fhirType)]"
+                            "visible": true
                         },
                         {
                             "name": "apiForFhirName",
@@ -63,9 +63,9 @@
                                 }
                             },
                             "constraints": {
-                                "required": true
+                                "required": false
                             },
-                            "visible": "[equals('APIforFhir', steps('appSettings').fhirSection.fhirType)]"
+                            "visible": true
                         },
                         {
                             "name": "storageAccountInfo",
