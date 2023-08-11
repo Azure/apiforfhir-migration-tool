@@ -13,7 +13,7 @@
         "location": {
             "type": "string",
             "minLength": 1,
-            "defaultValue": "[resourceGroup().location]",
+            // "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Primary location for all resources"
             }
@@ -32,12 +32,14 @@
         },
         "storageAccount": {
             "type": "string",
+            "defaultValue": "",
             "metadata": {
                 "description": "Name of the storage account."
             }
         },
         "newStorageAccount": {
             "type": "string",
+            "defaultValue": "",
             "metadata": {
                 "description": "Name of the new storage account to be created."
             }
@@ -122,11 +124,5 @@
             ]
         }
         
-    ],
-    "outputs": {
-        "Azure_FunctionURL": {
-            "type": "string",
-            "value": "[reference('coreDeploy').outputs.Azure_FunctionURL.value]"
-        }
-    }
+    ]
 }

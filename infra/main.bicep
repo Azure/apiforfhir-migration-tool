@@ -1,9 +1,9 @@
 targetScope = 'subscription'
 
 @minLength(1)
-@maxLength(64)
+@maxLength(6)
 @description('Name of the the environment which is used to generate a short unique hash used in all resources.')
-param name string
+param prefix string
 
 @minLength(1)
 @description('Primary location for all resources')
@@ -15,11 +15,17 @@ param fhirServiceName string
 @description('Name of the API for FHIR to export resources from.')
 param apiForFhirName string
 
+@description('Name of the FHIR Service to import resources into. Format is "workspace/fhirService".')
+param storageAccountName string
+
+@description('Name of the API for FHIR to export resources from.')
+param newStorageAccountName string
+
 @description('Name of your existing resource group (leave blank to create a new one)')
 param existingResourceGroupName string = ''
 
-var envRandomString = toLower(uniqueString(subscription().id, name, existingResourceGroupName, location))
-var nameShort = length(name) > 11 ? substring(name, 0, 11) : name
+var envRandomString = toLower(uniqueString(subscription().id, prefix, existingResourceGroupName, location))
+var nameShort = length(prefix) > 11 ? substring(prefix, 0, 11) : prefix
 var resourcePrefix = '${nameShort}-${substring(envRandomString, 0, 5)}'
 
 var createResourceGroup = empty(existingResourceGroupName) ? true : false
@@ -29,7 +35,7 @@ var appTags = {
 }
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = if (createResourceGroup) {
-  name: '${name}-rg'
+  name: '${resourcePrefix}-rg'
   location: location
   tags: appTags
 }
@@ -47,7 +53,8 @@ module template 'core.bicep'= if (createResourceGroup) {
     fhirServiceName: fhirServiceName
     location: location
     appTags: appTags
-
+    storageAccountExisting: storageAccountName
+    storageAccountNew: newStorageAccountName
   }
 }
 
@@ -60,6 +67,8 @@ module existingResourceGrouptemplate 'core.bicep'= if (!createResourceGroup) {
     fhirServiceName: fhirServiceName
     location: location
     appTags: appTags
+    storageAccountExisting: storageAccountName
+    storageAccountNew: newStorageAccountName
   }
 }
 

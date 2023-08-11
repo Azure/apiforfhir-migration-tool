@@ -72,13 +72,17 @@
         }
     },
     "functions": [],
-    "variables": {},
+    "variables": {
+        "array": "[split(parameters('fhirServiceName'), '/')]",
+        "serviceName": "[variables('array')[0]]",
+        "workspaceName": "[variables('array')[1]]"
+    },
     "resources": [
         {
             "condition": false,
             "type": "Microsoft.HealthcareApis/workspaces",
             "apiVersion": "2022-10-01-preview",
-            "name": "[split(parameters('fhirServiceName'), '/')[0]]",
+            "name": "[variables('workspaceName')]",
             "location": "[parameters('location')]",
             "tags": "[parameters('appTags')]",
             "resources": [
@@ -86,10 +90,10 @@
                     "condition": false,
                     "type": "fhirservices",
                     "dependsOn": [
-                        "[resourceId('Microsoft.HealthcareApis/workspaces', split(parameters('fhirServiceName'), '/')[0])]"
+                        "[resourceId('Microsoft.HealthcareApis/workspaces', variables('workspaceName'))]"
                     ],
                     "apiVersion": "2021-06-01-preview",
-                    "name": "[split(parameters('fhirServiceName'), '/')[1]]",
+                    "name": "[variables('serviceName')]",
                     "location": "[parameters('location')]",
                     "kind": "fhir-R4"
                 }
