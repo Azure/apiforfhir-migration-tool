@@ -228,7 +228,7 @@
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2022-09-01",
-            "name": "functionFhirServiceRoleAssignment",
+            "name": "fhir-migration-function-apiforfhir-managed-id-role-assignment",
             "location": "[parameters('location')]",
             "properties": {
                 "mode": "Incremental",
@@ -251,7 +251,7 @@
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2022-09-01",
-            "name": "bulk-import-function-fhir-managed-id-role-assignment",
+            "name": "fhir-migration-function-fhir-managed-id-role-assignment",
             "location": "[parameters('location')]",
             "properties": {
                 "mode": "Incremental",
@@ -260,7 +260,7 @@
                 },
                 "parameters": {
                     "resourceId": {
-                        "value": "[resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', parameters('fhirServiceName'))]"
+                        "value": "[resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', variables('workspaceName'), variables('serviceName'))]"
                     },
                     "roleId": {
                         "value": "3db33094-8700-4567-8da5-1501d4e7e843"
