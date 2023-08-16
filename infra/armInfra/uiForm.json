@@ -13,26 +13,41 @@
                             "name": "resourceScope",
                             "type": "Microsoft.Common.ResourceScope",
                             "location": {
-                                "resourceTypes": []
+                                "resourceTypes": [
+                                    "microsoft.resources/resourcegroups"
+                                ]
                             }
                         },
                         {
                             "name": "prefix",
                             "type": "Microsoft.Common.TextBox",
-                            "label": "Prefix for Migration tool resources.",
-                            "defaultValue": "",
-                            "toolTip": "Provide a prefix value.",
-                            "placeholder": "",
-                            "multiLine": false,
+                            "label": "Prefix",
+                            "subLabel": "",
+                            "defaultValue": "mig",
+                            "toolTip": "Prefix for all resources",
                             "constraints": {
-                              "required": true,
-                              "validations": [
-                                {
-                                    "regex": "^[a-z0-9A-Z]{1,6}$",
-                                    "message": "Only alphanumeric characters are allowed, and the value must be 1-6 characters long."
-                                }
-                            ]
+                                "required": false,
+                                "regex": "",
+                                "validationMessage": "",
+                                "validations": []
                             },
+                            "infoMessages": [],
+                            "visible": true
+                        },
+                        {
+                            "name": "location",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "Location",
+                            "subLabel": "",
+                            "defaultValue": "[[resourceGroup().location]",
+                            "toolTip": "Location for all resources.",
+                            "constraints": {
+                                "required": false,
+                                "regex": "",
+                                "validationMessage": "",
+                                "validations": []
+                            },
+                            "infoMessages": [],
                             "visible": true
                         },
                         {
@@ -68,76 +83,103 @@
                             "visible": true
                         },
                         {
-                            "name": "storageAccountInfo",
-                            "type": "Microsoft.Common.InfoBox",
-                            "visible": true,
-                            "options": {
-                              "icon": "Info",
-                              "text": "Please select a storage account that is linked with Azure API for FHIR \n Or any other existing storage account that you want to use.\n Or provide a name if you want to create & use a new storage account."
+                            "name": "storageAccountName_checkNameAvailability",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "request": {
+                                "method": "POST",
+                                "path": "[concat(steps('basics').resourceScope.subscription.id,'/providers/Microsoft.Storage/checkNameAvailability?api-version=2016-01-01')]",
+                                "body": {
+                                    "name": "[steps('basics').storageAccountName]",
+                                    "type": "Microsoft.Storage/storageAccounts"
+                                }
                             }
                         },
                         {
-                            "name": "storageAccount",
-                            "type": "Microsoft.Solutions.ResourceSelector",
-                            "resourceType": "Microsoft.Storage/storageAccounts",
-                            "options": {
-                                "filter": {
-                                    "subscription": "onBasics",
-                                    "location": "onBasics"
-                                }
-                            },
-                            "label": "Existing Storage Account",
+                            "name": "storageAccountName_rePUT",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "request": {
+                                "method": "GET",
+                                "path": "[concat(steps('basics').resourceScope.subscription.id,'/resourceGroups/',steps('basics').resourceScope.resourceGroup.name,'/providers/Microsoft.Storage/storageAccounts/',steps('basics').storageAccountName,'?api-version=2016-01-01')]",
+                                "body": {}
+                            }
+                        },
+                        {
+                            "name": "storageAccountName",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "Storage Account Name",
                             "defaultValue": "",
-                            "toolTip": "Name of the storage account.",
+                            "toolTip": "Name of existing storage account.",
                             "constraints": {
-                                "required": false
+                                "required": true,
+                                "validations": [
+                                    {
+                                        "isValid": "[or(steps('basics').storageAccountName_checkNameAvailability.nameAvailable,equals(steps('basics').storageAccountName_checkNameAvailability.reason,'AlreadyExists'))]",
+                                        "message": "[steps('basics').storageAccountName_checkNameAvailability.message]"
+                                    },
+                                    {
+                                        "isValid": "[or(steps('basics').storageAccountName_checkNameAvailability.nameAvailable,equals(steps('basics').storageAccountName_rePUT.id,concat(steps('basics').resourceScope.subscription.id,'/resourceGroups/',steps('basics').resourceScope.resourceGroup.name,'/providers/Microsoft.Storage/storageAccounts/',steps('basics').storageAccountName)),not(equals(steps('basics').storageAccountName_checkNameAvailability.reason,'AlreadyExists')))]",
+                                        "message": "[steps('basics').storageAccountName_checkNameAvailability.message]"
+                                    }
+                                ]
+                            },
+                            "visible": true
+                        },
+                        {
+                            "name": "functionAppCustomSettings",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "Function App Custom Settings",
+                            "subLabel": "",
+                            "defaultValue": "{}",
+                            "toolTip": "Any custom function app settings",
+                            "constraints": {
+                                "required": false,
+                                "regex": "",
+                                "validationMessage": "",
+                                "validations": []
                             },
                             "infoMessages": [],
-                            "visible": true
+                            "visible": false
                         },
                         {
-                            "name": "nameStorageAccount",
-                            "type": "Microsoft.Common.TextBox",
-                            "label": "New Storage Account Name",
-                            "defaultValue": "",
-                            "toolTip": "Provide name for new storage account.",
-                            "placeholder": "",
-                            "multiLine": false,
+                            "name": "createRoleAssignment",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Create Role Assignment",
+                            "subLabel": "",
+                            "defaultValue": "true",
+                            "toolTip": "Automatically create a role assignment for the function app to access the FHIR service and API for FHIR.",
                             "constraints": {
-                              "required": "[equals('', steps('basics').storageAccount)]",
-                              "validations": [
-                                {
-                                  "regex": "^[a-z0-9]{3,24}$",
-                                  "message": "Allowed: Length between 3 and 24 characters with only lowercase letters and numbers."
-                                }
-                              ]
+                                "required": false,
+                                "allowedValues": [
+                                    {
+                                        "label": "true",
+                                        "value": true
+                                    },
+                                    {
+                                        "label": "false",
+                                        "value": false
+                                    }
+                                ],
+                                "validations": []
                             },
-                            "visible": true
-                        },
-                        {
-                            "name": "containerWaring",
-                            "type": "Microsoft.Common.InfoBox",
-                            "visible": true,
-                            "options": {
-                              "icon": "Warning",
-                              "text": "This application would use a container name \"Migration\",\n Please make sure this conatainer is excluded from any eventing setup on storage account.\nIf you have container name \"Migration\" in selected storage Account, please rename it."
-                            }
+                            "infoMessages": [],
+                            "visible": false
                         }
                     ]
                 }
             ]
         },
         "outputs": {
-            "kind": "Subscription",
+            "kind": "ResourceGroup",
             "location": "[steps('basics').resourceScope.location.name]",
-            "subscriptionId": "[steps('basics').resourceScope.subscription.id]",
+            "resourceGroupId": "[steps('basics').resourceScope.resourceGroup.id]",
             "parameters": {
                 "prefix": "[steps('basics').prefix]",
-                "location": "[steps('basics').resourceScope.location.name]",
+                "location": "[steps('basics').location]",
                 "fhirServiceName": "[steps('basics').fhirServiceName.name]",
                 "apiForFhirName": "[steps('basics').apiForFhirName.name]",
-                "storageAccount": "[steps('basics').storageAccount.name]",
-                "storageAccountNew": "[steps('basics').nameStorageAccount]"
+                "storageAccountName": "[steps('basics').storageAccountName]",
+                "functionAppCustomSettings": "[steps('basics').functionAppCustomSettings]",
+                "createRoleAssignment": "[steps('basics').createRoleAssignment]"
             }
         }
     }

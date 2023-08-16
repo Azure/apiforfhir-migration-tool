@@ -11,7 +11,7 @@
     "parameters": {
       "prefix": {
         "type": "string",
-        "defaultValue": "bulk",
+        "defaultValue": "mig",
         "metadata": {
           "description": "Prefix for all resources"
         }
@@ -27,14 +27,14 @@
         "type": "string",
         "defaultValue": "",
         "metadata": {
-          "description": "Name of the FHIR Service to load resources into. Format is \"workspace/fhirService\"."
+          "description": "Name of the FHIR Service, destination for migration. Format is \"workspace/fhirService\"."
         }
       },
       "apiForFhirName": {
         "type": "string",
         "defaultValue": "",
         "metadata": {
-          "description": "Name of the API for FHIR to load resources into."
+          "description": "Name of the API for FHIR, source for migration."
         }
       },
       "storageAccountName": {
