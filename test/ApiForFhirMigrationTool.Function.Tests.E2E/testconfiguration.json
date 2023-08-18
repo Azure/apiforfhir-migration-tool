@@ -1,0 +1,21 @@
+﻿{
+    "FhirServer": {
+        "Cors": { 
+            "Origins": ["https://localhost:6001"],
+            "Methods": ["*"],
+            "Headers": ["*"],
+            "MaxAge": 1440 
+        },
+        "Operations": {
+            "Validate": {
+                "CacheDurationInSeconds": 0
+            },
+            "Import": {
+                "PollingFrequencyInSeconds": 1
+            },
+            "Export": {
+                "PollingFrequencyInSeconds": 1
+            }
+        }
+    }
+}
