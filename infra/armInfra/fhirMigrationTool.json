@@ -56,6 +56,13 @@
         "metadata": {
           "description": "Automatically create a role assignment for the function app to access the FHIR service and API for FHIR."
         }
+      },
+      "loaderRepoBranch": {
+        "type": "string",
+        "defaultValue": "personal/snarang/v1.2",
+        "metadata": {
+          "description": "Branch of the FHIR Loader repo for git integration"
+        }
       }
     },
     "variables": {
@@ -75,7 +82,8 @@
       "apiForFhirNameUrl": "[format('https://{0}.azurehealthcareapis.com', parameters('apiForFhirName'))]",
       "array": "[split(parameters('fhirServiceName'), '/')]",
       "serviceName": "[variables('array')[0]]",
-      "workspaceName": "[variables('array')[1]]"
+      "workspaceName": "[variables('array')[1]]",
+      "loaderRepoUrl": "https://github.com/Azure/apiforfhir-migration-tool/"
     },
     "resources": [
       {
@@ -234,6 +242,25 @@
           "name": "Standard_LRS"
         },
         "tags": "[variables('appTags')]",
+        "resources": [
+          {
+            "type": "tableServices/tables",
+            "apiVersion": "2019-06-01",
+            "name": "[concat('default/', 'chunk')]",
+            "dependsOn": [
+              "[variables('funcStoreName')]"
+            ]
+          },
+          {
+            "type": "tableServices/tables",
+            "apiVersion": "2019-06-01",
+            "name": "[concat('default/', 'export')]",
+            "dependsOn": [
+              "[variables('funcStoreName')]"
+            ]
+          }
+          
+        ],
         "metadata": {
           "description": "Azure Function required linked storage account"
         }
@@ -294,6 +321,22 @@
           "[resourceId('Microsoft.Storage/storageAccounts', variables('funcStoreName'))]",
           "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
         ]
+      },
+      {
+        "type": "Microsoft.Web/sites/sourcecontrols",
+        "apiVersion": "2022-03-01",
+        "name": "[format('{0}/{1}', format('{0}-func', variables('prefixNameCleanShort')), 'web')]",
+        "properties": {
+          "repoUrl": "[variables('loaderRepoUrl')]",
+          "branch": "[parameters('loaderRepoBranch')]",
+          "isManualIntegration": true
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+        ],
+        "metadata": {
+          "description": "Git integration for the function app code"
+        }
       },
       {
         "type": "Microsoft.Resources/deployments",
@@ -375,7 +418,7 @@
                     "value": "[resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', variables('workspaceName'), variables('serviceName'))]"
                 },
                 "roleId": {
-                    "value": "3db33094-8700-4567-8da5-1501d4e7e843"
+                    "value": "4465e953-8ced-4406-a58e-0f6e3f3b530b"
                 },
                 "principalId": {
                     "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'full').identity.principalId]"
