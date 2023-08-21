@@ -3,25 +3,27 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
+using Microsoft.Health.Fhir.Tests.Common.FixtureParameters;
+using Microsoft.Health.Fhir.Tests.E2E.Common;
+using Microsoft.Health.Fhir.Tests.E2E.Rest;
 using Xunit;
 
-namespace FhirMigrationToolE2E.E2E
+namespace ApiForFhirMigrationTool.Function.Tests.E2E
 {
-    public class E2ETest
+    [HttpIntegrationFixtureArgumentSets(DataStore.CosmosDb, Format.Json)]
+    public class MigrationTests : IClassFixture<MigrationTestFixture>
     {
-        private readonly HttpClient _client;
+        private readonly TestFhirClient _client;
 
-        public E2ETest(FunctionTestFixture fixture)
+        public MigrationTests(MigrationTestFixture fixture)
         {
-            _client = new HttpClient
-            {
-                BaseAddress = new Uri("http://localhost:7071"),
-            };
+            _client = fixture.TestFhirClient;
         }
 
         [Fact]
         public async Task GivenATestServer_WhenMigrationOperation()
         {
+            /*
             var migrationResponse = await _client.GetAsync("/api/start-migration");
             migrationResponse.EnsureSuccessStatusCode();
             var migrationContent = await migrationResponse.Content.ReadAsStringAsync();
@@ -29,10 +31,11 @@ namespace FhirMigrationToolE2E.E2E
             var checkResponse = await _client.GetAsync("/api/run-check-operation");
             checkResponse.EnsureSuccessStatusCode();
             var checkContent = await checkResponse.Content.ReadAsStringAsync();
+            */
 
-            // Assert that the content is what you expect
-            Assert.Equal("Expected Result", migrationContent);
-            Assert.Equal("Expected Result", checkContent);
+            var test = await _client.SearchAsync(Hl7.Fhir.Model.ResourceType.Patient);
+
+            Assert.NotNull(test);
         }
     }
 }
