@@ -113,10 +113,11 @@ namespace ApiForFhirMigrationTool.Function
                                 TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                 exportEntity["IsExportComplete"] = true;
                                 exportEntity["IsExportRunning"] = "Failed";
-                                exportEntity["IsImportComplete"] = true;
-                                exportEntity["IsImportRunning"] = "Completed";
+                                exportEntity["IsImportComplete"] = false;
+                                exportEntity["IsImportRunning"] = "Failed";
                                 exportEntity["ImportRequest"] = import_body;
                                 isComplete = true;
+                                _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                 throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
                             }
                         }

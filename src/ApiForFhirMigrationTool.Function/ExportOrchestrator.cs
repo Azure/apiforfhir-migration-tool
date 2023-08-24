@@ -86,7 +86,7 @@ namespace ApiForFhirMigrationTool.Function
                 string sinceValue = query.Substring(sinceStartIndex, query.IndexOf("&") - sinceStartIndex);
                 string tillValue = query.Substring(tillStartIndex);
 
-                if (exportResponse.Status == ResponseStatus.Completed)
+                if (exportResponse.Status == ResponseStatus.Accepted)
                 {
                     statusUrl = exportResponse.Content;
 
@@ -108,7 +108,8 @@ namespace ApiForFhirMigrationTool.Function
                             };
                     _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
                     TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
-                    qEntitynew["since"] = tillValue;
+
+                    // qEntitynew["since"] = tillValue;
                     qEntitynew["JobId"] = jobId++;
                     _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
                 }
@@ -126,7 +127,7 @@ namespace ApiForFhirMigrationTool.Function
                                 { "IsExportComplete", false },
                                 { "IsExportRunning", "Failed" },
                                 { "IsImportComplete", false },
-                                { "IsImportRunning", "Not Started" },
+                                { "IsImportRunning", "Failed" },
                                 { "ImportRequest", string.Empty },
                             };
                         _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);

@@ -34,9 +34,9 @@ public class Program
             .ConfigureAppConfiguration((hostingContext, configuration) =>
             {
                 configuration.Sources.Clear();
-                configuration.AddJsonFile("local.settings.json", true, true)
+                configuration.AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
                 .AddUserSecrets(Assembly.GetExecutingAssembly(), true)
-                .AddEnvironmentVariables();
+                .AddEnvironmentVariables("AZURE_");
 
                 IConfigurationRoot configurationRoot = configuration.Build();
                 configurationRoot.Bind(config);
@@ -44,6 +44,7 @@ public class Program
     .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices(services =>
     {
+        var credential = new DefaultAzureCredential();
         if (config.AppInsightConnectionstring != null)
         {
             services.AddLogging(builder =>
@@ -65,7 +66,7 @@ public class Program
         // services.AddTransient<IImportProcessor, ImportProcessor>();
         services.AddTransient<IAzureTableClientFactory, AzureTableClientFactory>();
         services.AddTransient<IMetadataStore, AzureTableMetadataStore>();
-        services.AddSingleton<TableServiceClient>(new TableServiceClient(new Uri(config.StagingStorageUri), config.TokenCredential));
+        services.AddSingleton<TableServiceClient>(new TableServiceClient(new Uri(config.StagingStorageUri), credential));
 
         services.AddTransient<IFhirProcessor, FhirProcessor>();
 
@@ -74,7 +75,6 @@ public class Program
         services.AddTransient<ISearchParameterOperation, SearchParameterOperation>();
         services.AddSingleton(config);
 
-        var credential = new DefaultAzureCredential();
         var baseUri = config.SourceUri;
         var desUri = config.DestinationUri;
         string[]? scopes = default;
@@ -111,6 +111,6 @@ public class Program
         return HttpPolicyExtensions
             .HandleTransientHttpError()
             .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-            .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+            .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
     }
 }
