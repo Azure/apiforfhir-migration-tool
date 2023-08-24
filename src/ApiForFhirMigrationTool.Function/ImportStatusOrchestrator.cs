@@ -40,6 +40,7 @@ namespace ApiForFhirMigrationTool.Function
             var statusUrl = string.Empty;
             bool isComplete = false;
             TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+            TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
 
             try
             {
@@ -70,6 +71,11 @@ namespace ApiForFhirMigrationTool.Function
                                 exportEntity["IsImportComplete"] = true;
                                 exportEntity["IsImportRunning"] = "Completed";
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+
+                                TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+
+                                qEntitynew["since"] = exportEntity["Till"];
+                                _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
                                 isComplete = true;
                             }
                             else

@@ -56,7 +56,7 @@ namespace ApiForFhirMigrationTool.Function
                         var import_body = _orchestrationHelper.CreateImportRequest(response.Content, _options.ImportMode);
 
                         ResponseModel importResponse = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImport), import_body);
-                        if (importResponse.Status == ResponseStatus.Completed)
+                        if (importResponse.Status == ResponseStatus.Accepted)
                         {
                             logger?.LogInformation($"Import  returned: Success.");
                             statusUrl = importResponse.Content;
