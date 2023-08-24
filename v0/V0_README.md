@@ -1,7 +1,14 @@
-# Migrating data from Azure API for FHIR server to Azure Health Data Services FHIR service
+# Migrate your data from Azure API for FHIR server to Azure Health Data Services FHIR service using the Lift and Shift migration pattern
 
-This sample will focus on how to migrate the FHIR data from Azure API for FHIR server to Azure Health Data Services FHIR service. This sample script utilizes [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) (which allows you to filter and export certain data according to your [query](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters)) to export data from a source Azure API for FHIR server, and [$import](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) to import to Azure Health Data Service FHIR service.
+This sample will focus on how to migrate the FHIR data from Azure API for FHIR server to Azure Health Data Services FHIR service using the Lift and Shift migration pattern. This migration pattern utilizes [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) (which allows you to filter and export certain data according to your [query](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters)) to export data from a source Azure API for FHIR server, and [$import](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) to import to Azure Health Data Service FHIR service.
 
+## Lift and Shift migration pattern
+Lift and Shift is the simplest migration pattern. It is ideal if your data pipeline can afford a large downtime during the migration process. It involves a singular $export to export all of your required data from Azure API for FHIR server to an intermediate storage account, and then calling $import to import what you've just exported into your Azure Health Data Services FHIR server.
+
+<!---
+To see the list of all recommended migration patterns, see here. #TODO add link to main readme
+
+-->
 ## Architecture Overview
 
 ![Architecture](docs/images/Architecture.png)
@@ -10,16 +17,36 @@ This sample will focus on how to migrate the FHIR data from Azure API for FHIR s
 1.	Microsoft work or school account
 2.	FHIR instances.
 	-	**Source**: Azure API for FHIR server instance from where the data will be exported from.
-		- Get the Azure API for FHIR server URL:
+		- Have the Azure API for FHIR server URL handy:
 			```PowerShell
 			https://<<SOURCE_ACCOUNT_NAME>>.azurehealthcareapis.com/
 			```
-	-	**Destination**: Azure Health Data Service FHIR service instance where the data will be imported to.
-		- Get the Azure Health Data Service FHIR service URL:
+	-	**Destination**: Azure Health Data Services FHIR service instance where the data will be imported to. See [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/get-started-with-fhir) for instructions on creating a new Azure Health Data Services FHIR service (and associated Azure Health Data Services [workspace](https://docs.microsoft.com/azure/healthcare-apis/healthcare-apis-quickstart)) if you don't already have one. 
+		- Have the Azure Health Data Service FHIR service URL handy:
 			```PowerShell
 			https://<<WORKSPACE_NAME>>-<<FHIR_SERVICE_NAME>>.fhir.azurehealthcareapis.com/
 			```
 ## Steps
+
+At a high level, the steps are:
+
+
+Azure API for FHIR server data export:  
+
+* [Configure Azure API for FHIR for bulk export](https://docs.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/configure-export-data) 
+
+* [FHIR server bulk data export](https://docs.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data)
+
+  
+
+AHDS FHIR service data import:  
+
+* [Configure FHIR service for bulk import](https://docs.microsoft.com/azure/healthcare-apis/fhir/configure-import-data)  
+
+* [FHIR service bulk import](https://docs.microsoft.com/azure/healthcare-apis/fhir/import-data)
+
+
+Detailed steps:
 
 1. Export data from the **source** Azure API for FHIR server.
 	
