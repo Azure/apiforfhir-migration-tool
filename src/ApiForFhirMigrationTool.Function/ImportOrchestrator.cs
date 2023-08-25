@@ -41,11 +41,11 @@ namespace ApiForFhirMigrationTool.Function
             logger.LogInformation("Starting import activities.");
             var statusRespose = new HttpResponseMessage();
             var statusUrl = string.Empty;
-            TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
 
             try
             {
-                Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") != string.Empty && ent.GetString("IsImportRunning") == "Not Started");
+                TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+                Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetString("IsImportRunning") == "Not Started");
                 if (jobListimport.Count() > 0)
                 {
                     foreach (TableEntity item in jobListimport)

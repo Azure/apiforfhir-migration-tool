@@ -11,6 +11,7 @@ using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
 using ApiForFhirMigrationTool.Function.SearchParameterOperation;
 using ApiForFhirMigrationTool.Function.Security;
+using Azure.Core;
 using Azure.Data.Tables;
 using Azure.Identity;
 using Microsoft.ApplicationInsights;
@@ -66,7 +67,13 @@ public class Program
         // services.AddTransient<IImportProcessor, ImportProcessor>();
         services.AddTransient<IAzureTableClientFactory, AzureTableClientFactory>();
         services.AddTransient<IMetadataStore, AzureTableMetadataStore>();
-        services.AddSingleton<TableServiceClient>(new TableServiceClient(new Uri(config.StagingStorageUri), credential));
+
+        TableClientOptions opts = new TableClientOptions(TableClientOptions.ServiceVersion.V2019_02_02);
+        opts.Retry.Delay = TimeSpan.FromSeconds(5);
+        opts.Retry.Mode = RetryMode.Fixed;
+        opts.Retry.MaxRetries = 3;
+
+        services.AddSingleton<TableServiceClient>(new TableServiceClient(new Uri(config.StagingStorageUri), credential, opts));
 
         services.AddTransient<IFhirProcessor, FhirProcessor>();
 

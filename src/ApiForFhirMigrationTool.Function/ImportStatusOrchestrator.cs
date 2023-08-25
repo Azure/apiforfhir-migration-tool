@@ -39,11 +39,11 @@ namespace ApiForFhirMigrationTool.Function
             var statusRespose = new HttpResponseMessage();
             var statusUrl = string.Empty;
             bool isComplete = false;
-            TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
-            TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
 
             try
             {
+                TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+                TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 Pageable<TableEntity> jobListimportRunning = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running");
                 if (jobListimportRunning.Count() > 0)
                 {
@@ -70,6 +70,7 @@ namespace ApiForFhirMigrationTool.Function
                                 TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                 exportEntity["IsImportComplete"] = true;
                                 exportEntity["IsImportRunning"] = "Completed";
+                                exportEntity["EndTime"] = DateTime.UtcNow;
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
 
                                 TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
@@ -84,6 +85,7 @@ namespace ApiForFhirMigrationTool.Function
                                 TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                 exportEntity["IsImportComplete"] = true;
                                 exportEntity["IsImportRunning"] = "Failed";
+                                exportEntity["EndTime"] = DateTime.UtcNow;
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                 isComplete = true;
                                 throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");

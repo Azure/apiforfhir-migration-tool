@@ -47,11 +47,12 @@ namespace ApiForFhirMigrationTool.Function
             var statusRespose = new HttpResponseMessage();
             var statusUrl = string.Empty;
             var import_body = string.Empty;
-            TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-            TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
 
             try
             {
+                TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+                TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+
                 Pageable<TableEntity> jobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Running" || ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running" || ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Not Started");
                 if (jobList.Count() <= 0)
                 {
@@ -105,6 +106,7 @@ namespace ApiForFhirMigrationTool.Function
                                 { "ImportRequest", string.Empty },
                                 { "Since", sinceValue },
                                 { "Till", tillValue },
+                                { "StartTime", DateTime.UtcNow },
                             };
                     _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
                     TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);

@@ -47,11 +47,11 @@ namespace ApiForFhirMigrationTool.Function
             var statusUrl = string.Empty;
             var import_body = string.Empty;
             bool isComplete = false;
-            TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-            TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
 
             try
             {
+                TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+                TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 Pageable<TableEntity> exportRunningjobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsExportRunning") == "Running");
                 if (exportRunningjobList.Count() > 0)
                 {
@@ -93,14 +93,21 @@ namespace ApiForFhirMigrationTool.Function
                                     else
                                     {
                                         logger?.LogInformation($"Output is null. No Output content in export:{statusUrl_new}");
-                                        import_body = string.Empty;
+
+                                        // import_body = string.Empty;
                                         TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                         exportEntity["IsExportComplete"] = true;
                                         exportEntity["IsExportRunning"] = "Completed";
                                         exportEntity["IsImportComplete"] = true;
                                         exportEntity["IsImportRunning"] = "Completed";
-                                        exportEntity["ImportRequest"] = import_body;
+                                        exportEntity["ImportRequest"] = "No";
+                                        exportEntity["EndTime"] = DateTime.UtcNow;
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+
+                                        TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+
+                                        qEntitynew["since"] = exportEntity["Till"];
+                                        _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
                                     }
                                 }
 
