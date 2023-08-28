@@ -3,7 +3,7 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
-using Microsoft.Health.Fhir.Tests.Common.FixtureParameters;
+/*using Microsoft.Health.Fhir.Tests.Common.FixtureParameters;
 using Microsoft.Health.Fhir.Tests.E2E.Rest;
 using Microsoft.Health.Fhir.Web;
 
@@ -17,3 +17,4 @@ namespace ApiForFhirMigrationTool.Function.Tests.E2E
         }
     }
 }
+*/
