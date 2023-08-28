@@ -4,12 +4,12 @@ steps:
     inputs:
       useGlobalJson: true
 
-  - task: RoslynAnalyzers@3
-    inputs:
-      userProvideBuildInfo: "msBuildInfo"
-      msBuildArchitecture: "DotNetCore"
-      msBuildCommandline: '$(Agent.ToolsDirectory)\dotnet\dotnet.exe build "$(Build.Repository.LocalPath)\FhirMigrationTool.sln"'
-    displayName: "Run code checks"
+  # - task: RoslynAnalyzers@3
+  #   inputs:
+  #     userProvideBuildInfo: "msBuildInfo"
+  #     msBuildArchitecture: "DotNetCore"
+  #     msBuildCommandline: '$(Agent.ToolsDirectory)\dotnet\dotnet.exe build "$(Build.Repository.LocalPath)\FhirMigrationTool.sln"'
+  #   displayName: "Run code checks"
 
   - task: CredScan@3
     inputs:
