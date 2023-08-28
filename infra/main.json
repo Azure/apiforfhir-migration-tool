@@ -1,0 +1,353 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "metadata": {
+      "_generator": {
+        "name": "bicep",
+        "version": "0.15.31.15270",
+        "templateHash": "11861629922040246994"
+      }
+    },
+    "parameters": {
+      "prefix": {
+        "type": "string",
+        "defaultValue": "mig",
+        "metadata": {
+          "description": "Prefix for all resources"
+        }
+      },
+      "fhirServiceName": {
+        "type": "string",
+        "defaultValue": "wkspcmigtool/fhirservdest",
+        "metadata": {
+          "description": "Name of the FHIR Service, destination for migration. Format is \"workspace/fhirService\"."
+        }
+      },
+      "apiForFhirName": {
+        "type": "string",
+        "defaultValue": "gen1migtool",
+        "metadata": {
+          "description": "Name of the API for FHIR, source for migration."
+        }
+      },
+      "appName": {
+        "type": "string",
+        "defaultValue": "[format('fnapp{0}', uniqueString(resourceGroup().id))]",
+        "metadata": {
+          "description": "The name of the function app that you wish to create."
+        }
+      },
+      "storageAccountType": {
+        "type": "string",
+        "defaultValue": "Standard_LRS",
+        "allowedValues": [
+          "Standard_LRS",
+          "Standard_GRS",
+          "Standard_RAGRS"
+        ],
+        "metadata": {
+          "description": "Storage Account type"
+        }
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "Location for all resources."
+        }
+      },
+      "appInsightsLocation": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "Location for Application Insights"
+        }
+      },
+      "loaderRepoBranch": {
+        "type": "string",
+        "defaultValue": "main",
+        "metadata": {
+          "description": "Branch of the FHIR Loader repo for git integration"
+        }
+      }
+    },
+    "variables": {
+      "functionAppName": "[format('{0}{1}',parameters('prefix'), parameters('appName'))]",
+      "appTags": {
+        "AppID": "fhir-migration-function"
+      },
+      "logAnalyticsName": "[format('{0}{1}-la', parameters('prefix'), parameters('appName'))]",
+      "hostingPlanName": "[parameters('appName')]",
+      "applicationInsightsName": "[parameters('appName')]",
+      "storageAccountName": "[format('{0}azfunctions', uniqueString(resourceGroup().id))]",
+      "array": "[split(parameters('fhirServiceName'), '/')]",
+      "serviceName": "[variables('array')[0]]",
+      "workspaceName": "[variables('array')[1]]",
+      "loaderRepoUrl": "https://github.com/Azure/apiforfhir-migration-tool"
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "2022-05-01",
+        "name": "[variables('storageAccountName')]",
+        "location": "[parameters('location')]",
+        "tags": "[variables('appTags')]",
+        "sku": {
+          "name": "[parameters('storageAccountType')]"
+        },
+        "resources": [
+          {
+            "type": "tableServices/tables",
+            "apiVersion": "2019-06-01",
+            "name": "[concat('default/', 'chunk')]",
+            "dependsOn": [
+              "[variables('storageAccountName')]"
+            ]
+          },
+          {
+            "type": "tableServices/tables",
+            "apiVersion": "2019-06-01",
+            "name": "[concat('default/', 'export')]",
+            "dependsOn": [
+              "[variables('storageAccountName')]"
+            ]
+          }
+        ],
+        "kind": "Storage",
+        "properties": {
+          "supportsHttpsTrafficOnly": true,
+          "defaultToOAuthAuthentication": true
+        }
+      },
+      {
+        "type": "Microsoft.Web/serverfarms",
+        "apiVersion": "2021-03-01",
+        "name": "[variables('hostingPlanName')]",
+        "location": "[parameters('location')]",
+        "sku": {
+          "name": "S1",
+          "tier": "Standard"
+        },
+        "properties": {}
+      },
+      {
+        "type": "Microsoft.Web/sites",
+        "apiVersion": "2021-03-01",
+        "name": "[variables('functionAppName')]",
+        "location": "[parameters('location')]",
+        "kind": "functionapp",
+        "tags": "[variables('appTags')]",
+        "identity": {
+          "type": "SystemAssigned"
+        },
+        "properties": {
+          "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+          "httpsOnly": true,
+          "siteConfig": {
+            "alwaysOn": true
+          }
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
+          "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+        ]
+      },
+      {
+        "type": "Microsoft.Web/sites/config",
+        "apiVersion": "2020-12-01",
+        "name": "[format('{0}/{1}', variables('functionAppName'), 'appsettings')]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "AzureWebJobsStorage": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-08-01').keys[0].value)]", 
+          "FUNCTIONS_EXTENSION_VERSION": "~4",
+          "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+          "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').InstrumentationKey]",
+          "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]", 
+          "SCM_DO_BUILD_DURING_DEPLOYMENT": true, 
+          "WEBSITE_RUN_FROM_PACKAGE": 1, 
+          "AZURE_DestinationFhirUri": "[format('https://{0}.fhir.azurehealthcareapis.com', replace(parameters('fhirServiceName'), '/', '-'))]", 
+          "AZURE_SourceFhirUri": "[format('https://{0}.azurehealthcareapis.com', parameters('apiForFhirName'))]", 
+          "AZURE_StartDate": "1970-01-01",
+          "AZURE_ScheduleInterval": 5,
+          "AZURE_ImportMode": "IncrementalLoad",
+          "AZURE_DeepCheckCount": 1,
+          "AZURE_UserAgent": "FhirMigrationTool",
+          "AZURE_SourceHttpClient": "SourceFhirEndpoint", 
+          "AZURE_DestinationHttpClient": "DestinationFhirEndpoint",
+          "AZURE_RetryCount": 3,
+          "AZURE_WaitForRetry": 1, 
+          "AZURE_Debug": true,
+          "AZURE_ExportTableName": "export",
+          "AZURE_ChunkTableName": "doChunk", 
+          "AZURE_ExportChunkTime": 30,
+          "AZURE_PartitionKey": "partitionkey",
+          "AZURE_RowKey": "rowkey"
+          },
+        "dependsOn": [
+          "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
+          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+        ]
+      },
+      {
+          "type": "Microsoft.Web/sites/sourcecontrols",
+          "apiVersion": "2022-03-01",
+          "name": "[format('{0}/{1}', format('{0}', variables('functionAppName')), 'web')]",
+          "properties": {
+            "repoUrl": "[variables('loaderRepoUrl')]",
+            "branch": "[parameters('loaderRepoBranch')]",
+            "isManualIntegration": true
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+          ],
+          "metadata": {
+            "description": "Git integration for the function app code"
+          }
+      },
+      {
+        "type": "Microsoft.Insights/components",
+        "apiVersion": "2020-02-02",
+        "name": "[variables('applicationInsightsName')]",
+        "location": "[parameters('appInsightsLocation')]",
+        "kind": "web",
+        "properties": {
+          "Application_Type": "web",
+          "Request_Source": "rest"
+        }
+      },
+      {
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2022-09-01",
+          "name": "migration-function-fhir-managed-id-role-assignment",
+          "properties": {
+              "expressionEvaluationOptions": {
+                  "scope": "inner"
+              },
+              "mode": "Incremental",
+              "parameters": {
+                  "resourceId": {
+                      "value": "[resourceId('Microsoft.HealthcareApis/services', parameters('apiForFhirName'))]"
+                  },
+                  "roleId": {
+                      "value": "3db33094-8700-4567-8da5-1501d4e7e843"
+                  },
+                  "principalId": {
+                      "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'full').identity.principalId]"
+                  }
+              },
+              "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                      "_generator": {
+                          "name": "bicep",
+                          "version": "0.16.2.56959",
+                          "templateHash": "15312434787615452365"
+                      }
+                  },
+                  "parameters": {
+                      "resourceId": {
+                          "type": "string"
+                      },
+                      "roleId": {
+                          "type": "string"
+                      },
+                      "principalId": {
+                          "type": "string"
+                      },
+                      "principalType": {
+                          "type": "string",
+                          "defaultValue": "ServicePrincipal"
+                      }
+                  },
+                  "resources": [
+                      {
+                          "type": "Microsoft.Authorization/roleAssignments",
+                          "apiVersion": "2020-04-01-preview",
+                          "name": "[guid(parameters('resourceId'), parameters('principalId'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId')))]",
+                          "properties": {
+                              "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId'))]",
+                              "principalId": "[parameters('principalId')]",
+                              "principalType": "[parameters('principalType')]"
+                          }
+                      }
+                  ]
+              }
+          },
+          "dependsOn": [
+              "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+          ],
+          "metadata": {
+              "description": "Setup access between FHIR and the deployment script managed identity"
+          }
+        },
+        {
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2022-09-01",
+          "name": "functionFhirServiceRoleAssignment",
+          "properties": {
+              "expressionEvaluationOptions": {
+                  "scope": "inner"
+              },
+              "mode": "Incremental",
+              "parameters": {
+                  "resourceId": {
+                      "value": "[resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', variables('workspaceName'), variables('serviceName'))]"
+                  },
+                  "roleId": {
+                      "value": "4465e953-8ced-4406-a58e-0f6e3f3b530b"
+                  },
+                  "principalId": {
+                      "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'full').identity.principalId]"
+                  }
+              },
+              "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                      "_generator": {
+                      "name": "bicep",
+                      "version": "0.16.2.56959",
+                      "templateHash": "15312434787615452365"
+                      }
+                  },
+                  "parameters": {
+                      "resourceId": {
+                      "type": "string"
+                      },
+                      "roleId": {
+                          "type": "string"
+                      },
+                      "principalId": {
+                          "type": "string"
+                      },
+                      "principalType": {
+                          "type": "string",
+                          "defaultValue": "ServicePrincipal"
+                      }
+                  },
+                  "resources": [
+                      {
+                          "type": "Microsoft.Authorization/roleAssignments",
+                          "apiVersion": "2020-04-01-preview",
+                          "name": "[guid(parameters('resourceId'), parameters('principalId'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId')))]",
+                          "properties": {
+                              "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId'))]",
+                              "principalId": "[parameters('principalId')]",
+                              "principalType": "[parameters('principalType')]"
+                          }
+                      }
+                  ]
+              }
+          },
+          "dependsOn": [
+              "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+          ],
+          "metadata": {
+              "description": "Setup access between FHIR and the deployment script managed identity"
+          }
+        }
+    ]
+  }

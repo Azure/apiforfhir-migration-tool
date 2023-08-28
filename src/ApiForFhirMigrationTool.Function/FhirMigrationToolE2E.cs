@@ -66,12 +66,12 @@ namespace ApiForFhirMigrationTool.Function
             ILogger logger = context.CreateReplaySafeLogger(nameof(E2ETestOrchestration));
             logger.LogInformation("Start E2E Test.");
 
-            int count = 0;
+            // int count = 0;
             var resSurface = new JArray();
             var resDeep = new JArray();
             JObject check = new JObject();
 
-            string? externalInput = context.GetInput<string>();
+            /*string? externalInput = context.GetInput<string>();
             if (!string.IsNullOrEmpty(externalInput))
             {
                 JObject jsonObject = JObject.Parse(externalInput);
@@ -81,11 +81,11 @@ namespace ApiForFhirMigrationTool.Function
                 {
                     count = (int)jsonObject["Count"]!;
                 }
-            }
+            }*/
 
             try
             {
-                if (count == 2 || count == 3)
+                /*if (count == 2 || count == 3)
                 {
                     string e2eImportGen1 = await context.CallActivityAsync<string>("E2ETestActivity", count);
                 }
@@ -104,7 +104,7 @@ namespace ApiForFhirMigrationTool.Function
                 logger.LogInformation("E2E Test for import completed.");
 
                 var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
-                logger.LogInformation("E2E Test for import status completed.");
+                logger.LogInformation("E2E Test for import status completed.");*/
 
                 if (_options.QuerySurface != null)
                 {

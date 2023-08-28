@@ -50,7 +50,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
             var azureTableClientFactory = GetMockAzureTableClientFactory();
             var azureTableMetadataStore = new Mock<IMetadataStore>();
 
-            azureTableMetadataStore.Setup(x => x.GetEntity(It.IsAny<TableClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(azureTableEntity);
+            azureTableMetadataStore.Setup(x => x.GetEntity(It.IsAny<TableClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(azureTableEntity!);
             azureTableMetadataStore.Setup(x => x.AddEntity(It.IsAny<TableClient>(), It.IsAny<TableEntity>(), It.IsAny<CancellationToken>())).Returns(true);
             azureTableMetadataStore.Setup(x => x.UpdateEntity(It.IsAny<TableClient>(), It.IsAny<TableEntity>(), It.IsAny<CancellationToken>())).Returns(true);
 

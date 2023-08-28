@@ -92,10 +92,12 @@ namespace ApiForFhirMigrationTool.Function
                     statusUrl = exportResponse.Content;
 
                     TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
-                    int jobId = (int)qEntity["JobId"];
-                    string rowKey = _options.RowKey + jobId++;
+                    if (qEntity["JobId"] != null)
+                    {
+                        int jobId = (int)qEntity["JobId"];
+                        string rowKey = _options.RowKey + jobId++;
 
-                    var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
+                        var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
                             {
                                 { "exportContentLocation", statusUrl },
                                 { "importContentLocation", string.Empty },
@@ -108,12 +110,13 @@ namespace ApiForFhirMigrationTool.Function
                                 { "Till", tillValue },
                                 { "StartTime", DateTime.UtcNow },
                             };
-                    _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
-                    TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                        _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
+                        TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
 
-                    // qEntitynew["since"] = tillValue;
-                    qEntitynew["JobId"] = jobId++;
-                    _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                        // qEntitynew["since"] = tillValue;
+                        qEntitynew["JobId"] = jobId++;
+                        _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                    }
                 }
                 else
                 {
