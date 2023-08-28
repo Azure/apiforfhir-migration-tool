@@ -34,7 +34,6 @@ public class Program
         var host = new HostBuilder()
             .ConfigureAppConfiguration((hostingContext, configuration) =>
             {
-                configuration.Sources.Clear();
                 configuration.AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
                 .AddUserSecrets(Assembly.GetExecutingAssembly(), true)
                 .AddEnvironmentVariables("AZURE_");
