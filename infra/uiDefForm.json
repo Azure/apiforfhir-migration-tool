@@ -14,7 +14,8 @@
             "Microsoft.OperationalInsights/workspaces",
             "Microsoft.Insights/diagnosticSettings",
             "Microsoft.Authorization/roleDefinitions",
-            "Microsoft.Authorization/roleAssignments"
+            "Microsoft.Authorization/roleAssignments",
+			"Microsoft.Resources/resourceGroups"
         ],
         "config": {
             "isWizard": true,
@@ -29,7 +30,8 @@
                         "Microsoft.Web",
                         "Microsoft.Resources",
                         "Microsoft.HealthcareApis",
-                        "Microsoft.Authorization"
+                        "Microsoft.Authorization",
+						"Microsoft.Resources"
                     ]
                 }
             }
@@ -83,7 +85,7 @@
                                 "options": {
                                     "filter": {
                                         "subscription": "onBasics",
-                                        "location": "onBasics"
+                                        "location": "onBasics"		
                                     }
                                 },
                                 "constraints": {
@@ -110,13 +112,16 @@
                         ]
                     }
                 ]
-            },
+            }
          ],
         "outputs": { 
             "prefix": "[basics('basicsConfigurationSection').prefix]",
             "location": "[location()]",
             "fhirServiceName": "[steps('fhirSelection').fhirSection.fhirServiceSelector.name]",
-            "apiForFhirName": "[steps('fhirSelection').fhirSection.apiForFhirSelector.name]"
+			"fhirserviceid": "[steps('fhirSelection').fhirSection.fhirServiceSelector.id]",
+            "apiForFhirName": "[steps('fhirSelection').fhirSection.apiForFhirSelector.name]",
+			"apiForFhirid": "[steps('fhirSelection').fhirSection.apiForFhirSelector.id]"
+
         }
     }
 }

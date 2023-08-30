@@ -65,9 +65,23 @@
       },
       "loaderRepoBranch": {
         "type": "string",
-        "defaultValue": "main",
+        "defaultValue": "personal/snarang/v1.2",
         "metadata": {
           "description": "Branch of the FHIR Loader repo for git integration"
+        }
+      },
+      "fhirid": {
+        "type": "string",
+        "defaultValue": "/subscriptions/a1766500-6fd5-4f5c-8515-607798271014/resourceGroups/migtool-deploy-rg/providers/Microsoft.HealthcareApis/workspaces/wkspcmigtool/fhirservices/fhirservdest",
+        "metadata": {
+          "description": "FHIR Server ID"
+        }
+      },
+      "apiForFhirid":{
+        "type": "string",
+        "defaultValue": "/subscriptions/a1766500-6fd5-4f5c-8515-607798271014/resourceGroups/migtool-deploy-rg/providers/Microsoft.HealthcareApis/services/gen1migtool",
+        "metadata": {
+          "description": "API for FHIR Server id"
         }
       }
     },
@@ -81,9 +95,13 @@
       "applicationInsightsName": "[parameters('appName')]",
       "storageAccountName": "[format('{0}azfunctions', uniqueString(resourceGroup().id))]",
       "array": "[split(parameters('fhirServiceName'), '/')]",
-      "serviceName": "[variables('array')[0]]",
-      "workspaceName": "[variables('array')[1]]",
-      "loaderRepoUrl": "https://github.com/Azure/apiforfhir-migration-tool"
+      "serviceName": "[variables('array')[1]]",
+      "workspaceName": "[variables('array')[0]]",
+      "loaderRepoUrl": "https://github.com/Azure/apiforfhir-migration-tool",
+      "fhirsegments": "[split(parameters('fhirid'), '/')]",
+      "apiForfhirsegments": "[split(parameters('apiForFhirid'), '/')]",
+      "fhirRg": "[variables('fhirsegments')[4]]",
+      "apiForFhirRg": "[variables('apiForfhirsegments')[4]]"
     },
     "resources": [
       {
@@ -163,26 +181,22 @@
           "FUNCTIONS_EXTENSION_VERSION": "~4",
           "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
           "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').InstrumentationKey]",
-          "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]", 
-          "SCM_DO_BUILD_DURING_DEPLOYMENT": true, 
-          "WEBSITE_RUN_FROM_PACKAGE": 1, 
-          "AZURE_DestinationFhirUri": "[format('https://{0}.fhir.azurehealthcareapis.com', replace(parameters('fhirServiceName'), '/', '-'))]", 
-          "AZURE_SourceFhirUri": "[format('https://{0}.azurehealthcareapis.com', parameters('apiForFhirName'))]", 
-          "AZURE_StartDate": "1970-01-01",
-          "AZURE_ScheduleInterval": 5,
+          "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]",
+          "WEBSITE_RUN_FROM_PACKAGE": "1",
+          "AZURE_AppInsightConnectionstring": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]",
+          "AZURE_DestinationUri": "[format('https://{0}.fhir.azurehealthcareapis.com', replace(parameters('fhirServiceName'), '/', '-'))]", 
+          "AZURE_SourceUri": "[format('https://{0}.azurehealthcareapis.com', parameters('apiForFhirName'))]",
+          "AZURE_ScheduleInterval": "2",
           "AZURE_ImportMode": "IncrementalLoad",
-          "AZURE_DeepCheckCount": 1,
+          "AZURE_DeepCheckCount": "1",
           "AZURE_UserAgent": "FhirMigrationTool",
           "AZURE_SourceHttpClient": "SourceFhirEndpoint", 
           "AZURE_DestinationHttpClient": "DestinationFhirEndpoint",
-          "AZURE_RetryCount": 3,
-          "AZURE_WaitForRetry": 1, 
-          "AZURE_Debug": true,
           "AZURE_ExportTableName": "export",
-          "AZURE_ChunkTableName": "doChunk", 
-          "AZURE_ExportChunkTime": 30,
-          "AZURE_PartitionKey": "partitionkey",
-          "AZURE_RowKey": "rowkey"
+          "AZURE_ChunkTableName": "chunk", 
+          "AZURE_ExportChunkTime": "30",
+          "AZURE_stagingStorageAccountName": "[variables('storageAccountName')]",
+          "AZURE_StagingStorageUri": "[format('https://{0}.table.core.windows.net', variables('storageAccountName'))]"
           },
         "dependsOn": [
           "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
@@ -190,21 +204,32 @@
           "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
         ]
       },
+      // {
+      //     "type": "Microsoft.Web/sites/sourcecontrols",
+      //     "apiVersion": "2022-03-01",
+      //     "name": "[format('{0}/{1}', format('{0}', variables('functionAppName')), 'web')]",
+      //     "properties": {
+      //       "repoUrl": "[variables('loaderRepoUrl')]",
+      //       "branch": "[parameters('loaderRepoBranch')]",
+      //       "isManualIntegration": true
+      //     },
+      //     "dependsOn": [
+      //       "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      //     ],
+      //     "metadata": {
+      //       "description": "Git integration for the function app code"
+      //     }
+      // },
       {
-          "type": "Microsoft.Web/sites/sourcecontrols",
-          "apiVersion": "2022-03-01",
-          "name": "[format('{0}/{1}', format('{0}', variables('functionAppName')), 'web')]",
-          "properties": {
-            "repoUrl": "[variables('loaderRepoUrl')]",
-            "branch": "[parameters('loaderRepoBranch')]",
-            "isManualIntegration": true
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
-          ],
-          "metadata": {
-            "description": "Git integration for the function app code"
-          }
+        "type": "Microsoft.Web/sites/extensions",
+        "apiVersion": "2022-03-01",
+        "name": "[format('{0}/{1}', variables('functionAppName'), 'zipdeploy')]",
+        "properties": {
+          "packageUri": "https://github.com/Azure/apiforfhir-migration-tool/tree/personal/snarang/v1.2/zip/ApiForFhirMigrationTool.Function - 20230828141130196.zip"
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+        ]
       },
       {
         "type": "Microsoft.Insights/components",
@@ -221,6 +246,7 @@
           "type": "Microsoft.Resources/deployments",
           "apiVersion": "2022-09-01",
           "name": "migration-function-fhir-managed-id-role-assignment",
+          "resourceGroup": "[variables('fhirRg')]",
           "properties": {
               "expressionEvaluationOptions": {
                   "scope": "inner"
@@ -231,10 +257,13 @@
                       "value": "[resourceId('Microsoft.HealthcareApis/services', parameters('apiForFhirName'))]"
                   },
                   "roleId": {
-                      "value": "3db33094-8700-4567-8da5-1501d4e7e843"
+                      "value": "5a1fc7df-4bf1-4951-a576-89034ee01acd"
                   },
                   "principalId": {
                       "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'full').identity.principalId]"
+                  },
+                  "apiForFhirName": {
+                      "value": "[parameters('apiForFhirName')]"
                   }
               },
               "template": {
@@ -260,17 +289,20 @@
                       "principalType": {
                           "type": "string",
                           "defaultValue": "ServicePrincipal"
+                      },
+                      "apiForFhirName": {
+                            "type": "string"
                       }
                   },
                   "resources": [
                       {
                           "type": "Microsoft.Authorization/roleAssignments",
-                          "apiVersion": "2020-04-01-preview",
+                          "apiVersion": "2022-04-01",
                           "name": "[guid(parameters('resourceId'), parameters('principalId'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId')))]",
+                          "scope": "[concat('Microsoft.HealthcareApis/services', '/', parameters('apiForFhirName'))]",
                           "properties": {
-                              "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId'))]",
-                              "principalId": "[parameters('principalId')]",
-                              "principalType": "[parameters('principalType')]"
+                              "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5a1fc7df-4bf1-4951-a576-89034ee01acd')]",
+                              "principalId": "[parameters('principalId')]"
                           }
                       }
                   ]
@@ -282,72 +314,85 @@
           "metadata": {
               "description": "Setup access between FHIR and the deployment script managed identity"
           }
+      },
+      {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2022-09-01",
+        "name": "functionFhirServiceRoleAssignment",
+        "resourceGroup": "[variables('apiForFhirRg')]",
+        "properties": {
+            "expressionEvaluationOptions": {
+                "scope": "inner"
+            },
+            "mode": "Incremental",
+            "parameters": {
+                // "resourceId": {
+                //     "value": "[resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', variables('workspaceName'), variables('serviceName'))]"
+                // },
+                "roleId": {
+                    "value": "5a1fc7df-4bf1-4951-a576-89034ee01acd"
+                },
+                "principalId": {
+                    "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'full').identity.principalId]"
+                },
+                "workspaceName": {
+                    "value": "[variables('workspaceName')]"
+                },
+                "fhirname": {
+                  "value": "[variables('serviceName')]"
+                }
+            },
+            "template": {
+                "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+                "metadata": {
+                    "_generator": {
+                    "name": "bicep",
+                    "version": "0.16.2.56959",
+                    "templateHash": "15312434787615452365"
+                    }
+                },
+                "parameters": {
+                    // "resourceId": {
+                    // "type": "string"
+                    // },
+                    "roleId": {
+                        "type": "string"
+                    },
+                    "principalId": {
+                        "type": "string"
+                    },
+                    "principalType": {
+                        "type": "string",
+                        "defaultValue": "ServicePrincipal"
+                    },
+                    "workspaceName": {
+                        "type": "string"
+                    },
+                    "fhirname": {
+                        "type": "string"
+                    }
+                },
+                "resources": [
+                    {
+                        "type": "Microsoft.Authorization/roleAssignments",
+                        "apiVersion": "2022-04-01",
+                        "name": "[guid(parameters('principalId'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId')))]",
+                        "scope": "[concat('Microsoft.HealthcareApis/workspaces', '/', parameters('workspaceName'), '/','fhirservices','/' , parameters('fhirname'))]",
+                        "properties": {
+                            "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5a1fc7df-4bf1-4951-a576-89034ee01acd')]",
+                            "principalId": "[parameters('principalId')]"
+                        }
+                    }
+                ]
+            }
         },
-        {
-          "type": "Microsoft.Resources/deployments",
-          "apiVersion": "2022-09-01",
-          "name": "functionFhirServiceRoleAssignment",
-          "properties": {
-              "expressionEvaluationOptions": {
-                  "scope": "inner"
-              },
-              "mode": "Incremental",
-              "parameters": {
-                  "resourceId": {
-                      "value": "[resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', variables('workspaceName'), variables('serviceName'))]"
-                  },
-                  "roleId": {
-                      "value": "4465e953-8ced-4406-a58e-0f6e3f3b530b"
-                  },
-                  "principalId": {
-                      "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'full').identity.principalId]"
-                  }
-              },
-              "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "metadata": {
-                      "_generator": {
-                      "name": "bicep",
-                      "version": "0.16.2.56959",
-                      "templateHash": "15312434787615452365"
-                      }
-                  },
-                  "parameters": {
-                      "resourceId": {
-                      "type": "string"
-                      },
-                      "roleId": {
-                          "type": "string"
-                      },
-                      "principalId": {
-                          "type": "string"
-                      },
-                      "principalType": {
-                          "type": "string",
-                          "defaultValue": "ServicePrincipal"
-                      }
-                  },
-                  "resources": [
-                      {
-                          "type": "Microsoft.Authorization/roleAssignments",
-                          "apiVersion": "2020-04-01-preview",
-                          "name": "[guid(parameters('resourceId'), parameters('principalId'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId')))]",
-                          "properties": {
-                              "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId'))]",
-                              "principalId": "[parameters('principalId')]",
-                              "principalType": "[parameters('principalType')]"
-                          }
-                      }
-                  ]
-              }
-          },
-          "dependsOn": [
-              "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
-          ],
-          "metadata": {
-              "description": "Setup access between FHIR and the deployment script managed identity"
-          }
+        "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+        ],
+        "metadata": {
+            "description": "Setup access between FHIR and the deployment script managed identity"
         }
+      }
     ]
   }
