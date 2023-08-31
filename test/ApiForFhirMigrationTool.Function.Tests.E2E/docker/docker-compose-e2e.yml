@@ -23,7 +23,6 @@ services:
       MSSQL_PID: Developer
     volumes:
       - ./sql-scripts:/usr/config
-      - mssql_data:/var/opt/mssql
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrongPassword1!' -Q 'SELECT 1' || exit 1"]
@@ -99,9 +98,6 @@ services:
       azurite:
         condition: service_started
     image: healthplatformregistry.azurecr.io/r4_fhir-server:3.4.277
-    # build:
-    #  context: .
-    #  dockerfile: Dockerfile.fhirMssql
     environment:
         MSSQL_FHIRADMIN_PASSWORD: "YourStrongPassword1!"
         FhirServer__Security__Enabled: "false"
@@ -130,6 +126,3 @@ networks:
       driver: default
       config:
         - subnet: "172.16.238.0/24"
-
-volumes:
-  mssql_data:
