@@ -1,0 +1,52 @@
+<Project>
+
+  <!-- Nuget related properties.-->
+  <PropertyGroup>
+    <Authors>Microsoft Health Team</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Copyright>Copyright © Microsoft Corporation. All rights reserved.</Copyright>
+    <DebugType>Portable</DebugType>
+    <TargetFramework>net7.0</TargetFramework>
+    <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <Deterministic>true</Deterministic>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <HighEntropyVA>true</HighEntropyVA>
+    <LangVersion>latest</LangVersion>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Product>Azure API for FHIR Migration Tool</Product>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <RepositoryUrl>https://github.com/azure/apiforfhir-migration-tool/</RepositoryUrl>
+    <IsPackable>false</IsPackable>
+    <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <RuntimePackageVersion>7.0.0</RuntimePackageVersion>
+    <AspNetPackageVersion>7.0.1</AspNetPackageVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="all"
+      IncludeAssets="Runtime;Build;Native;contentFiles;Analyzers" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435" PrivateAssets="all"
+      IncludeAssets="Runtime;Build;Native;contentFiles;Analyzers" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)/stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+
+  <Choose>
+    <When Condition="$(MSBuildProjectName.Contains('Test'))">
+      <PropertyGroup>
+        <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)/CustomAnalysisRules.Test.ruleset</CodeAnalysisRuleSet>
+      </PropertyGroup>
+      <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="3.1.2" PrivateAssets="all"
+          IncludeAssets="Runtime;Build;Native;contentFiles;Analyzers" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)/CustomAnalysisRules.ruleset</CodeAnalysisRuleSet>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+</Project>

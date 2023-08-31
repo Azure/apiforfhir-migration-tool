@@ -10,12 +10,12 @@ using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
 using Azure;
 using Azure.Data.Tables;
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ApiForFhirMigrationTool.Function
 {
@@ -30,9 +30,17 @@ namespace ApiForFhirMigrationTool.Function
         private readonly TelemetryClient _telemetryClient;
         private readonly IMetadataStore _azureTableMetadataStore;
 
-        public MigrationOrchestrator(MigrationOptions options, ILoggerFactory loggerFactory, IOrchestrationHelper orchestrationHelper, IMetadataStore azureTableMetadataStore, IAzureTableClientFactory azureTableClientFactory, IFhirProcessor exportProcessor, IFhirClient fhirClient, TelemetryClient telemetryClient)
+        public MigrationOrchestrator(
+            IOptions<MigrationOptions> options,
+            ILoggerFactory loggerFactory,
+            IOrchestrationHelper orchestrationHelper,
+            IAzureTableClientFactory azureTableClientFactory,
+            IFhirProcessor exportProcessor,
+            IFhirClient fhirClient,
+            TelemetryClient telemetryClient,
+            IMetadataStore azureTableMetadataStore)
         {
-            _options = options;
+            _options = options.Value;
             _logger = loggerFactory.CreateLogger<MigrationOrchestrator>();
             _orchestrationHelper = orchestrationHelper;
             _azureTableClientFactory = azureTableClientFactory;
@@ -51,7 +59,6 @@ namespace ApiForFhirMigrationTool.Function
 
             try
             {
-                _options.ValidateConfig();
                 logger.LogInformation("Start MigrationOrchestration.");
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
 
@@ -60,7 +67,7 @@ namespace ApiForFhirMigrationTool.Function
                 {
                     var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
                     {
-                        { "JobId", 0 }
+                        { "JobId", 0 },
                     };
                     _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
                 }
@@ -88,12 +95,18 @@ namespace ApiForFhirMigrationTool.Function
             return outputs;
         }
 
-        [Function("TimerOrchestration")]
-        public async Task Run(
+        [Function(nameof(MigrationTimerOrchestration))]
+        public async Task MigrationTimerOrchestration(
          [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
          [DurableClient] DurableTaskClient client,
          FunctionContext executionContext)
         {
+            if (!_options.EnableTimers)
+            {
+                _logger.LogInformation("Timers are disabled.");
+                return;
+            }
+
             string instanceId_new = "FhirMigrationTool";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
             try

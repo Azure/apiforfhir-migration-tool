@@ -4,16 +4,7 @@
 // -------------------------------------------------------------------------------------------------
 
 using System.Reflection;
-using ApiForFhirMigrationTool.Function.Configuration;
-using ApiForFhirMigrationTool.Function.FhirOperation;
-using ApiForFhirMigrationTool.Function.Models;
-using ApiForFhirMigrationTool.Function.OrchestrationHelper;
-using ApiForFhirMigrationTool.Function.Processors;
-using ApiForFhirMigrationTool.Function.SearchParameterOperation;
-using ApiForFhirMigrationTool.Function.Security;
-using Azure.Core;
 using Azure.Data.Tables;
-using Azure.Identity;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
@@ -21,102 +12,140 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
+using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using Polly;
 using Polly.Extensions.Http;
 
-public class Program
+namespace ApiForFhirMigrationTool.Function
 {
-    private static void Main(string[] args)
+    public class Program
     {
-        MigrationOptions config = new();
-
-        var host = new HostBuilder()
-            .ConfigureAppConfiguration((hostingContext, configuration) =>
-            {
-                configuration.AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
-                .AddUserSecrets(Assembly.GetExecutingAssembly(), true)
-                .AddEnvironmentVariables("AZURE_");
-
-                IConfigurationRoot configurationRoot = configuration.Build();
-                configurationRoot.Bind(config);
-            })
-    .ConfigureFunctionsWorkerDefaults()
-    .ConfigureServices(services =>
-    {
-        var credential = new DefaultAzureCredential();
-        if (config.AppInsightConnectionstring != null)
+        public static void Main(string[] args)
         {
-            services.AddLogging(builder =>
+            var config = new Configuration.MigrationOptions()
             {
-                builder.AddFilter<ApplicationInsightsLoggerProvider>(string.Empty, config.Debug ? LogLevel.Debug : LogLevel.Information);
-                builder.AddApplicationInsights(op => op.ConnectionString = config.AppInsightConnectionstring, op => op.FlushOnDispose = true);
-            });
+                SourceFhirUri = null,
+                TargetFhirUri = null,
+            };
 
-            services.Configure<TelemetryConfiguration>(options =>
+            var host = new HostBuilder()
+                .ConfigureAppConfiguration((hostingContext, configuration) =>
+                {
+                    configuration.Sources.Clear();
+
+                    IConfigurationRoot configRoot = configuration
+                        .AddJsonFile("local.settings.json", true, true)
+                        .AddUserSecrets(Assembly.GetExecutingAssembly(), true)
+                        .AddEnvironmentVariables()
+                        .Build();
+
+                    // #TODO - services that require configuration should get these from DI not from here.
+                    config = configRoot.GetRequiredSection("MigrationOptions").Get<Configuration.MigrationOptions>();
+                })
+            .ConfigureFunctionsWorkerDefaults()
+            .ConfigureServices(services =>
             {
-                options.ConnectionString = config.AppInsightConnectionstring;
-            });
-            services.AddTransient<TelemetryClient>();
+                SetupLogging(services, config);
+
+                // #TODO - would it make sense to split out this large options class into smaller, logical classes?
+                // Add our configuration as an IOptions. Validate.
+                services
+                    .AddOptions<Configuration.MigrationOptions>(nameof(Configuration.MigrationOptions))
+                    .ValidateDataAnnotations()
+                    .Validate(config =>
+                    {
+                        return config.ComplexValidate();
+                    });
+
+                services.AddTransient<OrchestrationHelper.IOrchestrationHelper, OrchestrationHelper.OrchestrationHelper>();
+
+                // services.AddTransient<IExportProcessor, ExportProcessor>();
+                // services.AddTransient<IImportProcessor, ImportProcessor>();
+                services.AddTransient<Models.IMetadataStore, Models.AzureTableMetadataStore>();
+
+                SetupMigrationStorageAccount(services, config);
+
+                services.AddTransient<Processors.IFhirProcessor, Processors.FhirProcessor>();
+
+                services.AddScoped<FhirOperation.IFhirClient, FhirOperation.FhirClient>();
+
+                services.AddTransient<SearchParameterOperation.ISearchParameterOperation, SearchParameterOperation.SearchParameterOperation>();
+
+                SetupFhirHttpClients(services, config);
+            })
+            .Build();
+
+            host.Run();
         }
 
-        services.AddTransient<IOrchestrationHelper, OrchestrationHelper>();
-
-        // services.AddTransient<IExportProcessor, ExportProcessor>();
-        // services.AddTransient<IImportProcessor, ImportProcessor>();
-        services.AddTransient<IAzureTableClientFactory, AzureTableClientFactory>();
-        services.AddTransient<IMetadataStore, AzureTableMetadataStore>();
-
-        TableClientOptions opts = new TableClientOptions(TableClientOptions.ServiceVersion.V2019_02_02);
-        opts.Retry.Delay = TimeSpan.FromSeconds(5);
-        opts.Retry.Mode = RetryMode.Fixed;
-        opts.Retry.MaxRetries = 3;
-
-        services.AddSingleton<TableServiceClient>(new TableServiceClient(new Uri(config.StagingStorageUri), credential, opts));
-
-        services.AddTransient<IFhirProcessor, FhirProcessor>();
-
-        services.AddScoped<IFhirClient, FhirClient>();
-
-        services.AddTransient<ISearchParameterOperation, SearchParameterOperation>();
-        services.AddSingleton(config);
-
-        var baseUri = config.SourceUri;
-        var desUri = config.DestinationUri;
-        string[]? scopes = default;
-
-#pragma warning disable CS8604 // Possible null reference argument.
-        services.AddHttpClient(config.SourceHttpClient, httpClient =>
+        internal static void SetupFhirHttpClients(IServiceCollection services, Configuration.MigrationOptions config)
         {
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.UserAgent, config.UserAgent);
-            httpClient.BaseAddress = baseUri;
-        })
-        .AddPolicyHandler(GetRetryPolicy())
-        .AddHttpMessageHandler(x => new BearerTokenHandler(credential, baseUri, scopes));
+            var credential = config.TokenCredential;
+            var sourceUri = config.SourceFhirUri!;
+            var desUri = config.TargetFhirUri!;
+            string[]? scopes = default;
 
-#pragma warning restore CS8604 // Possible null reference argument.
+            var retryPolicy = HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-#pragma warning disable CS8604 // Possible null reference argument.
-        services.AddHttpClient(config.DestinationHttpClient, client =>
+            var sourceFhirHttpBuilder = services.AddHttpClient(config.SourceHttpClient, httpClient =>
+            {
+                httpClient.DefaultRequestHeaders.Add(HeaderNames.UserAgent, config.UserAgent);
+                httpClient.BaseAddress = sourceUri!;
+            })
+            .AddPolicyHandler(retryPolicy);
+
+            var targetFhirHttpBuilder = services.AddHttpClient(config.DestinationHttpClient, client =>
+            {
+                client.DefaultRequestHeaders.Add(HeaderNames.UserAgent, config.UserAgent);
+                client.BaseAddress = desUri;
+            })
+            .AddPolicyHandler(retryPolicy);
+
+            if (credential is not null)
+            {
+                sourceFhirHttpBuilder.AddHttpMessageHandler(x => new Security.BearerTokenHandler(credential, sourceUri!, scopes));
+                targetFhirHttpBuilder.AddHttpMessageHandler(x => new Security.BearerTokenHandler(credential, desUri!, scopes));
+            }
+        }
+
+        internal static void SetupMigrationStorageAccount(IServiceCollection services, Configuration.MigrationOptions config)
         {
-            client.DefaultRequestHeaders.Add(HeaderNames.UserAgent, config.UserAgent);
-            client.BaseAddress = desUri;
-        })
-        .AddPolicyHandler(GetRetryPolicy())
-        .AddHttpMessageHandler(x => new BearerTokenHandler(credential, desUri, scopes));
-#pragma warning restore CS8604 // Possible null reference argument.
+            if (config.StagingStorageUri is not null)
+            {
+                services.AddSingleton(new TableServiceClient(config.StagingStorageUri, config.TokenCredential));
+            }
+            else if (config.StagingStorageConnectionString is not null)
+            {
+                services.AddSingleton(new TableClient(config.StagingStorageConnectionString, config.ExportTableName));
+            }
+            else
+            {
+                throw new ArgumentException("Either StagingStorageUri or StagingStorageConnectionString must be configured.");
+            }
 
-    })
-    .Build();
+            services.AddTransient<Models.IAzureTableClientFactory, Models.AzureTableClientFactory>();
+        }
 
-        host.Run();
-    }
+        internal static void SetupLogging(IServiceCollection services, Configuration.MigrationOptions config)
+        {
+            if (!string.IsNullOrEmpty(config.AppInsightConnectionString))
+            {
+                services.AddLogging(builder =>
+                {
+                    builder.AddFilter<ApplicationInsightsLoggerProvider>(string.Empty, config.Debug ? LogLevel.Debug : LogLevel.Information);
+                    builder.AddApplicationInsights(op => op.ConnectionString = config.AppInsightConnectionString, op => op.FlushOnDispose = true);
+                });
 
-    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
-    {
-        return HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-            .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+                services.Configure<TelemetryConfiguration>(options =>
+                {
+                    options.ConnectionString = config.AppInsightConnectionString;
+                });
+                services.AddTransient<TelemetryClient>();
+            }
+        }
     }
 }

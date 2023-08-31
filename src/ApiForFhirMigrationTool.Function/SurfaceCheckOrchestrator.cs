@@ -9,6 +9,7 @@ using ApiForFhirMigrationTool.Function.SurfaceCheck;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ApiForFhirMigrationTool.Function
 {
@@ -19,10 +20,14 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IFhirClient _fhirClient;
         private readonly ILogger _logger;
 
-        public SurfaceCheckOrchestrator(IFhirClient fhirClient, ISurfaceCheck surfaceCheck, MigrationOptions options, ILogger<SurfaceCheckOrchestrator> logger)
+        public SurfaceCheckOrchestrator(
+            IFhirClient fhirClient,
+            ISurfaceCheck surfaceCheck,
+            IOptions<MigrationOptions> options,
+            ILogger<SurfaceCheckOrchestrator> logger)
         {
             _surfaceCheck = surfaceCheck;
-            _options = options;
+            _options = options.Value;
             _fhirClient = fhirClient;
             _logger = logger;
         }

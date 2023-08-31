@@ -9,6 +9,7 @@ using ApiForFhirMigrationTool.Function.FhirOperation;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ApiForFhirMigrationTool.Function
 {
@@ -19,10 +20,14 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IFhirClient _fhirClient;
         private readonly ILogger _logger;
 
-        public DeepCheckOrchestrator(IFhirClient fhirClient, IDeepCheck deepCheck, MigrationOptions options, ILogger<DeepCheckOrchestrator> logger)
+        public DeepCheckOrchestrator(
+            IFhirClient fhirClient,
+            IDeepCheck deepCheck,
+            IOptions<MigrationOptions> options,
+            ILogger<DeepCheckOrchestrator> logger)
         {
             _deepCheck = deepCheck;
-            _options = options;
+            _options = options.Value;
             _fhirClient = fhirClient;
             _logger = logger;
         }

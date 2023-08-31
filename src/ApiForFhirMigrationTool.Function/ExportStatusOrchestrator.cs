@@ -14,6 +14,7 @@ using Azure.Data.Tables;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 
 namespace ApiForFhirMigrationTool.Function
@@ -27,10 +28,16 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IMetadataStore _azureTableMetadataStore;
         private readonly IOrchestrationHelper _orchestrationHelper;
 
-        public ExportStatusOrchestrator(IFhirProcessor exportProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IFhirClient fhirClient, IOrchestrationHelper orchestrationHelper)
+        public ExportStatusOrchestrator(
+            IFhirProcessor exportProcessor,
+            IOptions<MigrationOptions> options,
+            IAzureTableClientFactory azureTableClientFactory,
+            IMetadataStore azureTableMetadataStore,
+            IFhirClient fhirClient,
+            IOrchestrationHelper orchestrationHelper)
         {
             _exportProcessor = exportProcessor;
-            _options = options;
+            _options = options.Value;
             _fhirClient = fhirClient;
             _azureTableClientFactory = azureTableClientFactory;
             _azureTableMetadataStore = azureTableMetadataStore;
@@ -148,7 +155,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 if (!string.IsNullOrEmpty(exportStatusUrl))
                 {
-                    ResponseModel exportStatusResponse = await _exportProcessor.CheckProcessStatus(exportStatusUrl, _options.SourceUri, _options.SourceHttpClient);
+                    ResponseModel exportStatusResponse = await _exportProcessor.CheckProcessStatus(exportStatusUrl, _options.SourceFhirUri!, _options.SourceHttpClient);
                     return exportStatusResponse;
                 }
                 else

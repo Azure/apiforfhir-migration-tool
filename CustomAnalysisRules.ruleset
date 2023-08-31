@@ -12,6 +12,8 @@
     <Rule Id="IDE0004" Action="Warning" />
     <!-- Remove unnecessary import. -->
     <Rule Id="IDE0005" Action="Warning" />
+    <!-- Remove warning for using var vs explicit type. -->
+    <Rule Id="IDE0008" Action="None" />
     <!-- Allow lambdas vs local functions. -->
     <Rule Id="IDE0039" Action="None" />
     <!-- Prefer to use the conditional coalescing operator (?.) when invoking a lambda expression. -->

@@ -1,0 +1,14 @@
+FROM healthplatformregistry.azurecr.io/r4_fhir-server:3.4.277
+
+USER root
+
+RUN mkdir -p /setup/scripts
+COPY ./scripts/fix-cert.sh /setup/scripts/fix-cert.sh
+
+RUN chmod +x /setup/scripts/*.sh \
+    && chmod 777 /setup/scripts/*.sh \
+    && apk add --no-cache ca-certificates \
+    && update-ca-certificates
+
+EXPOSE 8080
+ENTRYPOINT ["sh", "-c", "/setup/scripts/fix-cert.sh && dotnet /app/Microsoft.Health.Fhir.Web.dll"]
