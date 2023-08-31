@@ -18,10 +18,16 @@ public static class TestConfigurationHelpers
         var testConfigPath = Path.GetFullPath("testconfiguration.json");
 
         // Setup test specific configuration.
-        Dictionary<string, string?> configuration =
-            GetLaunchSettings(functionProjectDir)
-            .Union(GetTestConfiguration(testConfigPath))
-            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        Dictionary<string, string?> configuration = GetLaunchSettings(functionProjectDir);
+
+        foreach (var p in GetTestConfiguration(testConfigPath))
+        {
+            if (p.Value is not null)
+            {
+                configuration.Remove(p.Key);
+                configuration.Add(p.Key, p.Value);
+            }
+        }
 
         // Only set if not in environment already. This allows users to override built in test config.
         foreach (var kvp in configuration)

@@ -22,12 +22,14 @@ public class MigrationTests : IClassFixture<FhirCosmosFixture>, IClassFixture<Fh
         _functionClient = migrationFixture.FunctionClient;
     }
 
+    // Runs before every test.
     public async Task InitializeAsync()
     {
         var createBundle = Samples.GetJsonSample<FhirModel.Bundle>("Bundle_Create_353_Resources");
         await _fhirCosmosClient.PostBundleAsync(createBundle);
     }
 
+    // Runs after every test.
     public async Task DisposeAsync()
     {
         var deleteBundle = Samples.GetJsonSample<FhirModel.Bundle>("Bundle_Delete_353_Resources");
@@ -46,7 +48,7 @@ public class MigrationTests : IClassFixture<FhirCosmosFixture>, IClassFixture<Fh
         Assert.Equal(353, cosmosFhirTestResourceCount.Resource.Total);
 
         // The destination server should be empty
-        var sqlFhirTestResourceCount = await _fhirCosmosClient.SearchAsync("/?_summary=count");
+        var sqlFhirTestResourceCount = await _fhirSqlClient.SearchAsync("/?_summary=count");
         Assert.Equal(0, sqlFhirTestResourceCount.Resource.Total);
     }
 }
