@@ -8,7 +8,9 @@ using ApiForFhirMigrationTool.Function.FhirOperation;
 using ApiForFhirMigrationTool.Function.Models;
 using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
+using Azure;
 using Azure.Data.Tables;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
@@ -26,8 +28,9 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IFhirProcessor _exportProcessor;
         private readonly IFhirClient _fhirClient;
         private readonly TelemetryClient _telemetryClient;
+        private readonly IMetadataStore _azureTableMetadataStore;
 
-        public MigrationOrchestrator(MigrationOptions options, ILoggerFactory loggerFactory, IOrchestrationHelper orchestrationHelper, IAzureTableClientFactory azureTableClientFactory, IFhirProcessor exportProcessor, IFhirClient fhirClient, TelemetryClient telemetryClient)
+        public MigrationOrchestrator(MigrationOptions options, ILoggerFactory loggerFactory, IOrchestrationHelper orchestrationHelper, IMetadataStore azureTableMetadataStore, IAzureTableClientFactory azureTableClientFactory, IFhirProcessor exportProcessor, IFhirClient fhirClient, TelemetryClient telemetryClient)
         {
             _options = options;
             _logger = loggerFactory.CreateLogger<MigrationOrchestrator>();
@@ -36,6 +39,7 @@ namespace ApiForFhirMigrationTool.Function
             _exportProcessor = exportProcessor;
             _fhirClient = fhirClient;
             _telemetryClient = telemetryClient;
+            _azureTableMetadataStore = azureTableMetadataStore;
         }
 
         [Function(nameof(MigrationOrchestration))]
@@ -49,7 +53,17 @@ namespace ApiForFhirMigrationTool.Function
             {
                 _options.ValidateConfig();
                 logger.LogInformation("Start MigrationOrchestration.");
-                TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+                TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+
+                Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
+                if (jobList.Count() <= 0)
+                {
+                    var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
+                    {
+                        { "JobId", 0 }
+                    };
+                    _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
+                }
 
                 var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
                         maxNumberOfAttempts: 3,
