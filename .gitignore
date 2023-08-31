@@ -295,3 +295,7 @@ install-aso/
 
 # Bicep farameters file
 /infra/main.parameters.json
+
+**/.DS_Store
+
+**/__azurite*

@@ -14,6 +14,7 @@ using Azure.Data.Tables;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -28,10 +29,16 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IMetadataStore _azureTableMetadataStore;
         private readonly IOrchestrationHelper _orchestrationHelper;
 
-        public ExportOrchestrator(IFhirProcessor exportProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IFhirClient fhirClient, IOrchestrationHelper orchestrationHelper)
+        public ExportOrchestrator(
+            IFhirProcessor exportProcessor,
+            IOptions<MigrationOptions> options,
+            IAzureTableClientFactory azureTableClientFactory,
+            IMetadataStore azureTableMetadataStore,
+            IFhirClient fhirClient,
+            IOrchestrationHelper orchestrationHelper)
         {
             _exportProcessor = exportProcessor;
-            _options = options;
+            _options = options.Value;
             _fhirClient = fhirClient;
             _azureTableClientFactory = azureTableClientFactory;
             _azureTableMetadataStore = azureTableMetadataStore;
@@ -75,7 +82,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 HttpMethod method = HttpMethod.Get;
                 string query = GetQueryStringForExport();
-                exportResponse = await _exportProcessor.CallProcess(method, string.Empty, _options.SourceUri, query, _options.SourceHttpClient);
+                exportResponse = await _exportProcessor.CallProcess(method, string.Empty, _options.SourceFhirUri!, query, _options.SourceHttpClient);
 
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
@@ -196,14 +203,14 @@ namespace ApiForFhirMigrationTool.Function
         private async Task<DateTimeOffset> SinceDate()
         {
             var since = string.Empty;
-            Uri baseUri = _options.SourceUri;
+            Uri baseUri = _options.SourceFhirUri!;
             string sourceFhirEndpoint = _options.SourceHttpClient;
             var firstResource = new object();
             var sinceDate = default(DateTimeOffset);
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(baseUri, "/?_sort=_lastUpdated&_count=1"),
+                RequestUri = new Uri(baseUri!, "/?_sort=_lastUpdated&_count=1"),
             };
             HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
 

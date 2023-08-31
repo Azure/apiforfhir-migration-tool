@@ -13,6 +13,7 @@ using Azure.Data.Tables;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ApiForFhirMigrationTool.Function
 {
@@ -24,10 +25,15 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IMetadataStore _azureTableMetadataStore;
         private readonly IOrchestrationHelper _orchestrationHelper;
 
-        public ImportOrchestrator(IFhirProcessor importProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IOrchestrationHelper orchestrationHelper)
+        public ImportOrchestrator(
+            IFhirProcessor importProcessor,
+            IOptions<MigrationOptions> options,
+            IAzureTableClientFactory azureTableClientFactory,
+            IMetadataStore azureTableMetadataStore,
+            IOrchestrationHelper orchestrationHelper)
         {
             _importProcessor = importProcessor;
-            _options = options;
+            _options = options.Value;
             _azureTableClientFactory = azureTableClientFactory;
             _azureTableMetadataStore = azureTableMetadataStore;
             _orchestrationHelper = orchestrationHelper;
@@ -92,7 +98,7 @@ namespace ApiForFhirMigrationTool.Function
             try
             {
                 HttpMethod method = HttpMethod.Post;
-                ResponseModel importResponse = await _importProcessor.CallProcess(method, requestContent, _options.DestinationUri, "/$import",  _options.DestinationHttpClient);
+                ResponseModel importResponse = await _importProcessor.CallProcess(method, requestContent, _options.TargetFhirUri!, "/$import",  _options.DestinationHttpClient);
                 return importResponse;
             }
             catch

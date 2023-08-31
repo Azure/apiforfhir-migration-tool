@@ -24,7 +24,7 @@ namespace ApiForFhirMigrationTool.Function.Security
         /// <param name="tokenCredential">Credential used to create tokens/</param>
         /// <param name="baseAddress">Base address for the client using the credential. Used for resource based scoping via {{baseAddress}}/.default</param>
         /// <param name="scopes">Optional scopes if you want to override the `.default` resource scope.</param>
-        public BearerTokenHandler(TokenCredential tokenCredential, Uri baseAddress, string[] scopes)
+        public BearerTokenHandler(TokenCredential tokenCredential, Uri baseAddress, string[]? scopes)
             : this(tokenCredential, baseAddress, scopes, TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(30))
         {
         }
@@ -32,7 +32,7 @@ namespace ApiForFhirMigrationTool.Function.Security
         internal BearerTokenHandler(
             TokenCredential tokenCredential,
             Uri baseAddress,
-            string[] scopes,
+            string[]? scopes,
             TimeSpan tokenRefreshOffset,
             TimeSpan tokenRefreshRetryDelay)
         {

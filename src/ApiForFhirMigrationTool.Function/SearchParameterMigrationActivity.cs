@@ -15,7 +15,9 @@ namespace ApiForFhirMigrationTool.Function.Migration
         private readonly ISearchParameterOperation _searchParameterOperation;
         private readonly ILogger _logger;
 
-        public SearchParameterMigrationActivity(ISearchParameterOperation searchParameterOperation, ILogger<SearchParameterMigrationActivity> logger)
+        public SearchParameterMigrationActivity(
+            ISearchParameterOperation searchParameterOperation,
+            ILogger<SearchParameterMigrationActivity> logger)
         {
             _searchParameterOperation = searchParameterOperation;
             _logger = logger;

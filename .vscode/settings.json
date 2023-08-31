@@ -1,0 +1,20 @@
+{
+    "azureFunctions.projectSubpath": "src/ApiForFhirMigrationTool.Function",
+    "azureFunctions.deploySubpath": "src/ApiForFhirMigrationTool.Function/bin/Release/net7.0/publish",
+    "azureFunctions.projectLanguage": "C#",
+    "azureFunctions.projectRuntime": "~4",
+    "debug.internalConsoleOptions": "neverOpen",
+    "azureFunctions.preDeployTask": "publish (functions)",
+    "dotnet-test-explorer.testProjectPath": "**/*Tests*.csproj",
+    "dotnet.defaultSolution": "ApiForFhirMigrationTool.sln",
+    "cSpell.words": ["dotnet"],
+    "emmet.excludeLanguages": [],
+    "emmet.triggerExpansionOnTab": true,
+    "search.exclude": {
+        "**/obj": true,
+        "**/coverage": true
+    },
+    "[csharp]": {
+        "editor.tabSize": 4
+    }
+}
