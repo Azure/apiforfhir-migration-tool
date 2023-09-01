@@ -7,6 +7,8 @@ param functionSettings object = {}
 param appTags object = {}
 param apiForFhirName string
 param fhirServiceName string
+@secure()
+param repoUrl string
 
 @description('Automatically create a role assignment for the function app to access the FHIR service and API for FHIR.')
 param createRoleAssignment bool = true
@@ -59,6 +61,14 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         }
     }
 
+    resource sourcecontol 'sourcecontrols' = {
+        name: 'web'
+        properties: {
+          repoUrl: repoUrl
+          branch: 'main'
+          isManualIntegration: true
+        }
+    }
 
     resource ftpPublishingPolicy 'basicPublishingCredentialsPolicies' = {
         name: 'ftp'
@@ -90,9 +100,6 @@ resource functionAppSettings 'Microsoft.Web/sites/config@2020-12-01' = {
             FUNCTIONS_WORKER_RUNTIME: 'dotnet-isolated'
             APPINSIGHTS_INSTRUMENTATIONKEY: appInsightsInstrumentationKey
             APPLICATIONINSIGHTS_CONNECTION_STRING: 'InstrumentationKey=${appInsightsInstrumentationKey}'
-            SCM_DO_BUILD_DURING_DEPLOYMENT: 'false'
-            ENABLE_ORYX_BUILD: 'false'
-            WEBSITE_RUN_FROM_PACKAGE: 1
         }, functionSettings)
 }
 
