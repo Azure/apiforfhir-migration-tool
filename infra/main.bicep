@@ -18,6 +18,10 @@ param apiForFhirName string
 @description('Name of your existing resource group (leave blank to create a new one)')
 param existingResourceGroupName string = ''
 
+@description('Git repository URL for the FHIR resources to import. For private repos, do https://{github-username}:{access-token}@github.com/{organisation-acount}/{repo}.git')
+@secure()
+param repoUrl string
+
 var envRandomString = toLower(uniqueString(subscription().id, name, existingResourceGroupName, location))
 var nameShort = length(name) > 11 ? substring(name, 0, 11) : name
 var resourcePrefix = '${nameShort}-${substring(envRandomString, 0, 5)}'
@@ -38,7 +42,7 @@ resource existingResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' e
   name: existingResourceGroupName
 }
 
-module template 'core.bicep'= if (createResourceGroup) {
+module template 'core.bicep' = if (createResourceGroup) {
   name: 'main'
   scope: resourceGroup
   params: {
@@ -47,11 +51,11 @@ module template 'core.bicep'= if (createResourceGroup) {
     fhirServiceName: fhirServiceName
     location: location
     appTags: appTags
-
+    repoUrl: repoUrl
   }
 }
 
-module existingResourceGrouptemplate 'core.bicep'= if (!createResourceGroup) {
+module existingResourceGrouptemplate 'core.bicep' = if (!createResourceGroup) {
   name: 'mainExistingResourceGroup'
   scope: existingResourceGroup
   params: {
@@ -60,6 +64,7 @@ module existingResourceGrouptemplate 'core.bicep'= if (!createResourceGroup) {
     fhirServiceName: fhirServiceName
     location: location
     appTags: appTags
+    repoUrl: repoUrl
   }
 }
 

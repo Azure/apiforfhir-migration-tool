@@ -19,6 +19,10 @@ param appTags object = {}
 @description('Any custom function app settings')
 param functionAppCustomSettings object = {}
 
+@description('Git repository URL for the FHIR resources to import. For private repos, do https://{github-username}:{access-token}@github.com/{organisation-acount}/{repo}.git')
+@secure()
+param repoUrl string
+
 @description('Tenant ID where resources are deployed')
 var tenantId  = subscription().tenantId
 
@@ -65,6 +69,7 @@ module function './azureFunction.bicep'= {
                 AZURE_InstrumentationKey: monitoring.outputs.appInsightsInstrumentationString
             }, functionAppCustomSettings)
         appTags: appTags
+        repoUrl: repoUrl
     }
 }
 
