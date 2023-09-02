@@ -7,6 +7,7 @@ using ApiForFhirMigrationTool.Function.Configuration;
 using ApiForFhirMigrationTool.Function.FhirOperation;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -19,10 +20,10 @@ namespace ApiForFhirMigrationTool.Function.SurfaceCheck
         private readonly IFhirClient _fhirClient;
         private readonly TelemetryClient _telemetryClient;
 
-        public SurfaceCheck(IFhirClient fhirClient, MigrationOptions options, TelemetryClient telemetryClient, ILogger<SurfaceCheck> logger)
+        public SurfaceCheck(IFhirClient fhirClient, IOptions<MigrationOptions> options, TelemetryClient telemetryClient, ILogger<SurfaceCheck> logger)
         {
             _telemetryClient = telemetryClient;
-            _options = options;
+            _options = options.Value;
             _logger = logger;
             _fhirClient = fhirClient;
         }
@@ -36,8 +37,8 @@ namespace ApiForFhirMigrationTool.Function.SurfaceCheck
             if (_options.SurfaceCheckResources != null)
             {
                 var surfaceCheckResource = new List<string>(_options.SurfaceCheckResources);
-                var baseUri = _options.SourceUri;
-                var desbaseUri = _options.DestinationUri;
+                var baseUri = _options.SourceFhirUri!;
+                var desbaseUri = _options.TargetFhirUri!;
                 string sourceFhirEndpoint = _options.SourceHttpClient;
                 string destinationFhirEndpoint = _options.DestinationHttpClient;
                 foreach (var item in surfaceCheckResource)
@@ -48,7 +49,7 @@ namespace ApiForFhirMigrationTool.Function.SurfaceCheck
                         var request = new HttpRequestMessage
                         {
                             Method = HttpMethod.Get,
-                            RequestUri = new Uri(baseUri, string.Format("{0}{1}", item, query)),
+                            RequestUri = new Uri(baseUri, string.Format("{0}{1}", item, query ?? string.Empty)),
                         };
                         HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
 

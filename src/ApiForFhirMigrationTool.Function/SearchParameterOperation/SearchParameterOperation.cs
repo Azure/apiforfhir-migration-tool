@@ -9,6 +9,7 @@ using ApiForFhirMigrationTool.Function.Configuration;
 using ApiForFhirMigrationTool.Function.ExceptionHelper;
 using ApiForFhirMigrationTool.Function.FhirOperation;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 
 namespace ApiForFhirMigrationTool.Function.SearchParameterOperation
@@ -19,9 +20,9 @@ namespace ApiForFhirMigrationTool.Function.SearchParameterOperation
         private readonly MigrationOptions _options;
         private readonly IFhirClient _fhirClient;
 
-        public SearchParameterOperation(MigrationOptions options, IFhirClient fhirClient, ILogger<SearchParameterOperation> logger)
+        public SearchParameterOperation(IOptions<MigrationOptions> options, IFhirClient fhirClient, ILogger<SearchParameterOperation> logger)
         {
-            _options = options;
+            _options = options.Value;
             _logger = logger;
             _fhirClient = fhirClient;
         }
@@ -35,7 +36,7 @@ namespace ApiForFhirMigrationTool.Function.SearchParameterOperation
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(_options.SourceUri, "/SearchParameter"),
+                    RequestUri = new Uri(_options.SourceFhirUri!, "/SearchParameter"),
                     Headers =
                     {
                         { HttpRequestHeader.Accept.ToString(), "application/json" },
@@ -43,7 +44,7 @@ namespace ApiForFhirMigrationTool.Function.SearchParameterOperation
                     Content = new StringContent(string.Empty, Encoding.UTF8, "application/json"),
                 };
 
-                HttpResponseMessage response = await _fhirClient.Send(request, _options.SourceUri, _options.SourceHttpClient);
+                HttpResponseMessage response = await _fhirClient.Send(request, _options.SourceFhirUri!, _options.SourceHttpClient);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -79,13 +80,14 @@ namespace ApiForFhirMigrationTool.Function.SearchParameterOperation
                 {
                     foreach (JObject resource in entryArray)
                     {
+                        if (resource["resource"] == null || resource["resource"]!["id"] == null)
+                        {
+                            throw new HttpFailureException($"Resource or Resource Id is null");
+                        }
+
                         resource.Remove("fullUrl");
                         JObject requestObject = new JObject();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-                        requestObject["url"] = $"SearchParameter/{(string)resource["resource"]["id"]}";
-#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                        requestObject["url"] = $"SearchParameter/{resource["resource"]!["id"]!}";
                         requestObject["method"] = "PUT";
                         resource["request"] = requestObject;
                     }
@@ -113,7 +115,7 @@ namespace ApiForFhirMigrationTool.Function.SearchParameterOperation
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Post,
-                    RequestUri = new Uri(_options.DestinationUri.ToString()),
+                    RequestUri = _options.TargetFhirUri!,
                     Headers =
                     {
                         { HttpRequestHeader.Accept.ToString(), "application/json" },
@@ -121,7 +123,7 @@ namespace ApiForFhirMigrationTool.Function.SearchParameterOperation
                     Content = new StringContent(requestContent, Encoding.UTF8, "application/json"),
                 };
 
-                HttpResponseMessage response = await _fhirClient.Send(request, _options.DestinationUri, _options.DestinationHttpClient);
+                HttpResponseMessage response = await _fhirClient.Send(request, _options.TargetFhirUri!, _options.DestinationHttpClient);
 
                 if (!response.IsSuccessStatusCode)
                 {

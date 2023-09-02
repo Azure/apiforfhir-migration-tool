@@ -12,6 +12,7 @@ using ApiForFhirMigrationTool.Function.SearchParameterOperation;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -37,8 +38,8 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
 
             _config = new MigrationOptions
             {
-                SourceUri = new Uri(TestHelpers.TestSourceUri),
-                DestinationUri = new Uri(TestHelpers.TestDestinationUri),
+                SourceFhirUri = new Uri(TestHelpers.TestSourceUri),
+                TargetFhirUri = new Uri(TestHelpers.TestDestinationUri),
             };
         }
 
@@ -52,7 +53,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                 telemetryClient: null,
                 logger: NullLogger.Instance as ILogger<FhirProcessor>);
 
-            ResponseModel exportResponse = await exportProcessor.CallProcess(HttpMethod.Get, string.Empty, _config.SourceUri, "/$export?_type=Patient", _config.SourceHttpClient);
+            ResponseModel exportResponse = await exportProcessor.CallProcess(HttpMethod.Get, string.Empty, _config.SourceFhirUri!, "/$export?_type=Patient", _config.SourceHttpClient);
             var statusUrl = exportResponse.Content;
 
             Assert.Equal(ResponseStatus.Accepted, exportResponse.Status);
@@ -69,7 +70,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                 telemetryClient: null,
                 logger: NullLogger.Instance as ILogger<FhirProcessor>);
 
-            ResponseModel exportStatusResponse = await exportProcessor.CheckProcessStatus(TestHelpers.ExportStatusUrl, _config.SourceUri, _config.SourceHttpClient);
+            ResponseModel exportStatusResponse = await exportProcessor.CheckProcessStatus(TestHelpers.ExportStatusUrl, _config.SourceFhirUri!, _config.SourceHttpClient);
 
             Assert.Equal(ResponseStatus.Completed, exportStatusResponse.Status);
         }
@@ -84,7 +85,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                 telemetryClient: null,
                 logger: NullLogger.Instance as ILogger<FhirProcessor>);
 
-            ResponseModel importResponse = await importProcessor.CallProcess(HttpMethod.Post, TestHelpers.TestImportBody, _config.DestinationUri, "/$import", _config.DestinationHttpClient);
+            ResponseModel importResponse = await importProcessor.CallProcess(HttpMethod.Post, TestHelpers.TestImportBody, _config.TargetFhirUri!, "/$import", _config.DestinationHttpClient);
             var statusUrl = importResponse.Content;
 
             Assert.Equal(ResponseStatus.Accepted, importResponse.Status);
@@ -101,7 +102,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                     telemetryClient: null,
                     logger: NullLogger.Instance as ILogger<FhirProcessor>);
 
-            ResponseModel importStatusResponse = await importProcessor.CheckProcessStatus(TestHelpers.ImportStatusUrl, _config.DestinationUri, _config.DestinationHttpClient);
+            ResponseModel importStatusResponse = await importProcessor.CheckProcessStatus(TestHelpers.ImportStatusUrl, _config.TargetFhirUri!, _config.DestinationHttpClient);
 
             Assert.Equal(ResponseStatus.Completed, importStatusResponse.Status);
         }
@@ -229,7 +230,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
 
             var loggerMock = new Mock<ILogger<SearchParameterOperation.SearchParameterOperation>>();
 
-            ISearchParameterOperation searchParameterOperation = new SearchParameterOperation.SearchParameterOperation(_config, _mockClient.Object, loggerMock.Object);
+            ISearchParameterOperation searchParameterOperation = new SearchParameterOperation.SearchParameterOperation(Options.Create(_config), _mockClient.Object, loggerMock.Object);
 
             JObject searchParameters = await searchParameterOperation.GetSearchParameters();
 
@@ -241,7 +242,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
         {
             var loggerMock = new Mock<ILogger<SearchParameterOperation.SearchParameterOperation>>();
 
-            ISearchParameterOperation searchParameterOperation = new SearchParameterOperation.SearchParameterOperation(_config, _mockClient.Object, loggerMock.Object);
+            ISearchParameterOperation searchParameterOperation = new SearchParameterOperation.SearchParameterOperation(Options.Create(_config), _mockClient.Object, loggerMock.Object);
 
             string transformedJson = searchParameterOperation.TransformObject(JObject.Parse(TestHelpers.MockSearchParamterJson));
 
@@ -255,7 +256,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
 
             var loggerMock = new Mock<ILogger<SearchParameterOperation.SearchParameterOperation>>();
 
-            ISearchParameterOperation searchParameterOperation = new SearchParameterOperation.SearchParameterOperation(_config, _mockClient.Object, loggerMock.Object);
+            ISearchParameterOperation searchParameterOperation = new SearchParameterOperation.SearchParameterOperation(Options.Create(_config), _mockClient.Object, loggerMock.Object);
 
             searchParameterOperation.PostSearchParameters(TestHelpers.MockTranformedSearchParamterJson);
 

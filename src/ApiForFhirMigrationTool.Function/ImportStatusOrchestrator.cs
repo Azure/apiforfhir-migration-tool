@@ -12,6 +12,7 @@ using Azure.Data.Tables;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ApiForFhirMigrationTool.Function
 {
@@ -22,10 +23,14 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IAzureTableClientFactory _azureTableClientFactory;
         private readonly IMetadataStore _azureTableMetadataStore;
 
-        public ImportStatusOrchestrator(IFhirProcessor importProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore)
+        public ImportStatusOrchestrator(
+            IFhirProcessor importProcessor,
+            IOptions<MigrationOptions> options,
+            IAzureTableClientFactory azureTableClientFactory,
+            IMetadataStore azureTableMetadataStore)
         {
             _importProcessor = importProcessor;
-            _options = options;
+            _options = options.Value;
             _azureTableClientFactory = azureTableClientFactory;
             _azureTableMetadataStore = azureTableMetadataStore;
         }
@@ -111,7 +116,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 if (!string.IsNullOrEmpty(importStatusUrl))
                 {
-                    ResponseModel importStatusResponse = await _importProcessor.CheckProcessStatus(importStatusUrl, _options.DestinationUri, _options.DestinationHttpClient);
+                    ResponseModel importStatusResponse = await _importProcessor.CheckProcessStatus(importStatusUrl, _options.TargetFhirUri!, _options.DestinationHttpClient);
                     return importStatusResponse;
                 }
                 else

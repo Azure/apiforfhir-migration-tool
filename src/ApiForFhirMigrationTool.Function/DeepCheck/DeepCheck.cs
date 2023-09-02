@@ -7,6 +7,7 @@ using ApiForFhirMigrationTool.Function.Configuration;
 using ApiForFhirMigrationTool.Function.FhirOperation;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -19,10 +20,10 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
         private readonly IFhirClient _fhirClient;
         private readonly TelemetryClient _telemetryClient;
 
-        public DeepCheck(IFhirClient fhirClient, MigrationOptions options, TelemetryClient telemetryClient, ILogger<DeepCheck> logger)
+        public DeepCheck(IFhirClient fhirClient, IOptions<MigrationOptions> options, TelemetryClient telemetryClient, ILogger<DeepCheck> logger)
         {
             _telemetryClient = telemetryClient;
-            _options = options;
+            _options = options.Value;
             _logger = logger;
             _fhirClient = fhirClient;
         }
@@ -30,15 +31,15 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
         public async Task<string> Execute(string query)
         {
             int resourceCount = _options.DeepCheckCount;
-            var baseUri = _options.SourceUri;
-            var desbaseUri = _options.DestinationUri;
+            Uri baseUri = _options.SourceFhirUri!;
+            Uri desbaseUri = _options.TargetFhirUri!;
 
             string sourceFhirEndpoint = _options.SourceHttpClient;
             string destinationFhirEndpoint = _options.DestinationHttpClient;
 
-            var res = new JObject();
-            var passResource = new JArray();
-            var errorResource = new JArray();
+            JObject res = new();
+            JArray passResource = new();
+            JArray errorResource = new();
 
             _logger?.LogInformation($"Deep Check Function start");
             try
@@ -46,9 +47,9 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(baseUri, string.Format("/{0}{1}", query, resourceCount)),
+                    RequestUri = new Uri(baseUri!, string.Format("/{0}{1}", query, resourceCount)),
                 };
-                HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
+                HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri!, sourceFhirEndpoint);
 
                 // var response = srcTask.Result;
                 var objResponse = JObject.Parse(srcTask.Content.ReadAsStringAsync().Result);
@@ -67,10 +68,10 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
                             var desrequest = new HttpRequestMessage
                             {
                                 Method = HttpMethod.Get,
-                                RequestUri = new Uri(desbaseUri, string.Format("{0}/{1}", gen1Response.GetValue("resourceType"), gen1Response.GetValue("id"))),
+                                RequestUri = new Uri(desbaseUri!, string.Format("{0}/{1}", gen1Response.GetValue("resourceType"), gen1Response.GetValue("id"))),
                             };
 
-                            HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, destinationFhirEndpoint);
+                            HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri!, destinationFhirEndpoint);
 
                             // var desResponse = desTask.Result;
                             var gen2Response = JObject.Parse(desTask.Content.ReadAsStringAsync().Result);

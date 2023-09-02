@@ -14,6 +14,7 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.DurableTask;
 using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 
 namespace ApiForFhirMigrationTool.Function
@@ -28,9 +29,16 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IFhirClient _fhirClient;
         private readonly TelemetryClient _telemetryClient;
 
-        public FhirMigrationToolE2E(MigrationOptions options, ILoggerFactory loggerFactory, IOrchestrationHelper orchestrationHelper, IAzureTableClientFactory azureTableClientFactory, IFhirProcessor exportProcessor, IFhirClient fhirClient, TelemetryClient telemetryClient)
+        public FhirMigrationToolE2E(
+            IOptions<MigrationOptions> options,
+            ILoggerFactory loggerFactory,
+            IOrchestrationHelper orchestrationHelper,
+            IAzureTableClientFactory azureTableClientFactory,
+            IFhirProcessor exportProcessor,
+            IFhirClient fhirClient,
+            TelemetryClient telemetryClient)
         {
-            _options = options;
+            _options = options.Value;
             _logger = loggerFactory.CreateLogger<FhirMigrationToolE2E>();
             _orchestrationHelper = orchestrationHelper;
             _azureTableClientFactory = azureTableClientFactory;

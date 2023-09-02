@@ -12,6 +12,7 @@ using ApiForFhirMigrationTool.Function.Processors;
 using ApiForFhirMigrationTool.Function.SearchParameterOperation;
 using Azure.Data.Tables;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json.Linq;
 
@@ -64,7 +65,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
 
             return new ExportOrchestrator(
                                exportProcessor,
-                               config,
+                               Options.Create(config),
                                GetMockAzureTableClientFactory().Object,
                                GetMockMetadataStore().Object,
                                mockClient.Object,
@@ -78,7 +79,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
 
             return new ExportStatusOrchestrator(
                                         exportProcessor,
-                                        config,
+                                        Options.Create(config),
                                         GetMockAzureTableClientFactory().Object,
                                         GetMockMetadataStore().Object,
                                         mockClient.Object,
@@ -91,7 +92,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
 
             return new ImportOrchestrator(
                                         importProcessor,
-                                        config,
+                                        Options.Create(config),
                                         GetMockAzureTableClientFactory().Object,
                                         GetMockMetadataStore().Object,
                                         orchestrationHelper.Object);
@@ -101,7 +102,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
         {
             return new ImportStatusOrchestrator(
                                         importProcessor,
-                                        config,
+                                        Options.Create(config),
                                         GetMockAzureTableClientFactory().Object,
                                         GetMockMetadataStore().Object);
         }

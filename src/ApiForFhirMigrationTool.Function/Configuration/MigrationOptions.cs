@@ -3,45 +3,43 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
+using System.ComponentModel.DataAnnotations;
 using Azure.Core;
 using Azure.Identity;
-using Newtonsoft.Json;
 
 namespace ApiForFhirMigrationTool.Function.Configuration
 {
     public class MigrationOptions
     {
-        [JsonProperty("sourceFhirUri")]
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        public Uri SourceUri { get; set; }
+        [Required]
+        [Url]
+        required public Uri? SourceFhirUri { get; set; }
 
-        [JsonProperty("destinationFhirUri")]
-        public Uri DestinationUri { get; set; }
+        [Required]
+        [Url]
+        required public Uri? TargetFhirUri { get; set; }
 
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        [Url]
+        public Uri? StagingStorageUri { get; set; }
 
-        [JsonProperty("stagingStorageAccountName")]
-        public string StagingStorageAccountName { get; set; } = string.Empty;
+        public string? StagingStorageConnectionString { get; set; }
 
-        [JsonProperty("stagingStorageUri")]
-        public string StagingStorageUri { get; set; } = string.Empty;
+        public string StagingContainerName { get; set; } = "migration";
 
-        [JsonProperty("stagingContainerName")]
-        public string StagingContainerName { get; set; } = string.Empty;
+        // #TODO - change this to a reasonable value. We should default to something.
+        // The range should also be checked - this is a placeholder.
+        [Range(1, 1000, ErrorMessage = "Please enter a value bigger than {1} and smaller than {2} for ScheduleInterval.")]
+        public double ScheduleInterval { get; set; } = 10;
 
-        [JsonProperty("scheduleInterval")]
-        public double ScheduleInterval { get; set; }
-
-        [JsonProperty("startDate")]
+        // #TODO - why is the StartDate a DateTime and EndDate a string?
         public DateTime StartDate { get; set; }
 
-        [JsonProperty("endDate")]
         public string EndDate { get; set; } = string.Empty;
 
-        [JsonProperty("AppInsightConnectionString")]
-        public string AppInsightConnectionstring { get; set; } = string.Empty;
+        public string? AppInsightConnectionString { get; set; }
 
-        [JsonProperty("importMode")]
+        // #TODO - should this be an enum?
+        [Required]
         public string ImportMode { get; set; } = "IncrementalLoad";
 
         public List<string>? SurfaceCheckResources { get; set; }
@@ -50,58 +48,54 @@ namespace ApiForFhirMigrationTool.Function.Configuration
 
         public List<string>? QueryDeep { get; set; }
 
-        [JsonProperty("DeepCheckCount")]
         public int DeepCheckCount { get; set; }
 
-        [JsonProperty("UserAgent")]
         public string UserAgent { get; set; } = "FhirMigrationTool";
 
-        [JsonProperty("SourceHttpClient")]
         public string SourceHttpClient { get; set; } = "SourceFhirEndpoint";
 
-        [JsonProperty("DestinationHttpClient")]
         public string DestinationHttpClient { get; set; } = "DestinationFhirEndpoint";
 
-        [JsonProperty("TokenCredential")]
         public TokenCredential TokenCredential { get; set; } = new DefaultAzureCredential();
 
-        [JsonProperty("retryCount")]
         public int RetryCount { get; set; }
 
-        [JsonProperty("waitForRetry")]
         public double WaitForRetry { get; set; }
 
-        [JsonProperty("debug")]
         public bool Debug { get; set; }
 
-        [JsonProperty("exportTableName")]
-        public string ExportTableName { get; set; } = string.Empty;
+        public bool EnableTimers { get; set; } = true;
 
-        [JsonProperty("chunkTableName")]
-        public string ChunkTableName { get; set; } = string.Empty;
+        [Required]
+        public string ExportTableName { get; set; } = "MigrationExportState";
 
-        [JsonProperty("ExportChunkTime")]
+        [Required]
+        public string ChunkTableName { get; set; } = "MigrationChunkState";
+
+        // #TODO - The range is a placeholder - should be checked.
+        [Range(1, 1000, ErrorMessage = "Please enter a value bigger than {1} and smaller than {2} for ExportChunkTime.")]
+        [Required]
         public int ExportChunkTime { get; set; } = 30;
 
-        [JsonProperty("partitionKey")]
+        [Required]
         public string PartitionKey { get; set; } = "mypartitionkey";
 
-        [JsonProperty("rowKey")]
+        [Required]
         public string RowKey { get; set; } = "myrowkey";
 
-        public bool ValidateConfig()
+        /// <summary>
+        /// This class is for complex validations that cannot be done with annotations.
+        /// This method is called in Program.cs.
+        /// </summary>
+        /// <returns>Bool for if complex validation passes</returns>
+        public bool ComplexValidate()
         {
-            if (SourceUri != null
-                && DestinationUri != null
-                && !string.IsNullOrEmpty(ImportMode)
-                && ScheduleInterval > 0)
+            if (StagingStorageConnectionString is null && StagingStorageUri is null)
             {
-                return true;
+                return false;
             }
-            else
-            {
-                throw new ArgumentException($"Process exiting: Please make sure that the required configuration values are available.");
-            }
+
+            return true;
         }
     }
 }
