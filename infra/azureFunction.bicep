@@ -7,6 +7,7 @@ param functionSettings object = {}
 param appTags object = {}
 param apiForFhirName string
 param fhirServiceName string
+param deploymentPackageUrl string
 
 @description('Automatically create a role assignment for the function app to access the FHIR service and API for FHIR.')
 param createRoleAssignment bool = true
@@ -59,7 +60,6 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         }
     }
 
-
     resource ftpPublishingPolicy 'basicPublishingCredentialsPolicies' = {
         name: 'ftp'
         // Location is needed regardless of the warning.
@@ -79,23 +79,33 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
             allow: false
         }
     }
-}
 
-resource functionAppSettings 'Microsoft.Web/sites/config@2020-12-01' = {
-    name: 'appsettings'
-    parent: functionApp
-    properties: union({
-            AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${funcStorageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${funcStorageAccount.listKeys().keys[0].value}'
-            FUNCTIONS_EXTENSION_VERSION: '~4'
-            FUNCTIONS_WORKER_RUNTIME: 'dotnet-isolated'
-            APPINSIGHTS_INSTRUMENTATIONKEY: appInsightsInstrumentationKey
-            APPLICATIONINSIGHTS_CONNECTION_STRING: 'InstrumentationKey=${appInsightsInstrumentationKey}'
-            SCM_DO_BUILD_DURING_DEPLOYMENT: 'false'
-            ENABLE_ORYX_BUILD: 'false'
-            WEBSITE_RUN_FROM_PACKAGE: 1
-        }, functionSettings)
-}
+    resource functionAppSettings 'config' = {
+      name: 'appsettings'
+      properties: union({
+              AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${funcStorageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${funcStorageAccount.listKeys().keys[0].value}'
+              FUNCTIONS_EXTENSION_VERSION: '~4'
+              FUNCTIONS_WORKER_RUNTIME: 'dotnet-isolated'
+              APPINSIGHTS_INSTRUMENTATIONKEY: appInsightsInstrumentationKey
+              APPLICATIONINSIGHTS_CONNECTION_STRING: 'InstrumentationKey=${appInsightsInstrumentationKey}'
+              
+              // This will trigger the custom deployment script to run during deployment
+              SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
+              ENABLE_ORYX_BUILD: 'true'
+              WEBSITE_RUN_FROM_PACKAGE: 0
+          }, functionSettings)
+  }
 
+  resource functionAppDeployment 'extensions' = {
+    name: any('ZipDeploy')
+    properties: {
+      packageUri: deploymentPackageUrl
+    }
+    dependsOn: [
+      functionAppSettings
+    ]
+  }
+}
 
 resource fhirService 'Microsoft.HealthcareApis/workspaces/fhirservices@2022-06-01' existing = if (createRoleAssignment == true) {
   //#disable-next-line prefer-interpolation
