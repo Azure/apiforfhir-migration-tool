@@ -11,6 +11,7 @@ using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
 using ApiForFhirMigrationTool.Function.SearchParameterOperation;
 using Azure.Data.Tables;
+using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -57,6 +58,15 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
             return azureTableMetadataStore;
         }
 
+        internal static Mock<TelemetryClient> GetMockTelemetryClient()
+        {
+            var telemetryClient = new Mock<TelemetryClient>();
+
+            telemetryClient.Setup(tc => tc.TrackEvent(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<Dictionary<string, double>>()));
+
+            return telemetryClient;
+        }
+
         internal static ExportOrchestrator GetTestExportOrchestrator(MigrationOptions config, IFhirProcessor exportProcessor)
         {
             var mockClient = new Mock<IFhirClient>();
@@ -68,7 +78,8 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                                GetMockAzureTableClientFactory().Object,
                                GetMockMetadataStore().Object,
                                mockClient.Object,
-                               orchestrationHelper.Object);
+                               orchestrationHelper.Object,
+                               GetMockTelemetryClient().Object);
         }
 
         internal static ExportStatusOrchestrator GetTestExportStatusOrchestrator(MigrationOptions config, IFhirProcessor exportProcessor)
@@ -82,7 +93,8 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                                         GetMockAzureTableClientFactory().Object,
                                         GetMockMetadataStore().Object,
                                         mockClient.Object,
-                                        orchestrationHelper.Object);
+                                        orchestrationHelper.Object,
+                                        GetMockTelemetryClient().Object);
         }
 
         internal static ImportOrchestrator GetTestImportOrchestrator(MigrationOptions config, IFhirProcessor importProcessor)
@@ -94,16 +106,20 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                                         config,
                                         GetMockAzureTableClientFactory().Object,
                                         GetMockMetadataStore().Object,
-                                        orchestrationHelper.Object);
+                                        orchestrationHelper.Object,
+                                        GetMockTelemetryClient().Object);
         }
 
         internal static ImportStatusOrchestrator GetTestImportStatusOrchestrator(MigrationOptions config, IFhirProcessor importProcessor)
         {
+            var orchestrationHelper = new Mock<IOrchestrationHelper>();
             return new ImportStatusOrchestrator(
                                         importProcessor,
                                         config,
                                         GetMockAzureTableClientFactory().Object,
-                                        GetMockMetadataStore().Object);
+                                        GetMockMetadataStore().Object,
+                                        orchestrationHelper.Object,
+                                        GetMockTelemetryClient().Object);
         }
 
         internal static Mock<IFhirClient> SetupSuccessfulExportOperationResponse(this Mock<IFhirClient> fhirClient)

@@ -3,6 +3,7 @@
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
 
+using System.Globalization;
 using ApiForFhirMigrationTool.Function.Configuration;
 using ApiForFhirMigrationTool.Function.ExceptionHelper;
 using ApiForFhirMigrationTool.Function.FhirOperation;
@@ -11,6 +12,7 @@ using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
 using Azure;
 using Azure.Data.Tables;
+using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
@@ -26,8 +28,9 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IAzureTableClientFactory _azureTableClientFactory;
         private readonly IMetadataStore _azureTableMetadataStore;
         private readonly IOrchestrationHelper _orchestrationHelper;
+        private readonly TelemetryClient _telemetryClient;
 
-        public ExportStatusOrchestrator(IFhirProcessor exportProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IFhirClient fhirClient, IOrchestrationHelper orchestrationHelper)
+        public ExportStatusOrchestrator(IFhirProcessor exportProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IFhirClient fhirClient, IOrchestrationHelper orchestrationHelper, TelemetryClient telemetryClient)
         {
             _exportProcessor = exportProcessor;
             _options = options;
@@ -35,6 +38,7 @@ namespace ApiForFhirMigrationTool.Function
             _azureTableClientFactory = azureTableClientFactory;
             _azureTableMetadataStore = azureTableMetadataStore;
             _orchestrationHelper = orchestrationHelper;
+            _telemetryClient = telemetryClient;
         }
 
         [Function(nameof(ExportStatusOrchestration))]
@@ -59,8 +63,8 @@ namespace ApiForFhirMigrationTool.Function
                     {
                         while (isComplete == false)
                         {
-                            string? statusUrl_new = item.GetString("exportContentLocation");
-                            ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExportStatusCheck), statusUrl_new);
+                            statusUrl = item.GetString("exportContentLocation");
+                            ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExportStatusCheck), statusUrl);
                             if (response.Status == ResponseStatus.Accepted)
                             {
                                 logger?.LogInformation($"Export Status check returned: InProgress.");
@@ -70,6 +74,16 @@ namespace ApiForFhirMigrationTool.Function
                                 exportEntity["IsExportComplete"] = false;
                                 exportEntity["IsExportRunning"] = "Running";
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                _telemetryClient.TrackEvent(
+                                    "Export",
+                                    new Dictionary<string, string>()
+                                    {
+                                        { "ExportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                        { "StatusUrl", statusUrl },
+                                        { "ExportStatus", "Running" },
+                                        { "Since", string.Empty },
+                                        { "Till", string.Empty },
+                                    });
                                 await context.CreateTimer(waitTime, CancellationToken.None);
                             }
                             else if (response.Status == ResponseStatus.Completed)
@@ -80,19 +94,31 @@ namespace ApiForFhirMigrationTool.Function
                                 if (!string.IsNullOrEmpty(resContent))
                                 {
                                     JObject objResponse = JObject.Parse(resContent);
-                                    var objOutput = objResponse["output"];
+                                    var objOutput = objResponse["output"] as JArray;
                                     if (objOutput != null && objOutput.Any())
                                     {
                                         // import_body = _orchestrationHelper.CreateImportRequest(resContent, _options.ImportMode);
+                                        var resourceCount = _orchestrationHelper.CalculateSumOfResources(objOutput).ToString(CultureInfo.InvariantCulture);
                                         TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                         exportEntity["IsExportComplete"] = true;
                                         exportEntity["IsExportRunning"] = "Completed";
                                         exportEntity["ImportRequest"] = "Yes";
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                        _telemetryClient.TrackEvent(
+                                            "Export",
+                                            new Dictionary<string, string>()
+                                            {
+                                                { "ExportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                                { "StatusUrl", statusUrl },
+                                                { "ExportStatus", "Completed" },
+                                                { "Since", string.Empty },
+                                                { "Till", string.Empty },
+                                                { "TotalResources", resourceCount },
+                                            });
                                     }
                                     else
                                     {
-                                        logger?.LogInformation($"Output is null. No Output content in export:{statusUrl_new}");
+                                        logger?.LogInformation($"Output is null. No Output content in export:{statusUrl}");
 
                                         // import_body = string.Empty;
                                         TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
@@ -103,6 +129,17 @@ namespace ApiForFhirMigrationTool.Function
                                         exportEntity["ImportRequest"] = "No";
                                         exportEntity["EndTime"] = DateTime.UtcNow;
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                        _telemetryClient.TrackEvent(
+                                        "Export",
+                                        new Dictionary<string, string>()
+                                        {
+                                            { "ExportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                            { "StatusUrl", statusUrl },
+                                            { "ExportStatus", "Completed" },
+                                            { "Since", string.Empty },
+                                            { "Till", string.Empty },
+                                            { "TotalResources", string.Empty },
+                                        });
 
                                         TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
 
@@ -125,6 +162,17 @@ namespace ApiForFhirMigrationTool.Function
                                 exportEntity["ImportRequest"] = import_body;
                                 isComplete = true;
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                _telemetryClient.TrackEvent(
+                                        "Export",
+                                        new Dictionary<string, string>()
+                                        {
+                                            { "ExportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                            { "StatusUrl", statusUrl },
+                                            { "ExportStatus", "Failed" },
+                                            { "Since", string.Empty },
+                                            { "Till", string.Empty },
+                                            { "TotalResources", string.Empty },
+                                });
                                 throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
                             }
                         }
