@@ -43,6 +43,13 @@
           "description": "Name of existing storage account."
         }
       },
+      "dashboardName": {
+        "type": "string",
+        "defaultValue": "MigrationToolDashboard",
+        "metadata": {
+          "description": "Name of dashboard."
+        }
+      },
       "functionAppCustomSettings": {
         "type": "object",
         "defaultValue": {},
@@ -469,7 +476,30 @@
         "metadata": {
             "description": "Setup access between FHIR and the deployment script managed identity"
         }
-      }
+      },
+      {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "name": "dashboardDeploy",
+            "location": "[parameters('location')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "relativePath": "migToolDashboardDeploy.json"
+                },
+                "parameters": {
+                    "applicationInsightsName": {
+                        "value": "[variables('appInsightsName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "dashboardName": {
+                        "value": "[parameters('dashboardName')]"
+                    }
+                }
+            }
+        }
     ],
     "outputs": {
       "Azure_FunctionURL": {

@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 // -------------------------------------------------------------------------------------------------
+using System.Collections.Concurrent;
 using System.Net;
 using ApiForFhirMigrationTool.Function.Configuration;
 using ApiForFhirMigrationTool.Function.FhirOperation;
@@ -11,6 +12,9 @@ using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
 using ApiForFhirMigrationTool.Function.SearchParameterOperation;
 using Azure.Data.Tables;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Channel;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -23,6 +27,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
         internal const string TestDestinationUri = "https://fhirservice.fhir.azurehealthcareapis.com";
         internal const string ExportStatusUrl = $"{TestSourceUri}/_operations/export/importId";
         internal const string ImportStatusUrl = $"{TestDestinationUri}/_operations/import/importId";
+        internal static ConcurrentQueue<ITelemetry> s_telemetryItems = new();
 
         internal static string MockExportStatusResponse => File.ReadAllText("../../../TestFiles/mock_export_status_response.json");
 
@@ -57,6 +62,27 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
             return azureTableMetadataStore;
         }
 
+        internal static TelemetryClient GetMockTelemetryClient()
+        {
+            //var telemetryClient = new Mock<TelemetryClient>();
+
+            //telemetryClient.Setup(tc => tc.TrackEvent(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<Dictionary<string, double>>()));
+
+            return CreateMockTelemetryClient();
+        }
+
+        internal static TelemetryClient CreateMockTelemetryClient()
+        {
+            var telemetryConfiguration = new TelemetryConfiguration
+            {
+                ConnectionString = "InstrumentationKey=" + Guid.NewGuid().ToString(),
+                TelemetryChannel = new StubTelemetryChannel(s_telemetryItems.Enqueue)
+            };
+
+            // TODO: Add telemetry initializers and processors if/as necessary.
+            return new TelemetryClient(telemetryConfiguration);
+        }
+
         internal static ExportOrchestrator GetTestExportOrchestrator(MigrationOptions config, IFhirProcessor exportProcessor)
         {
             var mockClient = new Mock<IFhirClient>();
@@ -68,7 +94,8 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                                GetMockAzureTableClientFactory().Object,
                                GetMockMetadataStore().Object,
                                mockClient.Object,
-                               orchestrationHelper.Object);
+                               orchestrationHelper.Object,
+                               GetMockTelemetryClient());
         }
 
         internal static ExportStatusOrchestrator GetTestExportStatusOrchestrator(MigrationOptions config, IFhirProcessor exportProcessor)
@@ -82,7 +109,8 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                                         GetMockAzureTableClientFactory().Object,
                                         GetMockMetadataStore().Object,
                                         mockClient.Object,
-                                        orchestrationHelper.Object);
+                                        orchestrationHelper.Object,
+                                        GetMockTelemetryClient());
         }
 
         internal static ImportOrchestrator GetTestImportOrchestrator(MigrationOptions config, IFhirProcessor importProcessor)
@@ -94,16 +122,20 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                                         config,
                                         GetMockAzureTableClientFactory().Object,
                                         GetMockMetadataStore().Object,
-                                        orchestrationHelper.Object);
+                                        orchestrationHelper.Object,
+                                        GetMockTelemetryClient());
         }
 
         internal static ImportStatusOrchestrator GetTestImportStatusOrchestrator(MigrationOptions config, IFhirProcessor importProcessor)
         {
+            var orchestrationHelper = new Mock<IOrchestrationHelper>();
             return new ImportStatusOrchestrator(
                                         importProcessor,
                                         config,
                                         GetMockAzureTableClientFactory().Object,
-                                        GetMockMetadataStore().Object);
+                                        GetMockMetadataStore().Object,
+                                        orchestrationHelper.Object,
+                                        GetMockTelemetryClient());
         }
 
         internal static Mock<IFhirClient> SetupSuccessfulExportOperationResponse(this Mock<IFhirClient> fhirClient)
@@ -375,5 +407,19 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
 
             return fhirClient;
         }
+    }
+
+    /// <summary>
+    /// A telemetry channel that simply calls a delegate.
+    /// </summary>
+    internal sealed class StubTelemetryChannel : ITelemetryChannel
+    {
+        private readonly Action<ITelemetry> _onSend;
+        public StubTelemetryChannel(Action<ITelemetry> onSend) => _onSend = onSend ?? throw new ArgumentNullException(nameof(onSend));
+        public bool? DeveloperMode { get; set; }
+        public string EndpointAddress { get; set; } = "";
+        public void Dispose() { }
+        public void Flush() { }
+        public void Send(ITelemetry item) => _onSend(item);
     }
 }

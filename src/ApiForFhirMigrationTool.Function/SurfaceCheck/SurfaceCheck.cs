@@ -70,6 +70,13 @@ namespace ApiForFhirMigrationTool.Function.SurfaceCheck
                         // Comparing Count
                         if (destotalCount != null)
                         {
+                            string srcTotal = string.Empty;
+                            if (srctotalCount != null)
+                            {
+                                srcTotal = srctotalCount.ToString();
+                            }
+
+                            string destTotal = destotalCount.ToString();
                             if (destotalCount.Equals(srctotalCount))
                             {
                                 var inputFormat = new JObject
@@ -91,6 +98,16 @@ namespace ApiForFhirMigrationTool.Function.SurfaceCheck
                                 };
                                 errorResource.Add(errorFormat);
                             }
+
+                            _telemetryClient.TrackEvent(
+                                "SurfaceCheck",
+                                new Dictionary<string, string>()
+                                {
+                                    { "Resource", item },
+                                    { "SourceCount", srcTotal },
+                                    { "DestinationCount", destTotal },
+                                    { "Result", destotalCount.Equals(srctotalCount) ? "Pass" : "Fail" },
+                                });
                         }
                     }
                     catch

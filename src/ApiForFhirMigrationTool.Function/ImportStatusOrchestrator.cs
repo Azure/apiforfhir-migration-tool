@@ -6,12 +6,16 @@
 using ApiForFhirMigrationTool.Function.Configuration;
 using ApiForFhirMigrationTool.Function.ExceptionHelper;
 using ApiForFhirMigrationTool.Function.Models;
+using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
 using Azure;
 using Azure.Data.Tables;
+using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Abstractions;
+using Newtonsoft.Json.Linq;
 
 namespace ApiForFhirMigrationTool.Function
 {
@@ -21,13 +25,17 @@ namespace ApiForFhirMigrationTool.Function
         private readonly MigrationOptions _options;
         private readonly IAzureTableClientFactory _azureTableClientFactory;
         private readonly IMetadataStore _azureTableMetadataStore;
+        private readonly IOrchestrationHelper _orchestrationHelper;
+        private readonly TelemetryClient _telemetryClient;
 
-        public ImportStatusOrchestrator(IFhirProcessor importProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore)
+        public ImportStatusOrchestrator(IFhirProcessor importProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IOrchestrationHelper orchestrationHelper, TelemetryClient telemetryClient)
         {
             _importProcessor = importProcessor;
             _options = options;
             _azureTableClientFactory = azureTableClientFactory;
             _azureTableMetadataStore = azureTableMetadataStore;
+            _orchestrationHelper = orchestrationHelper;
+            _telemetryClient = telemetryClient;
         }
 
         [Function(nameof(ImportStatusOrchestration))]
@@ -51,7 +59,8 @@ namespace ApiForFhirMigrationTool.Function
                     {
                         while (isComplete == false)
                         {
-                            ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImportStatusCheck), item.GetString("importContentLocation"));
+                            statusUrl = item.GetString("importContentLocation");
+                            ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImportStatusCheck), statusUrl);
 
                             if (response.Status == ResponseStatus.Accepted)
                             {
@@ -62,10 +71,29 @@ namespace ApiForFhirMigrationTool.Function
                                 TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                 exportEntity["IsImportRunning"] = "Running";
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                _telemetryClient.TrackEvent(
+                                "Import",
+                                new Dictionary<string, string>()
+                                {
+                                    { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                    { "StatusUrl", statusUrl },
+                                    { "ImportStatus", "Running" },
+                                });
                                 await context.CreateTimer(waitTime, CancellationToken.None);
                             }
                             else if (response.Status == ResponseStatus.Completed)
                             {
+                                string? resContent = response.Content;
+                                var resourceCount = string.Empty;
+                                if (!string.IsNullOrEmpty(resContent))
+                                {
+                                    JObject objResponse = JObject.Parse(resContent);
+                                    var objOutput = objResponse["output"] as JArray;
+                                    if (objOutput != null && objOutput.Any())
+                                    {
+                                        resourceCount = _orchestrationHelper.CalculateSumOfResources(objOutput).ToString();
+                                    }
+                                }
                                 logger?.LogInformation($"Import Status check returned: Success.");
                                 TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                 exportEntity["IsImportComplete"] = true;
@@ -77,6 +105,15 @@ namespace ApiForFhirMigrationTool.Function
 
                                 qEntitynew["since"] = exportEntity["Till"];
                                 _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                                _telemetryClient.TrackEvent(
+                                "Import",
+                                new Dictionary<string, string>()
+                                {
+                                    { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                    { "StatusUrl", statusUrl },
+                                    { "ImportStatus", "Completed" },
+                                    { "TotalResources", resourceCount },
+                                });
                                 isComplete = true;
                             }
                             else
@@ -88,6 +125,14 @@ namespace ApiForFhirMigrationTool.Function
                                 exportEntity["EndTime"] = DateTime.UtcNow;
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                 isComplete = true;
+                                _telemetryClient.TrackEvent(
+                                "Import",
+                                new Dictionary<string, string>()
+                                {
+                                    { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                    { "StatusUrl", statusUrl },
+                                    { "ImportStatus", "Failed" },
+                                });
                                 throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
                             }
                         }
