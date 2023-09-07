@@ -11,6 +11,7 @@ using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
 using Azure;
 using Azure.Data.Tables;
+using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
@@ -27,8 +28,9 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IAzureTableClientFactory _azureTableClientFactory;
         private readonly IMetadataStore _azureTableMetadataStore;
         private readonly IOrchestrationHelper _orchestrationHelper;
+        private readonly TelemetryClient _telemetryClient;
 
-        public ExportOrchestrator(IFhirProcessor exportProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IFhirClient fhirClient, IOrchestrationHelper orchestrationHelper)
+        public ExportOrchestrator(IFhirProcessor exportProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IFhirClient fhirClient, IOrchestrationHelper orchestrationHelper, TelemetryClient telemetryClient)
         {
             _exportProcessor = exportProcessor;
             _options = options;
@@ -36,6 +38,7 @@ namespace ApiForFhirMigrationTool.Function
             _azureTableClientFactory = azureTableClientFactory;
             _azureTableMetadataStore = azureTableMetadataStore;
             _orchestrationHelper = orchestrationHelper;
+            _telemetryClient = telemetryClient;
         }
 
         [Function(nameof(ExportOrchestration))]
@@ -116,6 +119,16 @@ namespace ApiForFhirMigrationTool.Function
                         // qEntitynew["since"] = tillValue;
                         qEntitynew["JobId"] = jobId++;
                         _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                        _telemetryClient.TrackEvent(
+                        "Export",
+                        new Dictionary<string, string>()
+                        {
+                            { "ExportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                            { "StatusUrl", statusUrl },
+                            { "ExportStatus", "Started" },
+                            { "Since", sinceValue },
+                            { "Till", tillValue },
+                        });
                     }
                 }
                 else
@@ -140,6 +153,17 @@ namespace ApiForFhirMigrationTool.Function
                         qEntitynew["JobId"] = jobId++;
 
                         _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+
+                        _telemetryClient.TrackEvent(
+                       "Export",
+                       new Dictionary<string, string>()
+                       {
+                            { "ExportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                            { "StatusUrl", statusUrl },
+                            { "ExportStatus", "Failed" },
+                            { "Since", sinceValue },
+                            { "Till", tillValue },
+                       });
 
                         throw new HttpFailureException($"Status: {exportResponse.Status} Response: {exportResponse.Content} ");
                     }

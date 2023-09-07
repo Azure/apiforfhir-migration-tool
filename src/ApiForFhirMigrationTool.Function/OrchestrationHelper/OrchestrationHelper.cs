@@ -69,5 +69,26 @@ namespace ApiForFhirMigrationTool.Function.OrchestrationHelper
 
             return importRequestJson;
         }
+
+        public string GetProcessId(string statusUrl)
+        {
+            var array = statusUrl.Split('/');
+            return array.Last();
+        }
+
+        public ulong CalculateSumOfResources(JArray output)
+        {
+            ulong sum = 0;
+            foreach (JObject obj in output)
+            {
+                var countToken = obj["count"];
+                if (countToken != null)
+                {
+                    sum += countToken.Value<ulong>();
+                }
+            }
+
+            return sum;
+        }
     }
 }
