@@ -271,4 +271,13 @@ module functionApiForFhirRoleAssignment './roleAssignment.bicep' = if (createRol
   }
 }
 
+@description('Setup access between FHIR and the deployment script managed identity')
+module migToolDashboard './migrationToolDashboard.bicep' =  {
+  name: 'mig-tool-dashboard'
+  params: {
+    applicationInsightsName: appInsights.name
+    location: location
+  }
+}
+
 output Azure_FunctionURL string = 'https://${functionApp.properties.defaultHostName}'
