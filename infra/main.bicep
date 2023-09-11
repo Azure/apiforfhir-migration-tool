@@ -1,17 +1,20 @@
 @minLength(1)
 @maxLength(32)
 @description('Name of the the environment which is used to generate a short unique hash used in all resources.')
-param prefix string
+param name string = 'mig'
 
 @minLength(1)
 @description('Primary location for all resources')
 param location string = resourceGroup().location
 
 @description('Name of the FHIR Service to import resources into. Format is "workspace/fhirService".')
-param fhirServiceName string
+param fhirServiceName string = 'wkspcmigtool/fhirservdest'
+
+param fhirserviceRg string = 'migtool-deploy-rg'
+param apiforFhirRg string = 'migtool-deploy-rg'
 
 @description('Name of the API for FHIR to export resources from.')
-param apiForFhirName string
+param apiForFhirName string = 'gen1migtool'
 
 @description('URL to the deployment package containing code to build the migration tool.')
 #disable-next-line no-hardcoded-env-urls
@@ -65,16 +68,27 @@ module function './azureFunction.bicep'= {
         storageAccountName: funcStorName
         fhirServiceName : fhirServiceName
         apiForFhirName : apiForFhirName
+        fhirserviceRg : fhirserviceRg
+        apiforFhirRg : apiforFhirRg
         location: location
         appInsightsInstrumentationKey: monitoring.outputs.appInsightsInstrumentationKey
         functionSettings: union({
-                AZURE_FhirServiceUrl: fhirServiceNameUrl
-                AZURE_ApiForFhirUrl: apiForFhirNameUrl
-                AZURE_InstrumentationKey: monitoring.outputs.appInsightsInstrumentationString
+                AZURE_DestinationUri: fhirServiceNameUrl
+                AZURE_SourceUri: apiForFhirNameUrl
+                AZURE_AppInsightConnectionstring: monitoring.outputs.appInsightsInstrumentationString
             }, functionAppCustomSettings)
         appTags: appTags
         deploymentPackageUrl: deploymentPackageUrl
     }
+}
+
+@description('Setup access between FHIR and the deployment script managed identity')
+module migToolDashboard './migrationToolDashboard.bicep' =  {
+  name: 'mig-tool-dashboard'
+  params: {
+    applicationInsightsName: appInsightsName
+    location: location
+  }
 }
 
 // These map to user secrets for local execution of the program
