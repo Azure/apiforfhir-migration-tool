@@ -8,7 +8,7 @@ steps:
     inputs:
       userProvideBuildInfo: "msBuildInfo"
       msBuildArchitecture: "DotNetCore"
-      msBuildCommandline: '$(Agent.ToolsDirectory)\dotnet\dotnet.exe build "$(Build.Repository.LocalPath)\FhirMigrationTool.sln"'
+      msBuildCommandline: '$(Agent.ToolsDirectory)\dotnet\dotnet.exe build "$(Build.Repository.LocalPath)\apiforfhir-migration-tool.sln"'
     displayName: "Run code checks"
 
   - task: CredScan@3
