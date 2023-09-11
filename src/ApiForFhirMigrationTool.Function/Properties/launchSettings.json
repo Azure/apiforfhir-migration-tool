@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "FhirMigrationTool": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7252",
+      "launchBrowser": false
+    }
+  }
+}

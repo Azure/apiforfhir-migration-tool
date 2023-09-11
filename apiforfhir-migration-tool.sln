@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34009.444
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{BDEC6EA9-324B-49A0-A6D2-ACCB0A878EAE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Function", "src\ApiForFhirMigrationTool.Function\ApiForFhirMigrationTool.Function.csproj", "{68DC1186-1FAA-433E-BA83-46DF3B88823C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5BFB4763-CFA0-4D19-AA16-A1E2A783A40D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiForFhirMigrationTool.Function.UnitTests", "test\ApiForFhirMigrationTool.Function.UnitTests\ApiForFhirMigrationTool.Function.UnitTests.csproj", "{D3E84AE9-4A8A-416F-BC5A-2C9CEF3985BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiForFhirMigrationTool.Function.Tests.E2E", "test\ApiForFhirMigrationTool.Function.Tests.E2E\ApiForFhirMigrationTool.Function.Tests.E2E.csproj", "{AE64A7B4-C9C1-4F36-B36C-0CE6F86971CB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{68DC1186-1FAA-433E-BA83-46DF3B88823C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68DC1186-1FAA-433E-BA83-46DF3B88823C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68DC1186-1FAA-433E-BA83-46DF3B88823C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68DC1186-1FAA-433E-BA83-46DF3B88823C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3E84AE9-4A8A-416F-BC5A-2C9CEF3985BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3E84AE9-4A8A-416F-BC5A-2C9CEF3985BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3E84AE9-4A8A-416F-BC5A-2C9CEF3985BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3E84AE9-4A8A-416F-BC5A-2C9CEF3985BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE64A7B4-C9C1-4F36-B36C-0CE6F86971CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE64A7B4-C9C1-4F36-B36C-0CE6F86971CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE64A7B4-C9C1-4F36-B36C-0CE6F86971CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE64A7B4-C9C1-4F36-B36C-0CE6F86971CB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{68DC1186-1FAA-433E-BA83-46DF3B88823C} = {BDEC6EA9-324B-49A0-A6D2-ACCB0A878EAE}
+		{D3E84AE9-4A8A-416F-BC5A-2C9CEF3985BC} = {5BFB4763-CFA0-4D19-AA16-A1E2A783A40D}
+		{AE64A7B4-C9C1-4F36-B36C-0CE6F86971CB} = {5BFB4763-CFA0-4D19-AA16-A1E2A783A40D}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2F979935-8DEB-42F1-8A4C-102581D1641E}
+	EndGlobalSection
+EndGlobal
