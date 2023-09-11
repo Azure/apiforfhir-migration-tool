@@ -118,7 +118,7 @@
             "prefix": "[basics('basicsConfigurationSection').prefix]",
             "location": "[location()]",
             "fhirServiceName": "[steps('fhirSelection').fhirSection.fhirServiceSelector.name]",
-			"fhirserviceid": "[steps('fhirSelection').fhirSection.fhirServiceSelector.id]",
+			"fhirid": "[steps('fhirSelection').fhirSection.fhirServiceSelector.id]",
             "apiForFhirName": "[steps('fhirSelection').fhirSection.apiForFhirSelector.name]",
 			"apiForFhirid": "[steps('fhirSelection').fhirSection.apiForFhirSelector.id]"
 
