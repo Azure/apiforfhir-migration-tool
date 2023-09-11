@@ -1,0 +1,68 @@
+{
+    "resourceType": "Bundle",
+    "id": "206fd029ea55c78e84e64f7183ce9adf",
+    "type": "batch",
+    "entry": [
+        {
+            "resource": {
+                "resourceType": "SearchParameter",
+                "id": "25634ef3-ca07-4172-b848-4d9f0fb7d35f",
+                "meta": {
+                    "versionId": "1",
+                    "lastUpdated": "2023-07-18T02:51:40.679+00:00"
+                },
+                "text": {
+                    "status": "generated"
+                },
+                "url": "http://hl7.org/fhir/us/davinci-drug-formulary/SearchParameter/DrugPlan",
+                "version": "1.0.1",
+                "name": "DrugPlan",
+                "status": "active",
+                "date": "2020-12-21T16:51:36+00:00",
+                "publisher": "HL7 Pharmacy Working Group",
+                "contact": [
+                    {
+                        "name": "HL7 Pharmacy Working Group",
+                        "telecom": [
+                            {
+                                "system": "url",
+                                "value": "http://www.hl7.org/Special/committees/medication/"
+                            },
+                            {
+                                "system": "email",
+                                "value": "pharmacy@lists.HL7.org"
+                            }
+                        ]
+                    }
+                ],
+                "description": "Accesses the DrugPlan ID of a FormularyDrug",
+                "jurisdiction": [
+                    {
+                        "coding": [
+                            {
+                                "system": "urn:iso:std:iso:3166",
+                                "code": "US"
+                            }
+                        ]
+                    }
+                ],
+                "code": "DrugPlan",
+                "base": [
+                    "MedicationKnowledge"
+                ],
+                "type": "string",
+                "expression": "MedicationKnowledge.extension.where(url='http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-PlanID-extension').value",
+                "comparator": [
+                    "eq"
+                ]
+            },
+            "search": {
+                "mode": "match"
+            },
+            "request": {
+                "url": "SearchParameter/25634ef3-ca07-4172-b848-4d9f0fb7d35f",
+                "method": "PUT"
+            }
+        }
+    ]
+}
