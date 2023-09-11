@@ -8,6 +8,8 @@ param appTags object = {}
 param apiForFhirName string
 param fhirServiceName string
 param deploymentPackageUrl string
+param fhirserviceRg string
+param apiforFhirRg string
 
 @description('Automatically create a role assignment for the function app to access the FHIR service and API for FHIR.')
 param createRoleAssignment bool = true
@@ -21,6 +23,21 @@ resource funcStorageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
         name: 'Standard_LRS'
     }
     tags: appTags
+}
+
+resource table 'Microsoft.Storage/storageAccounts/tableServices@2022-09-01' = {
+  name: 'default'
+  parent: funcStorageAccount
+}
+
+resource chunktable 'Microsoft.Storage/storageAccounts/tableServices/tables@2022-09-01' = {
+  name: 'chunk'
+  parent: table
+}
+
+resource exporttable 'Microsoft.Storage/storageAccounts/tableServices/tables@2022-09-01' = {
+  name: 'export'
+  parent: table
 }
 
 @description('App Service used to run Azure Function')
@@ -88,7 +105,18 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
               FUNCTIONS_WORKER_RUNTIME: 'dotnet-isolated'
               APPINSIGHTS_INSTRUMENTATIONKEY: appInsightsInstrumentationKey
               APPLICATIONINSIGHTS_CONNECTION_STRING: 'InstrumentationKey=${appInsightsInstrumentationKey}'
-              
+              AZURE_ScheduleInterval: 2
+              AZURE_ImportMode: 'IncrementalLoad'
+              AZURE_DeepCheckCount: 1
+              AZURE_UserAgent: 'FhirMigrationTool'
+              AZURE_SourceHttpClient: 'SourceFhirEndpoint'
+              AZURE_DestinationHttpClient: 'DestinationFhirEndpoint'
+              AZURE_ExportTableName: 'export'
+              AZURE_ChunkTableName: 'chunk'
+              AZURE_ExportChunkTime: 30
+              AZURE_stagingStorageAccountName: storageAccountName
+              AZURE_StagingStorageUri: 'https://${storageAccountName}.table.core.windows.net'
+
               // This will trigger the custom deployment script to run during deployment
               SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
               ENABLE_ORYX_BUILD: 'true'
@@ -110,10 +138,12 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
 resource fhirService 'Microsoft.HealthcareApis/workspaces/fhirservices@2022-06-01' existing = if (createRoleAssignment == true) {
   //#disable-next-line prefer-interpolation
   name: fhirServiceName
+  scope: resourceGroup(fhirserviceRg)
 }
 
 resource apiForFhir 'Microsoft.HealthcareApis/services@2021-11-01' existing = if (createRoleAssignment == true) {
   name: apiForFhirName
+  scope: resourceGroup(apiforFhirRg)
 }
 
 @description('Setup access between FHIR and the deployment script managed identity')

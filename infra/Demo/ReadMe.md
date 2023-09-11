@@ -8,10 +8,12 @@ This sample will guide the reader through deploying Azure resources using an ARM
     - You can download it from [here](https://aka.ms//installazurecli).
 3. Postman Application.
     - If you haven't already, download and install Postman from [here](https://www.postman.com/downloads/).
-
+4. User should have privilege to assign roles.
 
 ## Resource Deployment using ARM/Bicep Template with Azure CLI
-This steps guides you through deploying Azure resources using an ARM/Bicep Template via the Azure Command-Line Interface (CLI). 
+This steps guides you through deploying Azure resources using an ARM/Bicep Template via the Azure Command-Line Interface (CLI).
+
+**Note** : Prior to initiating the resource deployment, it is essential to make modifications to the Parameter File.This file contains values that are specific to your deployment
 
 **1. Log in to Azure**
 - Before you begin, ensure that you are logged in to your Azure account. If you are not already logged in, follow these steps:
@@ -59,7 +61,7 @@ This section explains how to test the deployed resources using a Postman collect
 
 **2. Set Up Environment Variable**
 - Click on the "No environment" dropdown in the top-right corner of Postman and select "Manage Environments".
-- Click "Add" to create a new environment. Give it a name (e.g., "MyServerEnvironment") and add variable FhirUrl and set the FHIR metadata endpoint as its value.
+- Click "Add" to create a new environment. Give it a name (e.g., "MyServerEnvironment") and include the variable "FhirUrl." Set the value of this variable to the FHIR metadata endpoint (excluding the "/metadata" at the end).
 - Select the environment you created from the dropdown menu.
 
 **3. Set Up Authorization**
