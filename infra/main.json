@@ -105,6 +105,30 @@
     },
     "resources": [
       {
+        "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+        "apiVersion": "2021-03-01",
+        "name": "[format('{0}/{1}', variables('functionAppName'), 'ftp')]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "allow": false
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+        ]
+      },
+      {
+        "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+        "apiVersion": "2021-03-01",
+        "name": "[format('{0}/{1}', variables('functionAppName'), 'scm')]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "allow": false
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+        ]
+      },
+      {
         "type": "Microsoft.Storage/storageAccounts",
         "apiVersion": "2022-05-01",
         "name": "[variables('storageAccountName')]",
