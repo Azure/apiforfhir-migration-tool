@@ -21,6 +21,10 @@ API for FHIR migration tool is an [Azure durable function](https://learn.microso
 			```PowerShell
 			https://<<WORKSPACE_NAME>>-<<FHIR_SERVICE_NAME>>.fhir.azurehealthcareapis.com/
 			```
+3. Configure the [export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/configure-export-data) on source FHIR instance ie. Azure API for FHIR server.
+
+4. Configure the [import](https://learn.microsoft.com/azure/healthcare-apis/fhir/configure-import-data) on Destination FHIR instance i.e Azure Health Data Service FHIR service server.
+
 ## Deployment
 ### Portal Deployment
 
@@ -28,6 +32,9 @@ To quickly deploy the Migration tool, you can use the Azure deployment below. Th
 
 1. Deploy the infrastructure for migration tool.
 	1. Deploy the migration tool using deploy to azure button
+
+		[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2Fmain.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2FuiDefForm.json)
+
     2. Deploy the migration tool manually
 
 		- Follow the steps to deploy the APIFORFHIR-Migration Tool:
@@ -38,9 +45,8 @@ To quickly deploy the Migration tool, you can use the Azure deployment below. Th
 				```
 			2. Open the cloned project in Visual Studio.
 			3. Sign into your Azure account in visual studio [link](https://learn.microsoft.com/visualstudio/azure/how-to-sign-in-with-azure-subscription?view=vs-2022).
-			4. Configuration setting
-			5. Publish the function from visual studio [link](https://learn.microsoft.com/en-us/azure/azure-functions/functions-develop-vs?tabs=in-process#publish-to-azure).
-			6. Once the publish of function app completed. The migration app will auto start the export-import process as the function app is time trigger.
+			4. Publish the function from visual studio [link](https://learn.microsoft.com/en-us/azure/azure-functions/functions-develop-vs?tabs=in-process#publish-to-azure).
+			5. Once the publish of function app completed. The migration app will auto start the export-import process as the function app is time trigger.
 
 ## Export FHIR Data from API for FHIR server
 
