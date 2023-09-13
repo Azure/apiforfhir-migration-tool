@@ -43,10 +43,36 @@ To quickly deploy the Migration tool, you can use the Azure deployment below. Th
 				```azurecli
 				git clone https://github.com/Azure/apiforfhir-migration-tool.git --depth 1
 				```
-			2. Open the cloned project in Visual Studio.
-			3. Sign into your Azure account in visual studio [link](https://learn.microsoft.com/visualstudio/azure/how-to-sign-in-with-azure-subscription?view=vs-2022).
-			4. Publish the function from visual studio [link](https://learn.microsoft.com/en-us/azure/azure-functions/functions-develop-vs?tabs=in-process#publish-to-azure).
-			5. Once the publish of function app completed. The migration app will auto start the export-import process as the function app is time trigger.
+			2. Log in to Azure
+			- Before you begin, ensure that you are logged in to your Azure account. If you are not already logged in, follow these steps:
+				```
+				az login
+				```
+			3. Set the Azure Subscription
+				- If you have multiple Azure subscriptions and need to specify which one to use for this deployment, use the az account set command:
+					```
+					az account set --subscription [Subscription Name or Subscription ID]
+					```
+				- Replace [Subscription Name or Subscription ID] with the name or ID of the subscription you want to use for this deployment. You can find your subscription information by running az account list.
+
+				- **Note** : This step is particularly important if you have multiple subscriptions, as it ensures that the resources are deployed to the correct subscription.
+
+			4. Create the Resource Group
+
+				- Use the following command to create a resource group.
+					```
+					az group create --name <resource_group_name> --location <location>
+					```
+				- Replace <*resource_group_name*> with your desired name and <*location*> with the Azure region where you want to create the resource group
+
+			5. Deploy the function
+			- Now, you can initiate the deployment using the Azure CLI
+				```
+				az deployment group create --resource-group<resource-group-name> --template-file <path-to-template> --parameters <path-to-parameter>
+				```
+				- <*resource-group-name*>: Replace this with the name of the resource group you want to use.
+				- <*path-to-template*>: Provide the path to your ARM/Bicep template file i.e. main.json under infra folder.
+				- <*path-to-parameter*>: Specify the path to the parameters file i.e. armmain.parameters.json under infra folder.
 
 ## Export FHIR Data from API for FHIR server
 
