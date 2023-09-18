@@ -270,7 +270,7 @@
           "type": "Microsoft.Resources/deployments",
           "apiVersion": "2022-09-01",
           "name": "migration-function-fhir-managed-id-role-assignment",
-          "resourceGroup": "[variables('fhirRg')]",
+          "resourceGroup": "[variables('apiForFhirRg')]",
           "properties": {
               "expressionEvaluationOptions": {
                   "scope": "inner"
@@ -343,7 +343,7 @@
         "type": "Microsoft.Resources/deployments",
         "apiVersion": "2022-09-01",
         "name": "functionFhirServiceRoleAssignment",
-        "resourceGroup": "[variables('apiForFhirRg')]",
+        "resourceGroup": "[variables('fhirRg')]",
         "properties": {
             "expressionEvaluationOptions": {
                 "scope": "inner"
