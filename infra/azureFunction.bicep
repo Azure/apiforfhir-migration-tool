@@ -44,13 +44,13 @@ resource exporttable 'Microsoft.Storage/storageAccounts/tableServices/tables@202
 resource hostingPlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   name: appServiceName
   location: location
-  kind: 'functionapp'
+  //kind: 'functionapp'
   sku: {
     tier: 'Standard'
-    name: 'S2'
+    name: 'S1'
   }
   properties: {
-    reserved: true
+    //reserved: true
   }
   tags: appTags
 }
@@ -59,20 +59,14 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2021-03-01' = {
 resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
     name: functionAppName
     location: location
-    kind: 'functionapp,linux'
-
+    kind: 'functionapp'
     identity: {
         type: 'SystemAssigned'
     }
-
     properties: {
         httpsOnly: true
-        enabled: true
         serverFarmId: hostingPlan.id
-        clientAffinityEnabled: false
         siteConfig: {
-            linuxFxVersion: 'dotnet-isolated|7.0'
-            use32BitWorkerProcess: false
             alwaysOn: true
         }
     }
@@ -164,6 +158,16 @@ module functionApiForFhirRoleAssignment './roleAssignment.bicep' = if (createRol
     resourceId: apiForFhir.id
     //FHIR Export
     roleId: '3db33094-8700-4567-8da5-1501d4e7e843'
+    principalId: functionApp.identity.principalId
+  }
+}
+
+@description('Setup access between FHIR and the deployment script managed identity')
+module functionstorageTableRoleAssignment './roleAssignment.bicep' = if (createRoleAssignment == true) {
+  name: 'storageTable-access'
+  params: {
+    resourceId: functionApp.identity.principalId
+    roleId: '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'
     principalId: functionApp.identity.principalId
   }
 }
