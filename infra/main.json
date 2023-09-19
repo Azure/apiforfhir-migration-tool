@@ -102,6 +102,7 @@
       "fhirRg": "[variables('fhirsegments')[4]]",
       "apiForFhirRg": "[variables('apiForfhirsegments')[4]]",
       "packageUri": "https://gen1export.blob.core.windows.net/zipdeploy/apiforfhir-migration-tool.zip"
+
     },
     "resources": [
       {
