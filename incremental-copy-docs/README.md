@@ -114,10 +114,9 @@ Once the $import operation is completed, the import operation content location i
 You can verify that the data was successfully copied over using the below checks.
 
 1. Surface Check <br>
-    For a quick validation, you can check the number of particular resource type count in the FHIR server using the surface check. It compares the number resources of that particular FHIR resource type between the API for FHIR and FHIR service. You can configure the name of the resource type in the parameter: SurfaceCheckResources
+    For a quick validation, you can use the surface check. It compares the number  of resources of a particular FHIR resource type between the API for FHIR and FHIR service. You can configure the name of the resource type in the parameter: SurfaceCheckResources
 
 2. Deep Check <br>
-    For a deeper look, you can use the eeep check to verfiy the FHIR JSON by comparing the JSON data from API for FHIR server and Azure Health Data Services FHIR service.
-    You can configure the number  of resources that will be compared in the parameter: DeepCheckCount.
+    For a deeper look, you can use the deep check to compare the JSON data of a subset of data from API for FHIR server and Azure Health Data Services FHIR service.You can configure the number of resources that will be compared in the parameter: DeepCheckCount.
 
 
