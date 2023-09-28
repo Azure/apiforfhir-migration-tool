@@ -1,6 +1,6 @@
-# Deploy migration tool manually for customers using private link.
-This sample will guide the reader through deploy the migration tool for customers using a Private Link.
+# Deploy the incremental copy migration tool manually (needed if you are using Azure Private Link)
 
+If you are using Azure Private Link, the Deploy to Azure deployment of the migration tool will not work. Follow this tutorial to learn how to deploy the migration tool manually with Azure Private Link.
 
 # Prerequisites needed
 1. An Azure account
@@ -10,7 +10,7 @@ This sample will guide the reader through deploy the migration tool for customer
 
 ## 1. Create Virtual network
 
- If you don't have an existing virtual network in Azure, follow these steps to create one. If you do have an existing virtual network, you can skip this step..
+ If you don't have an existing virtual network in Azure, follow these steps to create one. If you do have an existing virtual network, you can skip this step.
 - **Step 1: Sign in to Azure Portal**
             
     - Open a web browser and go to the [Azure Portal](https://portal.azure.com/#home). Sign in with your Azure account credentials.
@@ -61,8 +61,8 @@ This sample will guide the reader through deploy the migration tool for customer
         - Address range: [Azure Health Data Services FHIR service Subnet Address Range]
     - Click "Save".
 
-## 3. Create Private endpoint for Azure API for FHIR And Azure Health Data Services FHIR service
-- **Step 1: Locate and Select the Service**
+## 3. Create private endpoint for Azure API for FHIR And Azure Health Data Services FHIR service
+- **Step 1: Locate and select the service**
     - In the Azure Portal, locate the service for which you want to create a private endpoint.
 
 - **Step 2: Access Networking Settings**
@@ -80,7 +80,7 @@ This sample will guide the reader through deploy the migration tool for customer
         - Network Interface Name : This may be auto-generated or you may need to select from existing options, depending on your configuration.
         - Region : Select the appropriate region for your private endpoint.
 - **Step 5: Configure Resource**
-    - Once you've filled out the Basics, proceed to the Resource configuration.Here's what you'll need to provide :
+    - Once you've filled out the Basics, proceed to the Resource configuration. Here's what you'll need to provide :
         - Resource Type : This field specifies the type of resource you're connecting to with the private endpoint.
         - Resource : Here, you'll select the specific resource within the chosen resource type.
         - Target Sub-resource : This field helps you narrow down the specific aspect of the resource you're connecting to.
@@ -104,10 +104,10 @@ This sample will guide the reader through deploy the migration tool for customer
  For detailed instructions on securing the FHIR service's  import operation.
 
  ## 5. Deploy migration tool using ARM
- - To deploy the migration tool using Azure Resource Manager (ARM), please refer to this [documentation](https://github.com/Azure/apiforfhir-migration-tool/blob/personal/snarang/v1.2/docs/README.md).
+ - To deploy the migration tool using Azure Resource Manager (ARM), please refer to the section "Deploy the migration tool manually" in this [documentation](/incremental-copy-docs/README.md).
 
-## 6. Configuring Secure Storage of data migration tool.
-This step provides detail instructions for configuring secure storage of data migration tool. The process involves setting up networking configurations and creating a private endpoint to ensure secure access to your storage account.
+## 6. Configuring secure storage of data migration tool.
+This step provides detailed instructions for configuring secure storage of data migration tool. The process involves setting up networking configurations and creating a private endpoint to ensure secure access to your storage account.
 - **Step 1: Configure Networking for the Storage Account**
     - Navigate to the created storage account in the Azure Portal.
     - Click on "Networking" in the left-hand menu.
