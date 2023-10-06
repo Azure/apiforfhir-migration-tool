@@ -85,11 +85,42 @@ In the migration tool we are using $export [query](https://learn.microsoft.com/a
 
 The migration tool hits the HTTP APIs endpoint for the $export operation, the response contains export operation Content-Location URL. The content-location URL give the status on export operation. Each $export operation status is stored in Azure storage table.
 
-The migration tool exports 30 days (configurable using parameter: ExportChunkTime ) of data from API for FHIR in each export operation. The user can configure the start date from where the export should start from the API for FHIR server. If the start date is not provided the tool will fetch the first resource date from the server and start the migration.
+The migration tool exports 30 days which is configurable by using parameters: ExportChunkTime and ExportChunkDuration of data from API for FHIR in each export operation.
+
+#### How to configure Chunk Duration and Time for export.
+1. Open the Data migration Azure function.
+2. Go to the environemnt variable setting and under it go to App Setting.
+3. Set the below configuration as per the need:
+```
+Name: AZURE_ExportChunkDuration
+Value: "Days" or "Hours" or "Minutes"
+
+Name: AZURE_ExportChunkTime
+Value: <<Int number>>
+```
+AZURE_ExportChunkDuration it can take Days, Hours or Minutes as value. If the user want the data to be exported on Days basis, put "Days" as value in it. If the user want data to be exported on Hourly basis, put "Hours" as value OR if user want to export in minutes put "Minutes" as value.
+
+AZURE_ExportChunkTime it will take integer as value.
+
+Example:
+
+Below setting in azure function will export 30 days data in single chunk: 
+```
+Name: AZURE_ExportChunkDuration
+Value: "Days"
+
+Name: AZURE_ExportChunkTime
+Value: 30
+```
+
+The user can configure the start date in Azure function from where the export should start from the API for FHIR server. AZURE_StartDate will help to export the data from that specific date. <br>
+If the start date is not provided the tool will fetch the first resource date from the server and start the migration.
 
 Once the $export operation is completed, the export operation content location is stored in Azure storage table and the next export status orchestrator in the durable function picks the details from the storage table and checks the status of the export.
 
 The migration tool is also storing the _since and _till date for the export operation in Azure storage table. Once the export operation is completed, then the import operation orchestrator starts in the migration tool application.
+
+New export will not start once the previous import is completed on FHIR service.
 
 ## Import FHIR Data to Azure Health Data Services FHIR service
 
@@ -109,14 +140,82 @@ Once the $import operation is completed, the import operation content location i
 2. Azure Health Data Services FHIR service.
 	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#troubleshooting) to handle issues on importing the data.
 
+## Monitoring
+
+During the deployment of data migration tool , the dashboard is also deployed for monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. This dashboard gives the overview and details of each export-import runs.
+
+![Architecture](images/Dasboard.png)
+
+Dasboard contain below details.
+
+1. Export Operation Status.
+	- Completed export counts - This gives the count of export executed on Azure API for FHIR.
+	- Completed export details - This gives the details of each export executed on Azure API for FHIR.
+	- Running export count - This gives the current export run count on Azure API for FHIR.
+	- Running export details - This gives the details of current export run count on Azure API for FHIR.
+	- Failed export count - This gives the failed export run count on Azure API for FHIR.
+	- Failed export details - This gives the details of failed export run count on Azure API for FHIR.
+2. Import Operation Status.
+	- Completed Import counts - This gives the count of import executed on FHIR service.
+	- Completed Import details - This gives the details of each import executed on FHIR service.
+	- Running import count - This gives the current import run count on FHIR service
+	- Running import details - This gives the details of current import run count on FHIR service.
+	- Failed import count - This gives the failed import run count on FHIR service.
+	- Failed import details - This gives the details of failed import run count FHIR service.
+3. Surface Check - This give the details of surface check run for data movement verification.
+4. Function App
+	- Failures
+	- Server exceptions and dependency failures
+	- Avg processor / CPU utilization
+	- Average available memory.
+
 ## Data Movement Verification
 
 You can verify that the data was successfully copied over using the below checks.
 
 1. Surface Check <br>
-    For a quick validation, you can use the surface check. It compares the number  of resources of a particular FHIR resource type between the API for FHIR and FHIR service. You can configure the name of the resource type in the parameter: SurfaceCheckResources
+    For a quick validation, you can use the surface check. It compares the number  of resources of a particular FHIR resource type between the API for FHIR and FHIR service. You can configure the name of the resource type in the parameter: SurfaceCheckResources. 
+
+	To configure SurfaceCheckResources paramter, follow below steps:
+
+	1. Open the Data migration azure function.
+	2. Go the the environment variable. Under App setting set the below configuration:
+
+	```
+	Name: AZURE_SurfaceCheckResources
+	Value: ["<<Resource1 Name>>", "<<Resource2 Name>>"]
+	```
+
+	Value can contain list of resources that will check the count on both the server.
+
+	3. Save the setting and hit the E2ETest_Http function. Below are the steps how to run it.
 
 2. Deep Check <br>
     For a deeper look, you can use the deep check to compare the JSON data of a subset of data from API for FHIR server and Azure Health Data Services FHIR service.You can configure the number of resources that will be compared in the parameter: DeepCheckCount.
 
+	To configure DeepCheckCount paramter, follow below steps:
 
+	1. Open the Data migration azure function.
+	2. Go the the environment variable. Under App setting set the below configuration:
+
+	```
+	Name: AZURE_DeepCheckCount
+	Value: <<Resource Count>>
+	```
+	The number of complete fhir resources that need to be compared on both the server.
+
+	3. Save the setting and hit the E2ETest_Http function. Below are the steps how to run it.
+
+	### How to run surface and deep check
+
+	1. Once the data migration from Azure API for FHIR to Azure Health Data Service is complete. Run the below steps to verfiy the data movement.
+
+		1. Go to your Data migration Azure function and open E2ETest_Http function.
+		![Architecture](images/E2E-S&D-1.png)
+		2. Get the E2ETest_Http function URL.
+		![Architecture](images/E2E-S&D-2.png)
+		3. Hit the E2ETest_Http function URL directly on browser or from Postman.
+		4. There will be response containing statusQueryGetUri. Copy the uri. This URI shows the status of the function which has been hit.
+		5. Hit the URL to check the status of surface and deep check.
+		6. Once the statusQueryGetUri response runtimeStatus is complete. There will be output for surface and deep check which will contain the resources checks for both the server.
+		
