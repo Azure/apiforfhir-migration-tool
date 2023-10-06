@@ -352,9 +352,6 @@
             },
             "mode": "Incremental",
             "parameters": {
-                // "resourceId": {
-                //     "value": "[resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', variables('workspaceName'), variables('serviceName'))]"
-                // },
                 "roleId": {
                     "value": "5a1fc7df-4bf1-4951-a576-89034ee01acd"
                 },
@@ -379,9 +376,6 @@
                     }
                 },
                 "parameters": {
-                    // "resourceId": {
-                    // "type": "string"
-                    // },
                     "roleId": {
                         "type": "string"
                     },
