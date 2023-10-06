@@ -25,14 +25,14 @@
       },
       "apiForFhirName": {
         "type": "string",
-        "defaultValue": "fnappFhirMigrationTool",
+        "defaultValue": "",
         "metadata": {
           "description": "Name of the API for FHIR, source for migration."
         }
       },
       "appName": {
         "type": "string",
-        "defaultValue": "",
+        "defaultValue": "fnappFhirMigrationTool",
         "metadata": {
           "description": "The name of the function app that you wish to create."
         }
