@@ -103,6 +103,8 @@ namespace ApiForFhirMigrationTool.Function
                                         exportEntity["IsExportComplete"] = true;
                                         exportEntity["IsExportRunning"] = "Completed";
                                         exportEntity["ImportRequest"] = "Yes";
+                                        exportEntity["ExportEndTime"] = DateTime.UtcNow;
+                                        exportEntity["TotalResourceCount"] = resourceCount;
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                         _telemetryClient.TrackEvent(
                                             "Export",

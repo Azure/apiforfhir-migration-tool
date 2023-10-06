@@ -187,23 +187,36 @@ namespace ApiForFhirMigrationTool.Function
             TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
             TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
             since = (string)qEntity["since"];
+            var duration = _options.ExportChunkDuration;
 
             if (_options.StartDate == DateTime.MinValue && string.IsNullOrEmpty(since))
             {
                 var sinceDate = SinceDate();
-                since_new = sinceDate.Result;
-                since = since_new.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-                updateSinceDate = since_new.AddDays(_options.ExportChunkTime);
+                since_new = sinceDate.Result;          
             }
             else if (string.IsNullOrEmpty(since))
             {
-                since = _options.StartDate.ToString("yyyy-MM-ddTH:mm:ss.fffZ");
-                updateSinceDate = _options.StartDate.AddDays(_options.ExportChunkTime);
+                since_new = _options.StartDate;              
             }
             else
             {
-                DateTimeOffset newSince = DateTimeOffset.Parse(since);
-                updateSinceDate = newSince.AddDays(_options.ExportChunkTime);
+                since_new = DateTimeOffset.Parse(since);           
+            }
+
+            if (duration != null)
+            {
+                if (duration == "Days")
+                {
+                    updateSinceDate = since_new.AddDays(_options.ExportChunkTime);
+                }
+                else if (duration == "Hours")
+                {
+                    updateSinceDate = since_new.AddHours(_options.ExportChunkTime);
+                }
+                else
+                {
+                    updateSinceDate = since_new.AddMinutes(_options.ExportChunkTime);
+                }
             }
 
             if (updateSinceDate > DateTimeOffset.UtcNow)
@@ -211,6 +224,7 @@ namespace ApiForFhirMigrationTool.Function
                 updateSinceDate = DateTimeOffset.UtcNow;
             }
 
+            since = since_new.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             string query = string.Format("?_since={0}&_till={1}", since, till);
 

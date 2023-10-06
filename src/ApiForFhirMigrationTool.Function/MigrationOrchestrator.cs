@@ -10,7 +10,6 @@ using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
 using Azure;
 using Azure.Data.Tables;
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;

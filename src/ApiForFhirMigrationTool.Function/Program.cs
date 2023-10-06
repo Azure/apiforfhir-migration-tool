@@ -5,12 +5,14 @@
 
 using System.Reflection;
 using ApiForFhirMigrationTool.Function.Configuration;
+using ApiForFhirMigrationTool.Function.DeepCheck;
 using ApiForFhirMigrationTool.Function.FhirOperation;
 using ApiForFhirMigrationTool.Function.Models;
 using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
 using ApiForFhirMigrationTool.Function.SearchParameterOperation;
 using ApiForFhirMigrationTool.Function.Security;
+using ApiForFhirMigrationTool.Function.SurfaceCheck;
 using Azure.Core;
 using Azure.Data.Tables;
 using Azure.Identity;
@@ -64,6 +66,10 @@ public class Program
 
         // services.AddTransient<IExportProcessor, ExportProcessor>();
         // services.AddTransient<IImportProcessor, ImportProcessor>();
+
+        services.AddTransient<ISurfaceCheck, SurfaceCheck>();
+        services.AddTransient<IDeepCheck, DeepCheck>();
+
         services.AddTransient<IAzureTableClientFactory, AzureTableClientFactory>();
         services.AddTransient<IMetadataStore, AzureTableMetadataStore>();
 
