@@ -21,7 +21,7 @@ param apiForFhirid string = ''
 
 @description('URL to the deployment package containing code to build the migration tool.')
 #disable-next-line no-hardcoded-env-urls
-param deploymentPackageUrl string = 'https://github.com/Azure/apiforfhir-migration-tool/blob/personal/snarang/infrafix/zip/ApiForFhirMigrationTool.zip'
+param deploymentPackageUrl string = 'https://gen1export.blob.core.windows.net/zipdeploy/ApiForFhirMigrationTool.zip'
 
 @description('Used if you want to use an existing Log Analytics Workspace.')
 param existingLogAnalyticsWorkspaceName string = ''
