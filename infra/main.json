@@ -25,14 +25,14 @@
       },
       "apiForFhirName": {
         "type": "string",
-        "defaultValue": "fnappFhirMigrationTool",
+        "defaultValue": "",
         "metadata": {
           "description": "Name of the API for FHIR, source for migration."
         }
       },
       "appName": {
         "type": "string",
-        "defaultValue": "",
+        "defaultValue": "FhirMigrationTool",
         "metadata": {
           "description": "The name of the function app that you wish to create."
         }
@@ -91,9 +91,9 @@
         "AppID": "fhir-migration-function"
       },
       "logAnalyticsName": "[format('{0}{1}-la', parameters('prefix'), parameters('appName'))]",
-      "hostingPlanName": "[parameters('appName')]",
-      "applicationInsightsName": "[parameters('appName')]",
-      "storageAccountName": "[format('{0}azfunctions', uniqueString(resourceGroup().id))]",
+      "hostingPlanName": "[format('{0}{1}', parameters('prefix'), parameters('appName'))]",
+      "applicationInsightsName": "[format('ai{0}{1}', parameters('prefix'), parameters('appName'))]",
+      "storageAccountName": "[format('stg{0}func', substring(uniqueString(resourceGroup().id), 0, 4))]",
       "array": "[split(parameters('fhirServiceName'), '/')]",
       "serviceName": "[variables('array')[1]]",
       "workspaceName": "[variables('array')[0]]",
@@ -101,7 +101,7 @@
       "apiForfhirsegments": "[split(parameters('apiForFhirid'), '/')]",
       "fhirRg": "[variables('fhirsegments')[4]]",
       "apiForFhirRg": "[variables('apiForfhirsegments')[4]]",
-      "packageUri": "https://gen1export.blob.core.windows.net/zipdeploy/apiforfhir-migration-tool.zip"
+      "packageUri": "https://gen1export.blob.core.windows.net/zipdeploy/ApiForFhirMigrationTool.zip"
 
     },
     "resources": [
@@ -171,7 +171,9 @@
           "name": "S1",
           "tier": "Standard"
         },
-        "properties": {}
+        "properties": {
+          "reserved": false
+        }
       },
       {
         "type": "Microsoft.Web/sites",
@@ -207,7 +209,6 @@
           "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
           "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').InstrumentationKey]",
           "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]",
-          //"WEBSITE_RUN_FROM_PACKAGE": "1",
           "AZURE_AppInsightConnectionstring": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]",
           "AZURE_DestinationUri": "[format('https://{0}.fhir.azurehealthcareapis.com', replace(parameters('fhirServiceName'), '/', '-'))]", 
           "AZURE_SourceUri": "[format('https://{0}.azurehealthcareapis.com', parameters('apiForFhirName'))]",
@@ -351,9 +352,6 @@
             },
             "mode": "Incremental",
             "parameters": {
-                // "resourceId": {
-                //     "value": "[resourceId('Microsoft.HealthcareApis/workspaces/fhirservices', variables('workspaceName'), variables('serviceName'))]"
-                // },
                 "roleId": {
                     "value": "5a1fc7df-4bf1-4951-a576-89034ee01acd"
                 },
@@ -378,9 +376,6 @@
                     }
                 },
                 "parameters": {
-                    // "resourceId": {
-                    // "type": "string"
-                    // },
                     "roleId": {
                         "type": "string"
                     },
@@ -2067,7 +2062,7 @@
                                   },
                                   {
                                     "name": "Query",
-                                    "value": "let completed = customEvents\n| where name == \"Export\" and tostring(customDimensions.ExportStatus) == \"Completed\"\n| distinct  timestamp, exportId = tostring(customDimensions.ExportId)\n| order by timestamp desc;\nlet failed = customEvents\n| where name == \"Export\" and tostring(customDimensions.ExportStatus) == \"Failed\"\n| distinct  timestamp, exportId = tostring(customDimensions.ExportId)\n| order by timestamp desc;\nlet running = customEvents\n| where name == \"Export\" and tostring(customDimensions.ExportStatus) == \"Running\"\n| distinct  lastUpdate=timestamp, exportId = tostring(customDimensions.ExportId)\n| order by lastUpdate desc;\nlet started = customEvents\n| where name == \"Export\" and tostring(customDimensions.ExportStatus) == \"Started\"\n| distinct  startTime=timestamp, exportId = tostring(customDimensions.ExportId)\n| order by startTime desc;\nlet result = running\n| join kind=leftanti completed on exportId\n| join kind=leftanti failed on exportId\n| join kind=innerunique started on exportId;\nresult\n| distinct exportId, startTime, lastUpdate\n\n",
+                                    "value": "let completed = customEvents\n| where name == \"Import\" and tostring(customDimensions.ImportStatus) == \"Completed\"\n| distinct  timestamp, importId = tostring(customDimensions.ImportId)\n| order by timestamp desc;\nlet failed = customEvents\n| where name == \"Import\" and tostring(customDimensions.ImportStatus) == \"Failed\"\n| distinct  timestamp, importId = tostring(customDimensions.ImportId)\n| order by timestamp desc;\nlet running = customEvents\n| where name == \"Import\" and tostring(customDimensions.ImportStatus) == \"Running\"\n| distinct  lastUpdate=timestamp, importId = tostring(customDimensions.ImportId)\n| order by lastUpdate desc;\nlet started = customEvents\n| where name == \"Import\" and tostring(customDimensions.ImportStatus) == \"Started\"\n| distinct  startTime=timestamp, importId = tostring(customDimensions.ImportId)\n| order by startTime desc;\nlet result = running\n| join kind=leftanti completed on importId\n| join kind=leftanti failed on importId\n| join kind=innerunique started on importId;\nresult\n| distinct importId, startTime, lastUpdate\n\n",
                                     "isOptional": true
                                   },
                                   {

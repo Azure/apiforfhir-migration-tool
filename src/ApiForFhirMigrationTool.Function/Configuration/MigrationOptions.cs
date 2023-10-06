@@ -44,11 +44,11 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         [JsonProperty("importMode")]
         public string ImportMode { get; set; } = "IncrementalLoad";
 
-        public List<string>? SurfaceCheckResources { get; set; }
+        public List<string>? SurfaceCheckResources { get; set; } = new List<string> { "Patient" };
 
-        public List<string>? QuerySurface { get; set; }
+        public List<string>? QuerySurface { get; set; } = new List<string> { "?_summary=Count" };
 
-        public List<string>? QueryDeep { get; set; }
+        public List<string>? QueryDeep { get; set; } = new List<string> { "?_count=" };
 
         [JsonProperty("DeepCheckCount")]
         public int DeepCheckCount { get; set; }
@@ -82,6 +82,9 @@ namespace ApiForFhirMigrationTool.Function.Configuration
 
         [JsonProperty("ExportChunkTime")]
         public int ExportChunkTime { get; set; } = 30;
+
+        [JsonProperty("ExportChunkDuration")]
+        public string ExportChunkDuration { get; set; } = "Days";
 
         [JsonProperty("partitionKey")]
         public string PartitionKey { get; set; } = "mypartitionkey";

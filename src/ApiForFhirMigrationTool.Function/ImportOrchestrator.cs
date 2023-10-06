@@ -67,6 +67,7 @@ namespace ApiForFhirMigrationTool.Function
                             exportEntity["IsImportComplete"] = false;
                             exportEntity["IsImportRunning"] = "Started";
                             exportEntity["importContentLocation"] = importResponse.Content;
+                            exportEntity["ImportStartTime"] = DateTime.UtcNow;
                             _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                             _telemetryClient.TrackEvent(
                             "Import",
