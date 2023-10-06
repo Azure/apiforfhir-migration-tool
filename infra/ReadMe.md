@@ -1,1 +1,0 @@
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Ffhir2fhir.blob.core.windows.net%2Finfra-mig%2Fmain.jsons)
