@@ -8,17 +8,20 @@ param name string = 'mig'
 param location string = resourceGroup().location
 
 @description('Name of the FHIR Service to import resources into. Format is "workspace/fhirService".')
-param fhirServiceName string = 'wkspcmigtool/fhirservdest'
-
-param fhirserviceRg string = 'migtool-deploy-rg'
-param apiforFhirRg string = 'migtool-deploy-rg'
+param fhirServiceName string = ''
 
 @description('Name of the API for FHIR to export resources from.')
-param apiForFhirName string = 'gen1migtool'
+param apiForFhirName string = ''
+
+@description('Id of the FHIR Service to load resources into.')
+param fhirid string = ''
+
+@description('Id of the API for FHIR to load resources into.')
+param apiForFhirid string = ''
 
 @description('URL to the deployment package containing code to build the migration tool.')
 #disable-next-line no-hardcoded-env-urls
-param deploymentPackageUrl string = 'https://gen1export.blob.core.windows.net/zipdeploy/apiforfhir-migration-tool.zip'
+param deploymentPackageUrl string = 'https://github.com/Azure/apiforfhir-migration-tool/blob/personal/snarang/infrafix/zip/ApiForFhirMigrationTool.zip'
 
 @description('Used if you want to use an existing Log Analytics Workspace.')
 param existingLogAnalyticsWorkspaceName string = ''
@@ -38,6 +41,12 @@ var logAnalyticsName = length(existingLogAnalyticsWorkspaceName) == 0 ? '${resou
 var appInsightsName = '${resourceName}-appins'
 var fhirServiceNameUrl = 'https://${replace(fhirServiceName, '/', '-')}.fhir.azurehealthcareapis.com' 
 var apiForFhirNameUrl = 'https://${apiForFhirName}.azurehealthcareapis.com'
+
+var fhirResourceIdSplit = split(fhirid,'/')
+var apiforfhirResourceIdSplit = split(apiForFhirid,'/')
+
+var fhirserviceRg = fhirResourceIdSplit[4]
+var apiforFhirRg = apiforfhirResourceIdSplit[4]
 
 @description('Deploy monitoring and logging')
 module monitoring './monitoring.bicep'= {

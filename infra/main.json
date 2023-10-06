@@ -32,7 +32,7 @@
       },
       "appName": {
         "type": "string",
-        "defaultValue": "fnappFhirMigrationTool",
+        "defaultValue": "FhirMigrationTool",
         "metadata": {
           "description": "The name of the function app that you wish to create."
         }
@@ -91,9 +91,9 @@
         "AppID": "fhir-migration-function"
       },
       "logAnalyticsName": "[format('{0}{1}-la', parameters('prefix'), parameters('appName'))]",
-      "hostingPlanName": "[parameters('appName')]",
-      "applicationInsightsName": "[parameters('appName')]",
-      "storageAccountName": "[format('{0}azfunctions', uniqueString(resourceGroup().id))]",
+      "hostingPlanName": "[format('{0}{1}', parameters('prefix'), parameters('appName'))]",
+      "applicationInsightsName": "[format('ai{0}{1}', parameters('prefix'), parameters('appName'))]",
+      "storageAccountName": "[format('stg{0}func', substring(uniqueString(resourceGroup().id), 0, 4))]",
       "array": "[split(parameters('fhirServiceName'), '/')]",
       "serviceName": "[variables('array')[1]]",
       "workspaceName": "[variables('array')[0]]",
@@ -101,7 +101,7 @@
       "apiForfhirsegments": "[split(parameters('apiForFhirid'), '/')]",
       "fhirRg": "[variables('fhirsegments')[4]]",
       "apiForFhirRg": "[variables('apiForfhirsegments')[4]]",
-      "packageUri": "https://gen1export.blob.core.windows.net/zipdeploy/apiforfhir-migration-tool.zip"
+      "packageUri": "https://github.com/Azure/apiforfhir-migration-tool/blob/personal/snarang/infrafix/zip/ApiForFhirMigrationTool.zip"
 
     },
     "resources": [
