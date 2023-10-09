@@ -35,7 +35,7 @@ To quickly deploy the Migration tool, you can use the Azure deployment below. Pl
 1. Deploy the infrastructure for migration tool.
 	1. Deploy the migration tool through Azure Portal using the Deploy to Azure button
 
-		[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2Fmain.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2FuiDefForm.json)
+		[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fpersonal%2Fsnarang%2Finfrafix%2Finfra%2Fmain.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fpersonal%2Fsnarang%2Finfrafix%2Finfra%2FuiDefForm.json)
 
     2. Or, deploy the migration tool manually
 
