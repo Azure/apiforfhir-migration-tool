@@ -18,7 +18,7 @@ var tenantId = subscription().tenantId
 
 @description('Tags for all Azure resources in the solution')
 var appTags = {
-  AppID: 'fhir-migration-function'
+  AppID: 'fhir-migration-tool'
 }
 
 var uniqueResourceIdentifier = substring(uniqueString(resourceGroup().id, prefix), 0, 4)

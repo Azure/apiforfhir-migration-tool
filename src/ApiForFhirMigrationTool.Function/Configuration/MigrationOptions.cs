@@ -54,7 +54,7 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         public int DeepCheckCount { get; set; }
 
         [JsonProperty("UserAgent")]
-        public string UserAgent { get; set; } = "FhirMigrationTool";
+        public string UserAgent { get; set; } = "fhir-migration-tool";
 
         [JsonProperty("SourceHttpClient")]
         public string SourceHttpClient { get; set; } = "SourceFhirEndpoint";
