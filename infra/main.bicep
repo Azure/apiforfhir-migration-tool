@@ -34,7 +34,7 @@ var nameShort = length(name) > 10 ? substring(name, 0, 10) : name
 var resourceName = '${nameShort}${substring(envRandomString, 0, 6)}'
 
 var appTags = {
-  'app-id': 'apiforfhir-migration-tool'
+  'app-id': 'fhir-migration-tool'
 }
 
 var logAnalyticsName = length(existingLogAnalyticsWorkspaceName) == 0 ? '${resourceName}-la' : existingLogAnalyticsWorkspaceName

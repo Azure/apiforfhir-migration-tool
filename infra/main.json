@@ -88,7 +88,7 @@
     "variables": {
       "functionAppName": "[format('{0}{1}',parameters('prefix'), parameters('appName'))]",
       "appTags": {
-        "AppID": "fhir-migration-function"
+        "AppID": "fhir-migration-tool"
       },
       "logAnalyticsName": "[format('{0}{1}-la', parameters('prefix'), parameters('appName'))]",
       "hostingPlanName": "[format('{0}{1}', parameters('prefix'), parameters('appName'))]",
