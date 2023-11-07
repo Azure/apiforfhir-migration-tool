@@ -219,3 +219,34 @@ You can verify that the data was successfully copied over using the below checks
 		5. Hit the URL to check the status of surface and deep check.
 		6. Once the statusQueryGetUri response runtimeStatus is complete. There will be output for surface and deep check which will contain the resources checks for both the server.
 		
+## Stop Migration Tool
+
+You can stop the migration tool once the data migration from Azure API for FHIR instance to Azure Health Data Service FHIR service is completed.
+
+You can verfiy the data migration completion from Data Movement Verification step mentioned above.
+
+Please follow below step to stop the migration tool.
+
+### Azure Portal
+1. Go to the resource group on Azure Portal where the data migration tool is deployed.
+2. Open the data migration Azure function.
+3. Click on Overview of Function App.
+4. Click on stop and then click yes to stop the web app on prompt.
+![Architecture](images/Stop-Migration.png)
+
+### Azure CLI
+
+Below command can be run through Azure Cloud Shell or locally.
+
+1. Before you begin, ensure that you are logged in to your Azure account. If you are not already logged in, follow these steps:
+```
+az login
+```
+```
+az account set --subscription [Subscription Name or Subscription ID]
+```
+2. Run the below command to stop the data migration tool Azure function app.<br>
+Pass the function App name and resource group name as parameter to command.
+```
+az functionapp stop --name <<MyFunctionApp>>--resource-group <<MyResourceGroup>>
+```
