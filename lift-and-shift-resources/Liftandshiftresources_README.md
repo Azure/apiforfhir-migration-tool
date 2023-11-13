@@ -14,8 +14,9 @@ To see the list of all recommended migration patterns, see here. #TODO add link 
 ![Architecture](docs/images/Architecture.png)
 
 # Prerequisites needed
-1.	Microsoft work or school account
-2.	FHIR instances.
+1.	Review [general migration strategies]( https://learn.microsoft.com/azure/healthcare-apis/fhir/migration-strategies) first. 
+2. Microsoft work or school account
+3.	FHIR instances.
 	-	**Source**: Azure API for FHIR server instance from where the data will be exported from.
 		- Have the Azure API for FHIR server URL handy:
 			```PowerShell
