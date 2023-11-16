@@ -1,7 +1,7 @@
 # Deploy FHIR server and migration tool
 This sample will guide you through deploying a demo of the migration tool using an ARM/Bicep Template and subsequently testing the server using a Postman collection.
 
-If you already have existing test API for FHIR server and Azure Health Data Services FHIR servers, you may skip this tutorial and go straight to deploying the migration tool. <mark>##TODO</mark>
+
 
 # Prerequisites needed
 1. An Azure account
@@ -10,7 +10,7 @@ If you already have existing test API for FHIR server and Azure Health Data Serv
     - You can download it from [here](https://aka.ms//installazurecli).
 3. Postman Application.
     - If you haven't already, download and install Postman from [here](https://www.postman.com/downloads/).
-4. User should have privilege to assign roles.
+4. Privilege to assign roles (User Access Adminstrator in Azure Portal).
 
 ## What will be deployed in this template
 * Azure API for FHIR server (origin FHIR server)
