@@ -14,8 +14,8 @@ If you already have existing test API for FHIR server and Azure Health Data Serv
 
 ## What will be deployed in this template
 * Azure API for FHIR server (origin FHIR server)
-* Azure Health Data Services FHIR server (destination FHIR server)
-* Migration tool (OSS function)
+* Azure Health Data Services workspace and FHIR server (destination FHIR server) 
+* Intermediate storage account that will be used for the migration tool
 
 ## Resource Deployment using ARM/Bicep Template with Azure CLI
 These steps guide you through deploying Azure resources using an ARM/Bicep Template via the Azure Command-Line Interface (CLI).
@@ -74,7 +74,7 @@ This section explains how to test the deployed resources using a [Postman](https
 
 **2. Set Up Environment Variable**
 - Click on the "No environment" dropdown in the top-right corner of Postman and select "Manage Environments".
-- Click "Add" to create a new environment. Give it a name (e.g., "MyServerEnvironment") and include the variable "FhirUrl." Set the value of this variable to the origin FHIR server (Azure API for FHIR server created above, or existing Azure API for FHIR server that you already have) FHIR metadata endpoint (excluding the "/metadata" at the end).
+- Click "Add" to create a new environment. Give it a name (e.g., "MyServerEnvironment") and include the variable "FhirUrl." Set the value of this variable to the  FHIR metadata endpoint (excluding the "/metadata" at the end) of the origin FHIR server (Azure API for FHIR server created above, or existing Azure API for FHIR server that you already have).
 - Select the environment you created from the dropdown menu.
 
 **3. Set Up Authorization**
