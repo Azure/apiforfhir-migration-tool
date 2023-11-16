@@ -76,7 +76,7 @@
 						}
 					}
 				},
-				"url": "{{FhirUrl }}"
+				"url": "{{FhirUrl}}"
 			},
 			"response": []
 		},
@@ -107,7 +107,7 @@
 						}
 					}
 				},
-				"url": "{{FhirUrl }}"
+				"url": "{{FhirUrl}}"
 			},
 			"response": []
 		}

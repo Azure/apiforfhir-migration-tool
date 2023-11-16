@@ -1,67 +1,80 @@
 # Deploy FHIR server and migration tool
-This sample will guide the reader through deploying Azure resources using an ARM/Bicep Template and subsequently testing the server using a Postman collection.
+This sample will guide you through deploying a demo of the migration tool using an ARM/Bicep Template and subsequently testing the server using a Postman collection.
+
+
 
 # Prerequisites needed
 1. An Azure account
     - You must have an active Azure account. If you don't have one, you can sign up [here](https://azure.microsoft.com/en-us/free/).
-2. Installed and configured Azure CLI.
+2. Installed and configured [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/what-is-azure-cli).
     - You can download it from [here](https://aka.ms//installazurecli).
 3. Postman Application.
     - If you haven't already, download and install Postman from [here](https://www.postman.com/downloads/).
-4. User should have privilege to assign roles.
+4. Privilege to assign roles (User Access Adminstrator in Azure Portal).
+
+## What will be deployed in this template
+* Azure API for FHIR server (origin FHIR server)
+* Azure Health Data Services workspace and FHIR server (destination FHIR server) 
+* Intermediate storage account that will be used for the migration tool
 
 ## Resource Deployment using ARM/Bicep Template with Azure CLI
-This steps guides you through deploying Azure resources using an ARM/Bicep Template via the Azure Command-Line Interface (CLI).
+These steps guide you through deploying Azure resources using an ARM/Bicep Template via the Azure Command-Line Interface (CLI).
 
-**Note** : Prior to initiating the resource deployment, it is essential to make modifications to the Parameter File.This file contains values that are specific to your deployment
+**1. Set parameters in the parameters file**
+* Prior to initiating the resource deployment, it is essential to make modifications to the parameter file [ARTMTemplate.parameters.json](/infra/Demo/ARMTemplate.parameters.json).This file contains values that are specific to your deployment, including:
+  * apiForFhirName: Name for the API for FHIR server that will be created (origin server)
+  * workspaceName: Name for the Azure Health Data Services Workspace that will be created
+  * fhirServiceName: Name for the Azure Health Data Services FHIR service that will be created (destination server)
+  * storageAccountName: Name for the storage account that will act as the intermediate between the origin and destination
 
-**1. Log in to Azure**
+**2. Log in to Azure**
 - Before you begin, ensure that you are logged in to your Azure account. If you are not already logged in, follow these steps:
     ```
      az login
     ```
-**2. Set the Azure Subscription****
+**3. Set the Azure Subscription**
 - If you have multiple Azure subscriptions and need to specify which one to use for this deployment, use the az account set command:
     ```
-    az account set --subscription [Subscription Name or Subscription ID]
+    az account set --subscription "<Subscription Name or Subscription ID>"
     ```
-- Replace [Subscription Name or Subscription ID] with the name or ID of the subscription you want to use for this deployment. You can find your subscription information by running az account list.
+- Replace <*Subscription Name or Subscription ID*> with the name or ID of the subscription you want to use for this deployment. You can find your subscription information by running az account list.
 
 - **Note** : This step is particularly important if you have multiple subscriptions, as it ensures that the resources are deployed to the correct subscription.
 
-**3.Create the Resource Group**
+**4.Create the Resource Group**
 
-- Use the following command to create a resource group.
+- Use the following command to create a resource group, if you don't already have one that you want to use.
     ```
     az group create --name <resource_group_name> --location <location>
     ```
-  - Replace <*resource_group_name*> with your desired name and <*location*> with the Azure region where you want to create the resource group
+  - Replace <*resource_group_name*> with your desired name  and <*location*> with the Azure region where you want to create the resource group
 
-**4. Deploy the Resources** 
+**5. Deploy the Resources** 
 - Now, you can initiate the deployment using the Azure CLI
     ```
     az deployment group create --resource-group<resource-group-name> --template-file <path-to-template> --parameters <path-to-parameter>
     ```
     - <*resource-group-name*>: Replace this with the name of the resource group you want to use.
-    - <*path-to-template*>: Provide the path to your ARM/Bicep template file.
-    - <*path-to-parameter*>: Specify the path to the parameters file
+    - <*path-to-template*>: Provide the path to your ARM/Bicep template file (ARMTemplate.json)
+    - <*path-to-parameter*>: Specify the path to the parameters file (ARMTemplate.parameters.json)
 
-**5. Monitor Deployment Progress**
+**6. Monitor Deployment Progress**
 - During deployment, the Azure CLI will provide real-time feedback, displaying status messages as it creates the resources. Monitor the progress until the deployment completes.
 
-**6. Review Deployment Results**
+**7. Review Deployment Results**
 - Once the deployment is finished, you will receive a confirmation message in the CLI.
 
 ## Test the resources using Postman Collection
-This section explains how to test the deployed resources using a Postman collection.
+This section explains how to test the deployed resources using a [Postman](https://www.postman.com/downloads/) collection.
 
 **1. Import the Collection into the postman.**
+- Open Postman. 
 - Click on the "Import" button located in the top-left corner of the Postman window.
 - In the file selection dialog, choose the 'FHIR-Demo.postman_collection.json' file for import.
 
 **2. Set Up Environment Variable**
 - Click on the "No environment" dropdown in the top-right corner of Postman and select "Manage Environments".
-- Click "Add" to create a new environment. Give it a name (e.g., "MyServerEnvironment") and include the variable "FhirUrl." Set the value of this variable to the FHIR metadata endpoint (excluding the "/metadata" at the end).
+- Click "Add" to create a new environment. Give it a name (e.g., "MyServerEnvironment") and include the variable "FhirUrl." Set the value of this variable to the  FHIR metadata endpoint (excluding the "/metadata" at the end) of the origin FHIR server (Azure API for FHIR server created above, or existing Azure API for FHIR server that you already have).
 - Select the environment you created from the dropdown menu.
 
 **3. Set Up Authorization**
