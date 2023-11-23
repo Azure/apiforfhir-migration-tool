@@ -1,5 +1,5 @@
-# Deploy FHIR server and migration tool
-This sample will guide you through deploying a demo of the migration tool using an ARM/Bicep Template and subsequently testing the server using a Postman collection.
+# Incremental Copy migration tool demo
+This sample will guide you through a demo of the incremental copy migration tool. We will first deploy test Azure API for FHIR and Azure Health Data Services FHIR server, and then import some sample data to be used in the demo.
 
 
 
@@ -16,6 +16,7 @@ This sample will guide you through deploying a demo of the migration tool using 
 * Azure API for FHIR server (origin FHIR server)
 * Azure Health Data Services workspace and FHIR server (destination FHIR server) 
 * Intermediate storage account that will be used for the migration tool
+* Sample data to test with (using the Postman collection at the end of this tutorial)
 
 ## Resource Deployment using ARM/Bicep Template with Azure CLI
 These steps guide you through deploying Azure resources using an ARM/Bicep Template via the Azure Command-Line Interface (CLI).
@@ -64,26 +65,38 @@ These steps guide you through deploying Azure resources using an ARM/Bicep Templ
 **7. Review Deployment Results**
 - Once the deployment is finished, you will receive a confirmation message in the CLI.
 
-## Test the resources using Postman Collection
-This section explains how to test the deployed resources using a [Postman](https://www.postman.com/downloads/) collection.
 
-**1. Import the Collection into the postman.**
+Now, you have deployed a brand new Azure API for FHIR server, intermediate storage account, and a new Azure Health Data Services FHIR server. These azure resources can be used to test out the migration tool. 
+
+**8. Add initial sample data**
+* Import sample data into the Azure API for FHIR (origin server) using Postman. If you aren't  familiar with Postman, see Postman setup instructions in our [Postman starter sample](https://github.com/Azure-Samples/azure-health-data-and-ai-samples/blob/main/samples/sample-postman-queries/README.md#prerequisites).
+
+A. Import the Collection into the postman.
 - Open Postman. 
 - Click on the "Import" button located in the top-left corner of the Postman window.
-- In the file selection dialog, choose the 'FHIR-Demo.postman_collection.json' file for import.
+- In the file selection dialog, choose the ['FHIR-Demo.postman_collection.json' file](/infra/Demo/FHIR-Demo.postman_collection.json) for import.
 
-**2. Set Up Environment Variable**
+B. Set Up Environment Variables
 - Click on the "No environment" dropdown in the top-right corner of Postman and select "Manage Environments".
 - Click "Add" to create a new environment. Give it a name (e.g., "MyServerEnvironment") and include the variable "FhirUrl." Set the value of this variable to the  FHIR metadata endpoint (excluding the "/metadata" at the end) of the origin FHIR server (Azure API for FHIR server created above, or existing Azure API for FHIR server that you already have).
 - Select the environment you created from the dropdown menu.
 
-**3. Set Up Authorization**
-- Choose "OAuth 2.0" as the Authorization Type and proceed to set up OAuth 2.0 by either generating a new access token or utilizing an existing one if it's already available.
-- For detailed instructions on setting up OAuth 2.0 authorization, you can refer this [document](https://github.com/Azure-Samples/azure-health-data-and-ai-samples/tree/main/samples/sample-postman-queries).
+ C. Set Up Authorization
+- For detailed instructions on setting up OAuth 2.0 authorization, you can refer to the [Postman starter sample](https://github.com/Azure-Samples/azure-health-data-and-ai-samples/tree/main/samples/sample-postman-queries). You may need to change the Authorization to whichever authorization you are using (for example, the Postman sample uses BearerToken)
 
-**4. Initiate the execution**
-- Kindly open the 'DataInjection' request from the FHIR-Demo Collection. If the contents of the 'Body.json' file are not already in the body tab, please paste them there. Then, select the POST method and proceed to click the send button to initiate the execution.
-- For the purpose of updating, kindly open the 'ReadUpdate Resource' request from the FHIR-Demo Collection. If the contents of the 'Body.json' and the pre-Request script file are not already present in the body and pre-request script tab, respectively, kindly paste them there. Afterward, select the POST method and proceed to click the send button to initiate the execution.
+D. Import sample data into your origin API for FHIR
+- Open the 'DataInjection' request from the FHIR-Demo Collection. If the contents of the 'Body.json' file are not already in the body tab, please paste them there. Then, select the POST method and proceed to click the send button to initiate the execution.
+
+**9. Deploy the migration tool**
+* Follow the [instructions](/incremental-copy-docs/README.md) in this repo to deploy the migration tool. It can now be used with your new FHIR servers to test and demo!
+
+**10. Test incremental copy functionality**
+* To test the incremental copy functionality, open the 'ReadUpdate' request from the FHIR-Demo Collection. If the contents of the 'Body.json' and the pre-Request script file are not already present in the body and pre-request script tab, respectively, paste them there. Afterward, select the POST method and proceed to click the send button to initiate the execution. 
+* This request will update some of the previously posted resources that we posted in the initial sample data import (DataInject above). The migration tool runs automatically every 5 minutes. After the resources are updated, simulating an update in a real server, wait about 10 minutes to see that the migration tool will pick up the new updates and migrate them to the server. You can see this on the migration tool dashboard, and verify in Postman. 
+
+
+
+
 
 ## Troubleshooting
 **1. Template Deployment Errors**
