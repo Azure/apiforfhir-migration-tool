@@ -32,7 +32,7 @@
 			"response": []
 		},
 		{
-			"name": "Auth API4Fhir",
+			"name": "Auth Source FHIR",
 			"event": [
 				{
 					"listen": "test",
@@ -42,7 +42,7 @@
 							"if(pm.response.to.have.status(200))\r",
 							"{\r",
 							"    var jsonData = JSON.parse(responseBody);\r",
-							"    postman.setEnvironmentVariable(\"bearerToken\", jsonData.access_token);  \r",
+							"    postman.setEnvironmentVariable(\"sourceBearerToken\", jsonData.access_token);  \r",
 							"\r",
 							"    postman.setNextRequest(\"Get Metadata\");\r",
 							"}\r",
@@ -92,7 +92,7 @@
 			"response": []
 		},
 		{
-			"name": "Auth FHIR Serv",
+			"name": "Auth Dest FHIR",
 			"event": [
 				{
 					"listen": "test",
@@ -102,7 +102,7 @@
 							"if(pm.response.to.have.status(200))\r",
 							"{\r",
 							"    var jsonData = JSON.parse(responseBody);\r",
-							"    postman.setEnvironmentVariable(\"bearerTokenFhir\", jsonData.access_token);  \r",
+							"    postman.setEnvironmentVariable(\"destBearerToken\", jsonData.access_token);  \r",
 							"\r",
 							"    postman.setNextRequest(\"Get Metadata\");\r",
 							"}\r",
@@ -218,7 +218,7 @@
 			"response": []
 		},
 		{
-			"name": "Fetch MessageHeader",
+			"name": "Fetch Source MessageHeader",
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -239,7 +239,7 @@
 			"response": []
 		},
 		{
-			"name": "Fetch MessageHeader Fhir",
+			"name": "Fetch Dest MessageHeader",
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -327,7 +327,7 @@
 			"response": []
 		},
 		{
-			"name": "Fetch Patient",
+			"name": "Fetch Source Patient",
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -348,7 +348,7 @@
 			"response": []
 		},
 		{
-			"name": "Fetch Patient Fhir",
+			"name": "Fetch Dest Patient",
 			"request": {
 				"auth": {
 					"type": "bearer",

@@ -107,11 +107,11 @@ This section explains how to set up Postman for testing incremental copy functio
 ![Env-Config](images/Env-Config.png)
 
 **4. Get an access token from AAD**
-- In order to connect to API for FHIR and Azure Health Data Service FHIR service, you will need to get an access token first. To obtain an access token from AAD via Postman, you can send a ```POST Auth API4Fhir``` request for API for FHIR and ```POST Auth FHIR Serv``` for  Azure Health Data Service FHIR. The ```POST Auth API4Fhir``` and ```POST Auth FHIR Serv``` call comes pre-configured as part of the `FHIR-DEMO` collection that you imported earlier. 
+- In order to connect to API for FHIR and Azure Health Data Service FHIR service, you will need to get an access token first. To obtain an access token from AAD via Postman, you can send a ```POST Auth Source FHIR``` request for API for FHIR and ```POST Auth Dest FHIR``` for  Azure Health Data Service FHIR. The ```POST Auth Source FHIR``` and ```POST Auth Dest FHIR``` call comes pre-configured as part of the `FHIR-DEMO` collection that you imported earlier. 
 
-- In Postman, click on **Collections** on the left, select the `FHIR-DEMO` collection, and then select `POST Auth API4Fhir`. Press **Send** on the right.
+- In Postman, click on **Collections** on the left, select the `FHIR-DEMO` collection, and then select `POST Auth Source FHIR`. Press **Send** on the right.
 
-- Similarly, select the `FHIR-DEMO` collection, and then select `POST Auth FHIR Serv`. Press **Send** on the right. 
+- Similarly, select the `FHIR-DEMO` collection, and then select `POST Auth Dest FHIR`. Press **Send** on the right. 
 
 **IMPORTANT:** Ensure that the `fhir-migration-demo` environment is active by selecting it from the dropdown menu above the **Send** button.
 
@@ -137,18 +137,18 @@ This section explains how to test incremental copy functionality using Postman.
 
 **3. Test Incremental Copy Functionality for MessageHeader**
 
-- Open the 'Fetch MessageHeader' request from the FHIR-DEMO. Select the GET method and proceed to click the send button to initiate the execution.
+- Open the 'Fetch Source MessageHeader' request from the FHIR-DEMO. Select the GET method and proceed to click the send button to initiate the execution.
 
 - You will receive a 200 OK status code with a response body containing 'resourceType' as 'MessageHeader'. Check the 'versionId' inside the meta to match the same versionId that you received when sending the 'ReadUpdate' request.
 
-![MsgHeader-Updated](images/MsgHeader-Updated.png)
+![Fetch-Source-MsgHeader](images/Fetch-Source-MsgHeader.png)
 
-- Now, open the 'Fetch MessageHeader Fhir' request from the FHIR-DEMO. Select the GET method and proceed to click the send button to initiate the execution.
+- Now, open the 'Fetch Dest MessageHeader' request from the FHIR-DEMO. Select the GET method and proceed to click the send button to initiate the execution.
 
-- Verify the 'versionId' with the 'versionId' from the 'Fetch MessageHeader' response. If the versionIds are the same, that means the Incremental Copy Functionality is working fine.
+- Verify the 'versionId' with the 'versionId' from the 'Fetch Source MessageHeader' response. If the versionIds are the same, that means the data has been migrated from API for FHIR Server to Azure Health Data Service FHIR and the Incremental Copy Functionality is working fine.
 
 
-![MsgHeadre-Fhir-Updated](images/MsgHeader-Fhir-Updated.png)
+![Fetch-Dest-MsgHeader](images/Fetch-Dest-MsgHeader.png)
 
 - **Note:** You might receive a 404 Not Found error or the previous 'versionId' since the migration tool runs automatically every 5 minutes. Wait about 10 minutes to observe that the migration tool will pick up the new updates and migrate them to the server. You can also monitor this on the migration tool dashboard.
 
@@ -178,19 +178,19 @@ This section explains how to test incremental copy functionality using Postman.
 
 **6. Test Incremental Copy Functionality for Post Bundle**
 
-- Open the 'Fetch Patient' request from the FHIR-DEMO. Select the GET method and click the send button to initiate the execution.
+- Open the 'Fetch Source Patient' request from the FHIR-DEMO. Select the GET method and click the send button to initiate the execution.
 
 - You will receive a 200 OK status code with a response body containing 'resourceType' as 'Patient'. Check the 'versionId' inside the meta to match the same versionId that you received when sending the 'ReadUpdate' request.
 
 
-![Fetch-Patient-Updated](images/Fetch-Patient-Updated.png)
+![Fetch-Source-Patient](images/Fetch-Source-Patient.png)
 
-- Now, open the 'Fetch Patient Fhir' request from the FHIR-DEMO. Select the GET method and proceed to click the send button to initiate the execution.
+- Now, open the 'Fetch Dest Patient' request from the FHIR-DEMO. Select the GET method and proceed to click the send button to initiate the execution.
 
-- Verify the 'versionId' with the 'versionId' from the 'Fetch MessageHeader' response. If the versionIds are the same, that means the Incremental Copy Functionality is working fine.
+- Verify the 'versionId' with the 'versionId' from the 'Fetch Source Patient' response. If the versionIds are the same, that means the data has been migrated from API for FHIR Server to Azure Health Data Service FHIR and the Incremental Copy Functionality is working fine.
 
 
-![Fetch-Patient-Fhir-Updated](images/Fetch-Patient-Fhir-Updated.png)
+![Fetch-Dest-Patient](images/Fetch-Dest-Patient.png)
 
 - **Note:** You might receive a 404 Not Found error or the previous 'versionId' since the migration tool runs automatically every 5 minutes. Wait about 10 minutes to observe that the migration tool will pick up the new updates and migrate them to the server. You can also monitor this on the migration tool dashboard.
 
