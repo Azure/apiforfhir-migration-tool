@@ -1,9 +1,10 @@
 {
 	"info": {
-		"_postman_id": "3d94d792-4012-4213-800e-d8ae6d3f089d",
+		"_postman_id": "261ca6fb-aaad-484e-944c-d6e7de565a78",
 		"name": "FHIR-Demo",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "27213393"
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "16221516",
+		"_collection_link": "https://gold-water-539922.postman.co/workspace/MigrationToolTest~b0521e0d-8aa8-4328-864a-7e8cbe4d7462/collection/16221516-261ca6fb-aaad-484e-944c-d6e7de565a78?action=share&source=collection_link&creator=16221516"
 	},
 	"item": [
 		{
@@ -11,13 +12,9 @@
 			"request": {
 				"auth": {
 					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{bearerToken}}",
-							"type": "string"
-						}
-					]
+					"bearer": {
+						"token": "{{sourceBearerToken}}"
+					}
 				},
 				"method": "POST",
 				"header": [],
@@ -30,12 +27,7 @@
 						}
 					}
 				},
-				"url": {
-					"raw": "{{fhirurl}}",
-					"host": [
-						"{{fhirurl}}"
-					]
-				}
+				"url": "{{sourceFhirUrl}}"
 			},
 			"response": []
 		},
@@ -64,10 +56,10 @@
 					}
 				}
 			],
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
+				"auth": {
+					"type": "noauth"
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
@@ -90,25 +82,12 @@
 						},
 						{
 							"key": "resource",
-							"value": "{{resource}}",
+							"value": "{{sourceResource}}",
 							"type": "text"
 						}
 					]
 				},
-				"url": {
-					"raw": "https://login.microsoftonline.com/{{tenantId}}/oauth2/token",
-					"protocol": "https",
-					"host": [
-						"login",
-						"microsoftonline",
-						"com"
-					],
-					"path": [
-						"{{tenantId}}",
-						"oauth2",
-						"token"
-					]
-				}
+				"url": "https://login.microsoftonline.com/{{tenantId}}/oauth2/token"
 			},
 			"response": []
 		},
@@ -137,10 +116,10 @@
 					}
 				}
 			],
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
+				"auth": {
+					"type": "noauth"
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
@@ -163,25 +142,12 @@
 						},
 						{
 							"key": "resource",
-							"value": "{{resourcefhir}}",
+							"value": "{{destResource}}",
 							"type": "text"
 						}
 					]
 				},
-				"url": {
-					"raw": "https://login.microsoftonline.com/{{tenantId}}/oauth2/token",
-					"protocol": "https",
-					"host": [
-						"login",
-						"microsoftonline",
-						"com"
-					],
-					"path": [
-						"{{tenantId}}",
-						"oauth2",
-						"token"
-					]
-				}
+				"url": "https://login.microsoftonline.com/{{tenantId}}/oauth2/token"
 			},
 			"response": []
 		},
@@ -232,13 +198,9 @@
 			"request": {
 				"auth": {
 					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{bearerToken}}",
-							"type": "string"
-						}
-					]
+					"bearer": {
+						"token": "{{sourceBearerToken}}"
+					}
 				},
 				"method": "POST",
 				"header": [],
@@ -251,12 +213,7 @@
 						}
 					}
 				},
-				"url": {
-					"raw": "{{fhirurl}}",
-					"host": [
-						"{{fhirurl}}"
-					]
-				}
+				"url": "{{sourceFhirUrl}}"
 			},
 			"response": []
 		},
@@ -265,13 +222,9 @@
 			"request": {
 				"auth": {
 					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{bearerToken}}",
-							"type": "string"
-						}
-					]
+					"bearer": {
+						"token": "{{sourceBearerToken}}"
+					}
 				},
 				"method": "GET",
 				"header": [
@@ -281,16 +234,7 @@
 						"type": "default"
 					}
 				],
-				"url": {
-					"raw": "{{fhirurl}}/MessageHeader/b4ca189b-51ae-33df-cbe2-559b4423a321",
-					"host": [
-						"{{fhirurl}}"
-					],
-					"path": [
-						"MessageHeader",
-						"b4ca189b-51ae-33df-cbe2-559b4423a321"
-					]
-				}
+				"url": "{{sourceFhirUrl}}/MessageHeader/b4ca189b-51ae-33df-cbe2-559b4423a321"
 			},
 			"response": []
 		},
@@ -299,13 +243,9 @@
 			"request": {
 				"auth": {
 					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{bearerTokenFhir}}",
-							"type": "string"
-						}
-					]
+					"bearer": {
+						"token": "{{destBearerToken}}"
+					}
 				},
 				"method": "GET",
 				"header": [
@@ -315,16 +255,7 @@
 						"type": "default"
 					}
 				],
-				"url": {
-					"raw": "{{fhirserviceUrl}}/MessageHeader/b4ca189b-51ae-33df-cbe2-559b4423a321",
-					"host": [
-						"{{fhirserviceUrl}}"
-					],
-					"path": [
-						"MessageHeader",
-						"b4ca189b-51ae-33df-cbe2-559b4423a321"
-					]
-				}
+				"url": "{{destFhirUrl}}/MessageHeader/b4ca189b-51ae-33df-cbe2-559b4423a321"
 			},
 			"response": []
 		},
@@ -364,13 +295,9 @@
 			"request": {
 				"auth": {
 					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{bearerToken}}",
-							"type": "string"
-						}
-					]
+					"bearer": {
+						"token": "{{sourceBearerToken}}"
+					}
 				},
 				"method": "POST",
 				"header": [
@@ -395,12 +322,7 @@
 						}
 					}
 				},
-				"url": {
-					"raw": "{{fhirurl}}",
-					"host": [
-						"{{fhirurl}}"
-					]
-				}
+				"url": "{{sourceFhirUrl}}"
 			},
 			"response": []
 		},
@@ -409,13 +331,9 @@
 			"request": {
 				"auth": {
 					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{bearerToken}}",
-							"type": "string"
-						}
-					]
+					"bearer": {
+						"token": "{{sourceBearerToken}}"
+					}
 				},
 				"method": "GET",
 				"header": [
@@ -425,16 +343,7 @@
 						"type": "default"
 					}
 				],
-				"url": {
-					"raw": "{{fhirurl}}/Patient/PQC00000012",
-					"host": [
-						"{{fhirurl}}"
-					],
-					"path": [
-						"Patient",
-						"PQC00000012"
-					]
-				}
+				"url": "{{sourceFhirUrl}}/Patient/PQC00000011"
 			},
 			"response": []
 		},
@@ -443,13 +352,9 @@
 			"request": {
 				"auth": {
 					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{bearerTokenFhir}}",
-							"type": "string"
-						}
-					]
+					"bearer": {
+						"token": "{{destBearerToken}}"
+					}
 				},
 				"method": "GET",
 				"header": [
@@ -459,16 +364,7 @@
 						"type": "default"
 					}
 				],
-				"url": {
-					"raw": "{{fhirserviceUrl}}/Patient/PQC00000012",
-					"host": [
-						"{{fhirserviceUrl}}"
-					],
-					"path": [
-						"Patient",
-						"PQC00000012"
-					]
-				}
+				"url": "{{destFhirUrl}}/Patient/PQC00000011"
 			},
 			"response": []
 		}

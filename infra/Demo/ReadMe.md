@@ -1,4 +1,4 @@
-# Deploy FHIR server and migration tool
+# Incremental Copy migration tool demo
 This sample will guide you through deploying a demo of the migration tool using an ARM/Bicep Template and subsequently testing the server using a Postman collection.
 
 
@@ -66,52 +66,134 @@ These steps guide you through deploying Azure resources using an ARM/Bicep Templ
 
 Now, you have deployed a brand new Azure API for FHIR server, intermediate storage account, and a new Azure Health Data Services FHIR server. These azure resources can be used to test out the migration tool.
 
-**8. Deploy the migration tool**
-- Follow the [instructions](/incremental-copy-docs/README.md) in this repo to deploy the migration tool. It can now be used with your new FHIR servers to test and demo!
+## Deploy Incremental Copy Migration Tool
 
-**9. Set Up Postman and FHIR Service**
-- This section explains how to set up [Postman](https://www.postman.com/downloads/) for testing incremental copy functionality.
+- Follow the [instructions](/incremental-copy-docs/README.md) in this repository to deploy the incremental copy migration tool. It can now be used with your new FHIR servers for testing and demo purposes!
 
-A. Set Up App Registration and Assign FHIR Data Contributor role
-- Follow Step 1 and Step 2 from this [document](https://github.com/microsoft/azure-health-data-services-workshop/blob/main/resources/docs/Postman_FHIR_service_README.md) to access FHIR Services using Postman.
+- Follow the above step only if you haven't already deployed the migration tool app. If you have already deployed it, you can skip the above step.
 
-- **Note** : Repeat Step 2 to Assign FHIR Data Contributor role in Azure for Postman service client for ***API for FHIR server*** as well as ***Azure Health Data Service FHIR Service***.
+- After deploying the migration tool app, you can verify data movement from the ***API for the FHIR server*** to ***Azure Health Data Service FHIR*** using the [Data Movement Verification](/incremental-copy-docs/README.md#data-movement-verification) step.
 
-B. Import the Environment And Collection files into the postman.
-- Open Postman. 
+## Postman setup to test Incremental Copy Functionality 
+This section explains how to set up Postman for testing incremental copy functionality.
+
+**1. Set Up App Registration and Assign FHIR Data Contributor Role**
+
+- Follow **Step 1** and **Step 2** from this [document](https://github.com/microsoft/azure-health-data-services-workshop/blob/main/resources/docs/Postman_FHIR_service_README.md#getting-started) to access FHIR Services using Postman.
+
+- **Note:** Repeat **Step 2** to assign the FHIR Data Contributor role in Azure for the Postman service client for both the *API for FHIR server* and the *Azure Health Data Service FHIR Service*.
+
+**2. Import the Environment and Collection Files into Postman**
+
+- Open Postman.
 - Click on the "Import" button located in the top-left corner of the Postman window.
-- In the file selection dialog, choose the 'fhir-migration-demo.postman_environment.json'
-- Repeat the above steps to import 'FHIR-Demo.postman_collection.json'.
+- In the file selection dialog, import the [fhir-migration-demo.postman_environment.json](fhir-migration-demo.postman_environment.json) file.
+- Repeat the above steps to import the [FHIR-Demo.postman_collection.json](FHIR-Demo.postman_collection.json) file.
 
-C. Configure Postman environment
-- Click on Environments tab from left in Postman and select 'fhir-migration-demo'.
--  For the `fhir-migration-demo` Postman environment, you will need to retrieve the following values:
-    - `tenantId` - AAD tenant ID (go to **AAD** -> **Overview** -> **Tenant ID**)
-    - `clientId` - Application (client) ID for Postman service client app (go to **AAD** -> **App registrations** -> `<postman-service-client-name>` -> **Overview** -> **Application (client) ID**) 
-    - `clientSecret` - Client secret stored for Postman (see Step 1 #7 above) 
-    - `fhirurl` - ***API for FHIR server*** service endpoint - e.g. `https://<workspace-name>-<fhir-service-name>.fhir.azurehealthcareapis.com` (go to **Resource Group** -> **Overview** -> `<fhir-service-name>` -> **FHIR metadata endpoint** and copy *without* "/metadata" on the end)
-    - `resource` - ***API for FHIR server*** service endpoint - e.g. `https://<workspace-name>-<fhir-service-name>.fhir.azurehealthcareapis.com` (same as `fhirurl`)
-    - `fhirserviceurl` - ***Azure Health Data Service FHIR Service*** endpoint - e.g. `https://<workspace-name>-<fhir-service-name>.fhir.azurehealthcareapis.com` (go to **Resource Group** -> **Overview** -> `<fhir-service-name>` -> **FHIR metadata endpoint** and copy *without* "/metadata" on the end)
-    - `resourcefhir` - ***Azure Health Data Service FHIR Service*** endpoint - e.g. `https://<workspace-name>-<fhir-service-name>.fhir.azurehealthcareapis.com` (same as `fhirserviceurl`)
+**3. Configure Postman Environment**
+- Click on the "Environments" tab on the left in Postman and select 'fhir-migration-demo'.
+- For the `fhir-migration-demo` Postman environment, retrieve the following values:
+  - `tenantId` - AAD tenant ID (go to **AAD** -> **Overview** -> **Tenant ID**)
+  - `clientId` - Application (client) ID for the Postman service client app (go to **AAD** -> **App registrations** -> `<postman-service-client-name>` -> **Overview** -> **Application (client) ID**)
+  - `clientSecret` - Client secret stored for Postman (see the [Deploy Incremental Copy Migration Tool](#deploy-incremental-copy-migration-tool) step) 
+    - hint - *client secret is generated during App Registration in AAD*
+  - `sourceFhirUrl` - ***API for FHIR server*** service endpoint - e.g., `https://<fhir-service-name>.fhir.azurehealthcareapis.com` (go to **Resource Group** -> **Overview** -> `<fhir-service-name>` -> **FHIR metadata endpoint** and copy *without* "/metadata" at the end)
+  - `sourceResource` - ***API for FHIR server*** service endpoint - e.g., `https://<fhir-service-name>.fhir.azurehealthcareapis.com` (same as `sourceFhirUrl`)
+  - `destFhirUrl` - ***Azure Health Data Service FHIR Service*** endpoint - e.g., `https://<workspace-name>-<fhir-service-name>.fhir.azurehealthcareapis.com` (go to **Resource Group** -> **Overview** -> `<fhir-service-name>` -> **FHIR metadata endpoint** and copy *without* "/metadata" at the end)
+  - `destResource` - ***Azure Health Data Service FHIR Service*** endpoint - e.g., `https://<workspace-name>-<fhir-service-name>.fhir.azurehealthcareapis.com` (same as `destFhirUrl`)
 
-- Populate the above parameter values in your fhir-migration-demo Postman environment as shown below. Input the values in the CURRENT VALUE column. Leave bearerToken and bearerTokenFhir blank. Make sure to click Save to retain the fhir-migration-demo environment values.
+- Populate the above parameter values in your `fhir-migration-demo` Postman environment. Input the values in the CURRENT VALUE column. Leave `sourceBearerToken` and `destBearerToken` blank. Ensure to click **Save** to retain the `fhir-migration-demo` environment values.
 
+![Env-Config](images/Env-Config.png)
 
-D. Get an access token from AAD
+**4. Get an access token from AAD**
 - In order to connect to API for FHIR and Azure Health Data Service FHIR service, you will need to get an access token first. To obtain an access token from AAD via Postman, you can send a ```POST Auth API4Fhir``` request for API for FHIR and ```POST Auth FHIR Serv``` for  Azure Health Data Service FHIR. The ```POST Auth API4Fhir``` and ```POST Auth FHIR Serv``` call comes pre-configured as part of the `FHIR-DEMO` collection that you imported earlier. 
 
 - In Postman, click on **Collections** on the left, select the `FHIR-DEMO` collection, and then select `POST Auth API4Fhir`. Press **Send** on the right.
 
 - Similarly, select the `FHIR-DEMO` collection, and then select `POST Auth FHIR Serv`. Press **Send** on the right. 
 
-__IMPORTANT:__ Be sure to make the `fhir-migration-demo` environment active by selecting from the dropdown menu above the **Send** button. In the image below, `fhir-migration-demo` is shown as the active environment.
+**IMPORTANT:** Ensure that the `fhir-migration-demo` environment is active by selecting it from the dropdown menu above the **Send** button.
 
-**10. Test incremental copy functionality**
-- Kindly open the 'DataInjection' request from the FHIR-Demo Collection. If the contents of the 'Body.json' file are not already in the body tab, please paste them there. Then, select the POST method and proceed to click the send button to initiate the execution.
+## Test incremental copy functionality
+This section explains how to test incremental copy functionality using Postman.
 
-- To test the incremental copy functionality, open the 'ReadUpdate' request from the FHIR-Demo Collection. If the contents of the 'Body.json' and the pre-Request script file are not already present in the body and pre-request script tab, respectively, paste them there. Afterward, select the POST method and proceed to click the send button to initiate the execution.
+**1. Inject Data into API for FHIR Server**
 
-- This request will update some of the previously posted resources that we posted in the initial sample data import (DataInject above). The migration tool runs automatically every 5 minutes. After the resources are updated, simulating an update in a real server, wait about 10 minutes to see that the migration tool will pick up the new updates and migrate them to the server. You can see this on the migration tool dashboard, and verify in Postman.
+- Open the 'DataInjection' request from the FHIR-Demo Collection. If the contents of the [Body.json](Body.json) file are not already in the body tab, please paste them there. Then, select the POST method and proceed to click the send button to initiate the execution.
+
+- If you receive a 200 OK status code with a response body, that means you have successfully injected data into the API for FHIR Server.
+
+
+![Data-Injection](images/Data-Injection.png)
+
+**2. Read-Update Data into API for FHIR Server**
+
+- Open the 'ReadUpdate' request from the FHIR-DEMO Collection. If the contents of the [Body.json](Body.json) and the [pre-Request](Pre-request%20Script.js) script file are not already present in the body and pre-request script tab, respectively, paste them there. Then, select the POST method and proceed to click the send button to initiate the execution.
+
+- If you receive a 200 OK status code with a response body containing updated 'versionId', that means you have successfully updated data inside the API for FHIR Server. You can also verify the same by checking for 'versionId' incremented by one, inside entry -> resource -> meta within the response body.
+
+![ReadUpdate-MsgHeader](images/ReadUpdate-MsgHeader.png)
+
+**3. Test Incremental Copy Functionality for MessageHeader**
+
+- Open the 'Fetch MessageHeader' request from the FHIR-DEMO. Select the GET method and proceed to click the send button to initiate the execution.
+
+- You will receive a 200 OK status code with a response body containing 'resourceType' as 'MessageHeader'. Check the 'versionId' inside the meta to match the same versionId that you received when sending the 'ReadUpdate' request.
+
+![MsgHeader-Updated](images/MsgHeader-Updated.png)
+
+- Now, open the 'Fetch MessageHeader Fhir' request from the FHIR-DEMO. Select the GET method and proceed to click the send button to initiate the execution.
+
+- Verify the 'versionId' with the 'versionId' from the 'Fetch MessageHeader' response. If the versionIds are the same, that means the Incremental Copy Functionality is working fine.
+
+
+![MsgHeadre-Fhir-Updated](images/MsgHeader-Fhir-Updated.png)
+
+- **Note:** You might receive a 404 Not Found error or the previous 'versionId' since the migration tool runs automatically every 5 minutes. Wait about 10 minutes to observe that the migration tool will pick up the new updates and migrate them to the server. You can also monitor this on the migration tool dashboard.
+
+**4. Post Bundle Data into API for FHIR Server**
+
+- Open the 'Post Bundle' request from the FHIR-DEMO Collection. If the contents of the [PostBundleBody.json](PostBundleBody.json) and the [pre-Request script](Pre-request%20Script.js) file are not already present in the body and pre-request script tab, respectively, paste them there. Then, select the POST method and proceed to click the send button to initiate the execution.
+
+- If you receive a 200 OK status code with a response body, that means you have successfully posted bundle data inside the API for FHIR Server.
+
+
+![PostBundle](images/PostBundle.png)
+
+**5. Update PostBundle Data into API for FHIR Server**
+
+- Open the 'ReadUpdate' request from the FHIR-DEMO Collection. If the contents of the [pre-Request script](Pre-request%20Script.js) file are not already present in the pre-request script tab, respectively, paste them there. Replace the content inside the body with [PostBundleBody.json](PostBundleBody.json).
+
+- Update only the values inside the resource in the entry, excluding fields like 'resourceType', 'id', 'meta', 'text', 'extension', and 'identifier'. (For example, we have updated the family name of first resource in our context.)
+
+- Afterward, select the POST method and proceed to click the send button to initiate the execution. 
+
+- If you receive a 200 OK status code with a response body containing the updated 'versionId', that means you have successfully updated Post Bundle Data inside the API for FHIR Server. Verify the same by checking for 'versionId' inside entry -> resource -> meta within the response body.
+
+
+![ReadUpdate-PostBundle](images/ReadUpdate-PostBundle.png)
+
+- **Note** - check only for those resource which you updated. In our case it would be the first patient resource containing id : 'PQC00000011'.
+
+**6. Test Incremental Copy Functionality for Post Bundle**
+
+- Open the 'Fetch Patient' request from the FHIR-DEMO. Select the GET method and click the send button to initiate the execution.
+
+- You will receive a 200 OK status code with a response body containing 'resourceType' as 'Patient'. Check the 'versionId' inside the meta to match the same versionId that you received when sending the 'ReadUpdate' request.
+
+
+![Fetch-Patient-Updated](images/Fetch-Patient-Updated.png)
+
+- Now, open the 'Fetch Patient Fhir' request from the FHIR-DEMO. Select the GET method and proceed to click the send button to initiate the execution.
+
+- Verify the 'versionId' with the 'versionId' from the 'Fetch MessageHeader' response. If the versionIds are the same, that means the Incremental Copy Functionality is working fine.
+
+
+![Fetch-Patient-Fhir-Updated](images/Fetch-Patient-Fhir-Updated.png)
+
+- **Note:** You might receive a 404 Not Found error or the previous 'versionId' since the migration tool runs automatically every 5 minutes. Wait about 10 minutes to observe that the migration tool will pick up the new updates and migrate them to the server. You can also monitor this on the migration tool dashboard.
+
 
 ## Troubleshooting
 **1. Template Deployment Errors**
