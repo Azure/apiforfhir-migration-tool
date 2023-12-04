@@ -12,6 +12,7 @@ using Azure;
 using Azure.Data.Tables;
 using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.DurableTask;
 using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Logging;
@@ -89,11 +90,12 @@ namespace ApiForFhirMigrationTool.Function
 
         [Function("TimerOrchestration")]
         public async Task Run(
-         [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
+        // [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
          [DurableClient] DurableTaskClient client,
          FunctionContext executionContext)
         {
-            string instanceId_new = "FhirMigrationTool";
+            string instanceId_new = "FhirMigrationTool2";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
             try
             {

@@ -92,6 +92,9 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         [JsonProperty("rowKey")]
         public string RowKey { get; set; } = "myrowkey";
 
+        [JsonProperty("exportWithHistoryDelete")]
+        public bool ExportWithHistoryDelete { get; set; } = true;
+
         public bool ValidateConfig()
         {
             if (SourceUri != null

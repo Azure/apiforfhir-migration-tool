@@ -97,8 +97,8 @@ public class Program
             httpClient.DefaultRequestHeaders.Add(HeaderNames.UserAgent, config.UserAgent);
             httpClient.BaseAddress = baseUri;
         })
-        .AddPolicyHandler(GetRetryPolicy())
-        .AddHttpMessageHandler(x => new BearerTokenHandler(credential, baseUri, scopes));
+        .AddPolicyHandler(GetRetryPolicy());
+      //  .AddHttpMessageHandler(x => new BearerTokenHandler(credential, baseUri, scopes));
 
 #pragma warning restore CS8604 // Possible null reference argument.
 
