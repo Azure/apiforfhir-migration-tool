@@ -65,7 +65,7 @@ Detailed steps:
 			``` PowerShell
 			GET https://<<Source FHIR Server URL>>/$export?_container=<<CONTAINER NAME>>&_type=<<RESOURCE TYPE>>
 			```
-			**NOTE** : Specify the container name where the export of the resources will be done. If the container is not present in storage account export command will create it.
+			**NOTE** : Specify the container name where the export of the resources will be done. If the container is not present in the storage account, the export command will create it.
 
 		- If you export per resource, you will need to manually run the above command once per resource type. Execute the export jobs in parallel to minimize wait times, and note down the job IDs to check the execution status for each export job. 
 	
@@ -94,16 +94,18 @@ Detailed steps:
 	
 		__Note__: Use the same storage account while configuring the import on AHDS FHIR service which was configured for $export.
 	
-	2. Prepare the $import body payload. You can prepare this manually by following $import documentation [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#calling-import), or you can use the included OSS Powershill script that will create the $import body payload for you. 
+	2. Prepare the $import body payload. <br> Options: <br> 
+	a. You can prepare this manually by following $import documentation [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#calling-import). <br>
+	b. Or, you can use the included OSS Powershell script in this repo that will automatically create the $import body payload for you. The following explains how to use the $import body payload script:
    
 
-		The PowerShell script will take the $export Content-Location as parameter and will create the $import body payload that will be used during executing the $import command.
+		The PowerShell script will take the $export Content-Location as a parameter and will create the $import body payload that will be used when executing the $import command.
 	
-		- To run the PowerShell Script user need to have FHIR Data contributor role on AHDS FHIR Service as script require token to access the $export command output. Follow [steps](https://learn.microsoft.com/azure/healthcare-apis/configure-azure-rbac#assign-roles-for-the-fhir-service) to configure role on AHDS FHIR services.
+		- To run the PowerShell Script, you need to have the "FHIR Data Contributor" role for the Azure Health Data Services FHIR Service, as the script require access to the $export command output. Follow [steps](https://learn.microsoft.com/azure/healthcare-apis/configure-azure-rbac#assign-roles-for-the-fhir-service) to configure roles on AHDS FHIR services.
 		
-		- Follow the steps to execute the script:
+		- Follow  steps to execute the $import payload script:
 
-			1. You can run the Powershell script locally Or can use [Open Azure Cloud Shell](https://shell.azure.com) - you can also access this from [Azure Portal](https://portal.azure.com).\
+			1. You can run the Powershell script locally, or you can use [Open Azure Cloud Shell](https://shell.azure.com) - you can also access this from [Azure Portal](https://portal.azure.com).\
 			More details on how to setup [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview)
 
 				- If using Azure Cloud Shell, select PowerShell for the environment 
@@ -121,12 +123,13 @@ Detailed steps:
 				```
 				where 'xxxx-xxxx-xxxx-xxxx-xxxxxx' is your subscription ID.
 
-			3. Browse to the scripts folder under this path (..\fhir-migration-tool\v0\scripts).
+			3. Browse to the scripts folder under this path (..\fhir-migration-tool\lift-and-shift-resources\scripts).
 
 			4. Run the following PowerShell script. 
 				```Powershell
 				./Import_Payload.ps1 -url '<$export Content-Location URL>' 
 				```
+				
 				|Parameter   | Description   |
 				|---|---|
 				| url | $export Content_Location URL . 
@@ -152,7 +155,7 @@ Detailed steps:
 
 If you'd like to verify that all of your exported FHIR data was successfully imported into the new FHIR server, follow these steps. This verification will only work if the destination Azure Health Data Services FHIR service was initially empty. 
 
-- Get the exported FHIR resource count(s). You have noted the value(s) in step of : **Export data from the **source** Azure API for FHIR server.**
+- Get the exported FHIR resource count(s). You have noted the value(s) in step 2 of : **Export data from the **source** Azure API for FHIR server.**
 - Now run the below command to check the resource count on destination Azure Health Data Services FHIR service.  
 	If you have done the export on system level run the below command to check the total resource count on destination Azure AHDS FHIR Service.
 	```PowerShell
