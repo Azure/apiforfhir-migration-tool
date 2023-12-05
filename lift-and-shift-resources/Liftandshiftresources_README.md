@@ -96,7 +96,7 @@ Detailed steps:
 	
 	2. Prepare the $import body payload. <br> Options: <br> 
 	a. You can prepare this manually by following $import documentation [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#calling-import). <br>
-	b. Or, you can use the included OSS Powershell script in this repo that will automatically create the $import body payload for you. The following explains how to use the $import body payload script:
+	b. Or, you can use the included OSS Powershell script in this repo that will automatically create the $import body payload from the export storage container for you. The following explains how to use the $import body payload script:
    
 
 		The PowerShell script will take the $export Content-Location as a parameter and will create the $import body payload that will be used when executing the $import command.
