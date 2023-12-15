@@ -164,7 +164,8 @@ namespace ApiForFhirMigrationTool.Function
                     throw new ArgumentException($"Url to check import status was empty.");
                 }
             }
-            catch
+
+            catch(Exception ex) 
             {
                 throw;
             }

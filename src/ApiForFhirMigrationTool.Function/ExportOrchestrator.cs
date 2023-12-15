@@ -85,7 +85,7 @@ namespace ApiForFhirMigrationTool.Function
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 var statusUrl = string.Empty;
 
-                if (_options.ExportWithHistoryDelete == true)
+                if (_options.ExportWithHistory == true || _options.ExportWithDelete == true)
                 {
                     int sinceStartIndex = query.IndexOf("_since=") + 7;
                     int tillStartIndex = query.IndexOf("_till=") + 6;
@@ -238,10 +238,16 @@ namespace ApiForFhirMigrationTool.Function
 
             since = since_new.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            string query = string.Format("?_since={0}&_till={1}", since, till);
+            string query= string.Empty;
 
-            if (_options.ExportWithHistoryDelete == true)
+            if (_options.ExportWithHistory == true && _options.ExportWithDelete == true)
                 query = string.Format("?includeAssociatedData=_history,_deleted&_since={0}&_till={1}", since, till);
+            else if (_options.ExportWithHistory == true)
+                query = string.Format("?includeAssociatedData=_history&_since={0}&_till={1}", since, till);
+            else if (_options.ExportWithDelete == true)
+                query = string.Format("?includeAssociatedData=_deleted&_since={0}&_till={1}", since, till);
+            else
+                query = string.Format("?_since={0}&_till={1}", since, till); 
 
             return $"/$export{query}";
         }
