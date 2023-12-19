@@ -10,14 +10,23 @@ This respository is a set of OSS tools that helps you migrate your data from Azu
 ## Migration Patterns
 We recommend the following migration patterns. Depending on your organization’s tolerance for downtime, you may choose to use certain migration patterns and tools to help facilitate your migration.
 
+
+
 | Migration Pattern | Details                                                                                                                                                                                          | How?                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 |-------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Lift and Shift    | The simplest pattern. Ideal if your data pipelines can afford large downtime.                                                                                                                    |Choose the option that works best for your organization: <br> • Configure a workflow to [\$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) your data on Azure API for FHIR, then [\$import](https://learn.microsoft.com/azure/healthcare-apis/fhir/configure-import-data) into Azure Health Data Services FHIR Service. You can create your own tool to migrate the data using \$export and \$import.<br> •  The Github repo has some tips on running these commands, as well as a script to help automate creating the \$import payload [here](/lift-and-shift-resources/Liftandshiftresources_README.md).  |
-| Incremental copy  | Continuous version of lift and shift, with less downtime. Ideal for large amounts of data that take longer to copy, or if you want to continue running Azure API for FHIR during the migration.  | Choose the option that works best for your organization: <br> • You can create your own tool to migrate the data in an incremental fashion. <br> • We have created an [OSS incremental copy migration tool](/incremental-copy-docs/README.md) that can help with this migration pattern.                                                                            
+| Lift and Shift    | The simplest pattern. Ideal if your data pipelines can afford large downtime. <br> <br> Downtime: Your Azure API for FHIR instance will need to be read-only during the entire duration of the migration.                                                                                                                   |Choose the option that works best for your organization: <br> • Configure a workflow to [\$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) your data on Azure API for FHIR, then [\$import](https://learn.microsoft.com/azure/healthcare-apis/fhir/configure-import-data) into Azure Health Data Services FHIR Service. You can create your own tool to migrate the data using \$export and \$import.<br> •  The Github repo has some tips on running these commands, as well as a script to help automate creating the \$import payload [here](/lift-and-shift-resources/Liftandshiftresources_README.md).  |
+| Incremental copy  | Continuous version of lift and shift, with less downtime. Ideal for large amounts of data that take longer to copy, or if you want to continue running Azure API for FHIR during the migration.  <br><br> Downtime: Your Azure API for FHIR instance can remain read/write during the migration. Then, before cutover, there will be a short downtime where Azure API for FHIR will need to be read-only for the last incremental copy.   | Choose the option that works best for your organization: <br> • You can create your own tool to migrate the data in an incremental fashion. <br> • We have created an [OSS incremental copy migration tool](/incremental-copy-docs/README.md) that can help with this migration pattern.                                                                            
 
 This repo provides resources for each of these migration patterns. 
 
 ##  Lift and Shift
+### Lift and Shift Overview
+At a high level, this migration pattern involves:
+
+1. Stop all writes to Azure API for FHIR.
+2. Move data from Azure API for FHIR to Azure Health Data Services FHIR service.
+3. Once migration is complete, cutover and point all applications and workloads to the new Azure Health Data Services FHIR service.
+4. Decommission Azure API for FHIR. 
 ### How to use
 1. Review overall migration strategies [here](https://learn.microsoft.com/azure/healthcare-apis/fhir/migration-strategies).
 2. Review configurations that you may want to set up in your new Azure Health Data Services FHIR Server [here](/incremental-copy-docs/Appendix.md#configurations-to-set-in-your-new-azure-health-data-services-fhir-server).
@@ -27,6 +36,13 @@ This repo provides resources for each of these migration patterns.
 ### Incremental Copy Migration Tool Overview
 The OSS migration tool is an Azure Durable Function-based tool layered on top of existing FHIR server \$export and \$import functionality to orchestrate one-way migration of FHIR data. It continuously migrates new data to give you time to test your new FHIR server with your data, and flexibility to align your cutover with your organization’s existing maintenance windows.
 
+At a high level, this migration pattern involves:
+
+1. Start moving data from Azure API for FHIR to Azure Health Data Services. The Azure API for FHIR can continue having new writes during this process.
+2. Incrementally copy new data from Azure API for FHIR to Azure Health Data Services. 
+3. After a majority of the data has been copied, stop all writes to Azure API for FHIR. Wait for the final $export/$imports to complete. 
+4. Cutover and point all applications and workloads to the new Azure Health Data Services FHIR service.
+5. Decommission Azure API for FHIR and stop the migration tool. 
 
 ### Migration tool capabilities
 
