@@ -21,7 +21,7 @@ This sample will guide you through deploying a demo of the migration tool using 
 These steps guide you through deploying Azure resources using an ARM/Bicep Template via the Azure Command-Line Interface (CLI).
 
 **1. Set parameters in the parameters file**
-* Prior to initiating the resource deployment, it is essential to make modifications to the parameter file [ARTMTemplate.parameters.json](/infra/Demo/ARMTemplate.parameters.json).This file contains values that are specific to your deployment, including:
+* Prior to initiating the resource deployment, it is essential to make modifications to the parameter file [ARMTemplate.parameters.json](/infra/Demo/ARMTemplate.parameters.json).This file contains values that are specific to your deployment, including:
   * apiForFhirName: Name for the API for FHIR server that will be created (origin server)
   * workspaceName: Name for the Azure Health Data Services Workspace that will be created
   * fhirServiceName: Name for the Azure Health Data Services FHIR service that will be created (destination server)
@@ -52,7 +52,7 @@ These steps guide you through deploying Azure resources using an ARM/Bicep Templ
 **5. Deploy the Resources** 
 - Now, you can initiate the deployment using the Azure CLI
     ```
-    az deployment group create --resource-group<resource-group-name> --template-file <path-to-template> --parameters <path-to-parameter>
+    az deployment group create --resource-group <resource-group-name> --template-file <path-to-template> --parameters <path-to-parameter>
     ```
     - <*resource-group-name*>: Replace this with the name of the resource group you want to use.
     - <*path-to-template*>: Provide the path to your ARM/Bicep template file (ARMTemplate.json)
