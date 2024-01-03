@@ -58,7 +58,6 @@ Please take note of the following limitations of the migration tool before choos
 
 -   Since you are copying data to a new Azure Health Data Service FHIR server, you will have a new FHIR server URL and will need to manually point your applications to a new FHIR URL.
 -   The migration tool only copies FHIR resources. It will not copy over your FHIR server configurations, you will need to manually set those configurations again in your new FHIR server. See [here](/incremental-copy-docs/Appendix.md) for more information on setting configurations.
--   Our current \$export and \$import do not support historical versions and soft deletes. This is in the roadmap.
 -   After the initial migration, migration tool only incrementally copies new and edited FHIR resources. If a FHIR resource is hard-deleted from the source Azure API for FHIR server during the migration (after the initial migration), you will need to manually keep track of deletes that happen during the migration, and manually delete them from your new server post-migration.
 
 
