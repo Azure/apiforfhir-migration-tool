@@ -90,7 +90,7 @@ namespace ApiForFhirMigrationTool.Function
 
         [Function("TimerOrchestration")]
         public async Task Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
+        [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
          [DurableClient] DurableTaskClient client,
          FunctionContext executionContext)
         {
