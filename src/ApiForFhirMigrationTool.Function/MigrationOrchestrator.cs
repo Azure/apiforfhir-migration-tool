@@ -91,8 +91,8 @@ namespace ApiForFhirMigrationTool.Function
         [Function("TimerOrchestration")]
         public async Task Run(
         [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
-         [DurableClient] DurableTaskClient client,
-         FunctionContext executionContext)
+        [DurableClient] DurableTaskClient client,
+        FunctionContext executionContext)
         {
             string instanceId_new = "FhirMigrationTool";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);

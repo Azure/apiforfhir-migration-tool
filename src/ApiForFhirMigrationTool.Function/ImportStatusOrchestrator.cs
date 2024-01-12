@@ -165,7 +165,7 @@ namespace ApiForFhirMigrationTool.Function
                 }
             }
 
-            catch(Exception ex) 
+            catch 
             {
                 throw;
             }

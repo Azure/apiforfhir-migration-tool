@@ -53,28 +53,71 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
                 // var response = srcTask.Result;
                 var objResponse = JObject.Parse(srcTask.Content.ReadAsStringAsync().Result);
                 JToken? entry = objResponse["entry"];
-
+                JObject? gen2Response = null;
+                JObject? gen1Response = null;
                 if (entry != null)
                 {
                     foreach (JToken item in entry)
                     {
-                        var gen1Response = (JObject?)item["resource"];
+                        gen1Response = (JObject?)item["resource"];
+
                         if (gen1Response != null)
                         {
-                            gen1Response.Remove("meta");
-
-                            // Getting resource from Gen2 server.
-                            var desrequest = new HttpRequestMessage
+                            JToken? version = null;
+                            var metaToken = gen1Response["meta"];
+                            if (metaToken != null && metaToken is JObject metaObject)
                             {
-                                Method = HttpMethod.Get,
-                                RequestUri = new Uri(desbaseUri, string.Format("{0}/{1}", gen1Response.GetValue("resourceType"), gen1Response.GetValue("id"))),
-                            };
+                                metaObject.Remove("lastUpdated");
+                                version = metaObject.GetValue("versionId");
+                            }
+                            if (_options.ExportWithHistory == true || _options.ExportWithDelete == true)
+                            {
+                                var requestObject = (JObject?)item["request"];
+                                if (requestObject != null)
+                                {
+                                    var methodValue = requestObject.GetValue("method")?.ToString();
+                                    if (string.Equals(methodValue, "DELETE", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        continue;
+                                    }
+                                }
+                                // Getting resource from Gen2 server.
+                                var desrequest = new HttpRequestMessage
+                                    {
+                                        Method = HttpMethod.Get,
+                                        RequestUri = new Uri(desbaseUri, string.Format("{0}/{1}/{2}/{3}", gen1Response.GetValue("resourceType"), gen1Response.GetValue("id"), "_history", version)),
+                                    };
 
-                            HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, destinationFhirEndpoint);
+                                    HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, destinationFhirEndpoint);
 
-                            // var desResponse = desTask.Result;
-                            var gen2Response = JObject.Parse(desTask.Content.ReadAsStringAsync().Result);
-                            gen2Response.Remove("meta");
+                                    // var desResponse = desTask.Result;
+                                    gen2Response = JObject.Parse(desTask.Content.ReadAsStringAsync().Result);
+                                    metaToken = gen2Response["meta"];
+                                    if (metaToken != null && metaToken is JObject metaObject1)
+                                    {
+                                        metaObject1.Remove("lastUpdated");
+                                    }
+                            }
+                            else
+                            {
+                                // Getting resource from Gen2 server.
+                                var desrequest = new HttpRequestMessage
+                                {
+                                    Method = HttpMethod.Get,
+                                    RequestUri = new Uri(desbaseUri, string.Format("{0}/{1}", gen1Response.GetValue("resourceType"), gen1Response.GetValue("id"))),
+                                };
+
+                                HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, destinationFhirEndpoint);
+
+                                // var desResponse = desTask.Result;
+                                gen2Response = JObject.Parse(desTask.Content.ReadAsStringAsync().Result);
+                                metaToken = gen2Response["meta"];
+                                if (metaToken != null && metaToken is JObject metaObject1)
+                                {
+                                    metaObject1.Remove("lastUpdated");
+                                }
+
+                            }
 
                             // Comparing the resource from Gen1 and Gen2 server.
                             if (JToken.DeepEquals(gen1Response, gen2Response))
@@ -98,6 +141,7 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
                                 };
                                 errorResource.Add(errorFormat);
                             }
+
                         }
                     }
                 }
