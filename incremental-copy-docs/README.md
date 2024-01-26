@@ -27,7 +27,20 @@ The API for FHIR migration tool is an [Azure durable function](https://learn.mic
 
 4. Configure [$import](https://learn.microsoft.com/azure/healthcare-apis/fhir/configure-import-data) on the destination FHIR instance (Azure Health Data Service FHIR service server).
 > [!IMPORTANT]  
-> Please ensure that your $import is set to **incremental import mode** in order for the migration tool to work. If needed, you may switch back to initial import mode post-migration. Set incremental import mode following these [instructions](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/configure-import-data#step-3b-set-import-configuration-for-incremental-import-mode). Learn more about incremental and initial import [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data). 
+> Please ensure that your $import is set to **incremental import mode** in order for the migration tool to work. If needed, you may switch back to initial import mode post-migration. Set incremental import mode following these [instructions](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/configure-import-data#step-3b-set-import-configuration-for-incremental-import-mode). Learn more about incremental and initial import [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data).
+
+## Deployed Components
+During the deployment of incremental copy migration tool below components get deployed.
+
+1. Azure Function App
+	- The data migration tool code is deployed in Azure function. It incrementally migrate the data from Azure API for FHIR to Azure Health Data Service FHIR Service.
+2. Storage account
+	- Storage Account linked to Azure Function App and been use to store and monitor the export-import data. Table storage is being used to capture and store the details for each data migration run.
+3. Shared Dashboard
+	- The dasboard capture and visualize the details for each export-import of data. 
+
+4. Application Insinght
+	- It capture the log of data migration tool ie. Azure function app.
 
 ## Deployment
 ### Portal Deployment
@@ -39,7 +52,9 @@ To quickly deploy the Migration tool, you can use the Azure deployment below. Pl
 
 		[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2Fmain.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2FuiDefForm.json)
 
-    2. Or, deploy the migration tool manually
+    **NOTE** : To avoid azure resource already deployed with the same name use unique Prefix for FHIR Migration Tool resources during deployment.
+
+    3. Or, deploy the migration tool manually
 
 		- Follow steps to deploy the APIFORFHIR-Migration Tool:
 
@@ -77,6 +92,8 @@ To quickly deploy the Migration tool, you can use the Azure deployment below. Pl
 				- <*resource-group-name*>: Replace this with the name of the resource group you want to use.
 				- <*path-to-template*>: Provide the path to your ARM/Bicep template file i.e. main.json under infra folder.
 				- <*path-to-parameter*>: Specify the path to the parameters file i.e. armmain.parameters.json under infra folder.
+
+      **NOTE** : To avoid azure resource already deployed with the same name use unique Prefix for FHIR Migration Tool resources during deployment.
 
 ## Export FHIR Data from API for FHIR server
 
@@ -135,16 +152,10 @@ The migration tool hits the HTTP APIs endpoint for the $import operation, the re
 
 Once the $import operation is completed, the import operation content location is stored in Azure storage table and the next import status orchestrator in the durable function picks the details from storage table and checks the status of the import.
 
-## Troubleshooting
-
-1. Azure API for FHIR.
-	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/export-data#troubleshoot) to handle issues on exporting the data.
-2. Azure Health Data Services FHIR service.
-	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#troubleshooting) to handle issues on importing the data.
-
 ## Monitoring
+### Dashboard Monitoring
 
-During the deployment of data migration tool , the dashboard is also deployed for monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. This dashboard gives the overview and details of each export-import runs.
+During the deployment of data migration tool , the dashboard is also deployed for monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. It's the visualization of each export-import runs.
 
 ![Architecture](images/Dasboard.png)
 
@@ -170,6 +181,33 @@ Dasboard contain below details.
 	- Server exceptions and dependency failures
 	- Avg processor / CPU utilization
 	- Average available memory.
+
+### Table Storage Monitoring
+
+During the deployment of data migration tool , the table storage [chunk and export table] linked to Function App is used to store and monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. This table gives the overview and details of each export-import runs.
+
+There are two table storage created during deployment.
+
+1. Chunk: 
+	- It store the how many run have been done or started for the migration.
+	- It store the datetime value in since column. It indicate from which time the data should be exported from next run. This value is since in export URL for next export-import run.
+
+2. Export:
+	- This contain each export-import details.
+	- It capture the time take for each export and import.
+	- It capture the status of export and import.
+	- The export-import content location is capture which can be used to get the extact error occured during export-import by fetching the details through URL.
+
+
+## Troubleshooting
+
+1. Azure API for FHIR.
+	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/export-data#troubleshoot) to handle issues on exporting the data.
+2. Azure Health Data Services FHIR service.
+	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#troubleshooting) to handle issues on importing the data.
+3. To troubleshoot the error or failure of export-import. Please check the export table storage created during deployment process linked to Azure function app.
+	- It contain the details for each export-import error status.
+	- To get the complete error fetch the content location URL and query the url to get the complete failure details of export/import.
 
 ## Data Movement Verification
 
