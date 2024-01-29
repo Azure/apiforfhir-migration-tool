@@ -22,6 +22,12 @@
         },
         "dashboardName": {
             "value": ""
+        },
+        "exportWithHistory":{
+            "value": true
+        },
+        "exportWithDelete":{
+            "value":true
         }
     }
 }

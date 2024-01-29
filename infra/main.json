@@ -83,6 +83,20 @@
         "metadata": {
           "description": "Name of dashboard."
         }
+      },
+      "exportWithHistory": {
+        "type": "bool",
+        "defaultValue": true,
+        "metadata": {
+          "description": "Export With History"
+        }
+      },
+      "exportWithDelete": {
+        "type": "bool",
+        "defaultValue": true,
+        "metadata": {
+          "description": "Export With Delete"
+        }
       }
     },
     "variables": {
@@ -221,6 +235,8 @@
           "AZURE_ExportTableName": "export",
           "AZURE_ChunkTableName": "chunk", 
           "AZURE_ExportChunkTime": "30",
+          "AZURE_ExportWithHistory":"[parameters('exportWithHistory')]",
+          "AZURE_ExportWithDelete":"[parameters('exportWithDelete')]",
           "AZURE_stagingStorageAccountName": "[variables('storageAccountName')]",
           "AZURE_StagingStorageUri": "[format('https://{0}.table.core.windows.net', variables('storageAccountName'))]",
           "SCM_DO_BUILD_DURING_DEPLOYMENT": true,
@@ -258,7 +274,7 @@
       {
         "type": "Microsoft.Authorization/roleAssignments",
         "apiVersion": "2022-04-01",
-        "name": "[guid('tableassignment',subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'))]",
+        "name": "[guid(variables('storageAccountName'),subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'))]",
         "scope": "[concat('Microsoft.Storage/storageAccounts', '/', variables('storageAccountName'))]",
         "dependsOn": [
             "[variables('storageAccountName')]"

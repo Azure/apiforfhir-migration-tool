@@ -29,6 +29,13 @@ param existingLogAnalyticsWorkspaceName string = ''
 @description('Any custom function app settings')
 param functionAppCustomSettings object = {}
 
+@description('Export With History')
+param exportWithHistory bool 
+
+@description('Export With Delete')
+param exportWithDelete bool 
+
+
 var envRandomString = toLower(uniqueString(subscription().id, name, location))
 var nameShort = length(name) > 10 ? substring(name, 0, 10) : name
 var resourceName = '${nameShort}${substring(envRandomString, 0, 6)}'
@@ -80,6 +87,8 @@ module function './azureFunction.bicep'= {
         fhirserviceRg : fhirserviceRg
         apiforFhirRg : apiforFhirRg
         location: location
+        exportWithHistory : exportWithHistory
+        exportWithDelete : exportWithDelete
         appInsightsInstrumentationKey: monitoring.outputs.appInsightsInstrumentationKey
         functionSettings: union({
                 AZURE_DestinationUri: fhirServiceNameUrl
@@ -88,6 +97,8 @@ module function './azureFunction.bicep'= {
             }, functionAppCustomSettings)
         appTags: appTags
         deploymentPackageUrl: deploymentPackageUrl
+
+
     }
 }
 

@@ -10,7 +10,8 @@ param fhirServiceName string
 param deploymentPackageUrl string
 param fhirserviceRg string
 param apiforFhirRg string
-
+param exportWithHistory bool
+param exportWithDelete bool
 @description('Automatically create a role assignment for the function app to access the FHIR service and API for FHIR.')
 param createRoleAssignment bool = true
 
@@ -108,6 +109,9 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
               AZURE_ExportTableName: 'export'
               AZURE_ChunkTableName: 'chunk'
               AZURE_ExportChunkTime: 30
+              AZURE_ExportWithHistory: exportWithHistory
+              AZURE_ExportWithDelete: exportWithDelete
+              
               AZURE_stagingStorageAccountName: storageAccountName
               AZURE_StagingStorageUri: 'https://${storageAccountName}.table.core.windows.net'
 
