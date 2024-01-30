@@ -113,7 +113,7 @@
                                 "name": "exportWithHistory",
                                 "type": "Microsoft.Common.DropDown",
                                 "label": "Export With History",
-                                "defaultValue":"true",
+                                "defaultValue":"True",
                                 "toolTip": "",
                                 "constraints": {
                                     "allowedValues": [
@@ -134,7 +134,7 @@
                                 "name": "exportWithDelete",
                                 "type": "Microsoft.Common.DropDown",
                                 "label": "Export With Delete",
-                                "defaultValue":"true",
+                                "defaultValue":"True",
                                 "toolTip": "",
                                 "constraints": {
                                     "allowedValues": [
