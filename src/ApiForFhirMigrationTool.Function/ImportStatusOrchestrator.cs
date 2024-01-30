@@ -99,6 +99,7 @@ namespace ApiForFhirMigrationTool.Function
                                 exportEntity["IsImportComplete"] = true;
                                 exportEntity["IsImportRunning"] = "Completed";
                                 exportEntity["EndTime"] = DateTime.UtcNow;
+                                exportEntity["TotalImportResourceCount"] = resourceCount;
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
 
                                 TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);

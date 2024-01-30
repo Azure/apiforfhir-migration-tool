@@ -22,10 +22,25 @@ The API for FHIR migration tool is an [Azure durable function](https://learn.mic
 			```PowerShell
 			https://<<WORKSPACE_NAME>>-<<FHIR_SERVICE_NAME>>.fhir.azurehealthcareapis.com/
 			```
-3. Make sure that the intermediate Azure storage account that you plan to use for this migration is selected as the $export storage account for FHIR instance. You can do this by configuring [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/configure-export-data) on source FHIR instance (Azure API for FHIR server). If you do not already have a storage account, create a new storage account in the same subscription as your Azure API for FHIR server and follow the steps for configuring [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/configure-export-data) to select that storage account.
+3. Configure [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/configure-export-data) on the origin Azure API for FHIR server. Make sure that the intermediate Azure storage account that you plan to use for this migration is selected as the $export storage account for FHIR instance. You can do this by configuring [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/configure-export-data) on source FHIR instance (Azure API for FHIR server). If you do not already have a storage account, create a new storage account in the same subscription as your Azure API for FHIR server and follow the steps for configuring [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/configure-export-data) to select that storage account.
     - Reminder: The Source (Azure API for FHIR server instance), Destination (Azure Health Data Services FHIR server), and the intermediate storage account need to all be in the same subscription.
 
 4. Configure [$import](https://learn.microsoft.com/azure/healthcare-apis/fhir/configure-import-data) on the destination FHIR instance (Azure Health Data Service FHIR service server).
+> [!IMPORTANT]  
+> Please ensure that your $import is set to **incremental import mode** in order for the migration tool to work. If needed, you may switch back to initial import mode post-migration. Set incremental import mode following these [instructions](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/configure-import-data#step-3b-set-import-configuration-for-incremental-import-mode). Learn more about incremental and initial import [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data).
+
+## Deployed Components
+During the deployment of incremental copy migration tool below components get deployed.
+
+1. Azure Function App
+	- The data migration tool code is deployed in Azure function. It incrementally migrate the data from Azure API for FHIR to Azure Health Data Service FHIR Service.
+2. Storage account
+	- Storage Account linked to Azure Function App and been use to store and monitor the export-import data. Table storage is being used to capture and store the details for each data migration run.
+3. Shared Dashboard
+	- The dasboard capture and visualize the details for each export-import of data. 
+
+4. Application Insinght
+	- It capture the log of data migration tool ie. Azure function app.
 
 ## Deployment
 ### Portal Deployment
@@ -37,7 +52,9 @@ To quickly deploy the Migration tool, you can use the Azure deployment below. Pl
 
 		[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2Fmain.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2FuiDefForm.json)
 
-    2. Or, deploy the migration tool manually
+    **NOTE** : To avoid azure resource already deployed with the same name use unique Prefix for FHIR Migration Tool resources during deployment.
+
+    3. Or, deploy the migration tool manually
 
 		- Follow steps to deploy the APIFORFHIR-Migration Tool:
 
@@ -75,6 +92,8 @@ To quickly deploy the Migration tool, you can use the Azure deployment below. Pl
 				- <*resource-group-name*>: Replace this with the name of the resource group you want to use.
 				- <*path-to-template*>: Provide the path to your ARM/Bicep template file i.e. main.json under infra folder.
 				- <*path-to-parameter*>: Specify the path to the parameters file i.e. armmain.parameters.json under infra folder.
+
+      **NOTE** : To avoid azure resource already deployed with the same name use unique Prefix for FHIR Migration Tool resources during deployment.
 
 ## Export FHIR Data from API for FHIR server
 
@@ -116,6 +135,28 @@ Value: 30
 The user can configure the start date in Azure function from where the export should start from the API for FHIR server. AZURE_StartDate will help to export the data from that specific date. <br>
 If the start date is not provided the tool will fetch the first resource date from the server and start the migration.
 
+### Export with History and Delete
+
+Exporting with history and delete allows you to export current state of a resource as well as its previous versions.
+
+During the deployment of the migration tool, users have the option to enable or disable the exporting of history and deletion by specifying their values as true or false.
+
+Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with history and deletion is set to true. If you prefer to export without history and deletion, you can change the value to false.
+
+![Export](images/Export-with-history-delete.png)
+
+Upon the completion of deployment, users can still make adjustments to the export settings for history and deletion by modifying the values within the Azure function's environment variable. 
+
+Example:
+
+```
+Name: AZURE_ExportWithHistory
+Value: True
+
+Name: AZURE_ExportWithDelete
+Value: False
+
+```
 Once the $export operation is completed, the export operation content location is stored in Azure storage table and the next export status orchestrator in the durable function picks the details from the storage table and checks the status of the export.
 
 The migration tool is also storing the _since and _till date for the export operation in Azure storage table. Once the export operation is completed, then the import operation orchestrator starts in the migration tool application.
@@ -133,16 +174,10 @@ The migration tool hits the HTTP APIs endpoint for the $import operation, the re
 
 Once the $import operation is completed, the import operation content location is stored in Azure storage table and the next import status orchestrator in the durable function picks the details from storage table and checks the status of the import.
 
-## Troubleshooting
-
-1. Azure API for FHIR.
-	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/export-data#troubleshoot) to handle issues on exporting the data.
-2. Azure Health Data Services FHIR service.
-	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#troubleshooting) to handle issues on importing the data.
-
 ## Monitoring
+### Dashboard Monitoring
 
-During the deployment of data migration tool , the dashboard is also deployed for monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. This dashboard gives the overview and details of each export-import runs.
+During the deployment of data migration tool , the dashboard is also deployed for monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. It's the visualization of each export-import runs.
 
 ![Architecture](images/Dasboard.png)
 
@@ -168,6 +203,33 @@ Dasboard contain below details.
 	- Server exceptions and dependency failures
 	- Avg processor / CPU utilization
 	- Average available memory.
+
+### Table Storage Monitoring
+
+During the deployment of data migration tool , the table storage [chunk and export table] linked to Function App is used to store and monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. This table gives the overview and details of each export-import runs.
+
+There are two table storage created during deployment.
+
+1. Chunk: 
+	- It store the how many run have been done or started for the migration.
+	- It store the datetime value in since column. It indicate from which time the data should be exported from next run. This value is since in export URL for next export-import run.
+
+2. Export:
+	- This contain each export-import details.
+	- It capture the time take for each export and import.
+	- It capture the status of export and import.
+	- The export-import content location is capture which can be used to get the extact error occured during export-import by fetching the details through URL.
+
+
+## Troubleshooting
+
+1. Azure API for FHIR.
+	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/export-data#troubleshoot) to handle issues on exporting the data.
+2. Azure Health Data Services FHIR service.
+	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#troubleshooting) to handle issues on importing the data.
+3. To troubleshoot the error or failure of export-import. Please check the export table storage created during deployment process linked to Azure function app.
+	- It contain the details for each export-import error status.
+	- To get the complete error fetch the content location URL and query the url to get the complete failure details of export/import.
 
 ## Data Movement Verification
 
