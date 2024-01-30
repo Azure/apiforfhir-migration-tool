@@ -107,7 +107,7 @@
       "logAnalyticsName": "[format('{0}{1}-la', parameters('prefix'), parameters('appName'))]",
       "hostingPlanName": "[format('{0}{1}', parameters('prefix'), parameters('appName'))]",
       "applicationInsightsName": "[format('ai{0}{1}', parameters('prefix'), parameters('appName'))]",
-      "storageAccountName": "[format('stg{0}func', substring(uniqueString(resourceGroup().id), 0, 4))]",
+      "storageAccountName": "[format('{0}stor', variables('prefixNameCleanShort'))]",
       "array": "[split(parameters('fhirServiceName'), '/')]",
       "serviceName": "[variables('array')[1]]",
       "workspaceName": "[variables('array')[0]]",
@@ -115,7 +115,10 @@
       "apiForfhirsegments": "[split(parameters('apiForFhirid'), '/')]",
       "fhirRg": "[variables('fhirsegments')[4]]",
       "apiForFhirRg": "[variables('apiForfhirsegments')[4]]",
-      "packageUri": "https://gen1export.blob.core.windows.net/zipdeploy/ApiForFhirMigrationTool.zip"
+      "packageUri": "https://gen1export.blob.core.windows.net/zipdeploy/ApiForFhirMigrationTool.zip",
+      "uniqueResourceIdentifier": "[substring(uniqueString(resourceGroup().id, parameters('prefix')), 0, 4)]",
+      "prefixNameClean": "[format('{0}{1}', replace(parameters('prefix'), '-', ''), variables('uniqueResourceIdentifier'))]",
+      "prefixNameCleanShort": "[if(greater(length(variables('prefixNameClean')), 16), substring(variables('prefixNameClean'), 0, 8), variables('prefixNameClean'))]"
 
     },
     "resources": [
@@ -340,7 +343,7 @@
                       {
                           "type": "Microsoft.Authorization/roleAssignments",
                           "apiVersion": "2022-04-01",
-                          "name": "[guid(parameters('resourceId'), parameters('principalId'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId')))]",
+                          "name": "[guid(parameters('resourceId'), parameters('principalId'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId')),parameters('apiForFhirName'))]",
                           "scope": "[concat('Microsoft.HealthcareApis/services', '/', parameters('apiForFhirName'))]",
                           "properties": {
                               "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5a1fc7df-4bf1-4951-a576-89034ee01acd')]",
@@ -413,7 +416,7 @@
                     {
                         "type": "Microsoft.Authorization/roleAssignments",
                         "apiVersion": "2022-04-01",
-                        "name": "[guid(parameters('principalId'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId')))]",
+                        "name": "[guid(parameters('principalId'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId')),parameters('fhirname'))]",
                         "scope": "[concat('Microsoft.HealthcareApis/workspaces', '/', parameters('workspaceName'), '/','fhirservices','/' , parameters('fhirname'))]",
                         "properties": {
                             "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5a1fc7df-4bf1-4951-a576-89034ee01acd')]",
