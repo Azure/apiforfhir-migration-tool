@@ -2396,6 +2396,204 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
               }
             }
           }
+          {
+            position: {
+              x: 0
+              y: 13
+              colSpan: 4
+              rowSpan: 2
+            }
+            metadata: {
+              inputs: [
+                {
+                  name: 'resourceTypeMode'
+                  isOptional: true
+                }
+                {
+                  name: 'ComponentId'
+                  isOptional: true
+                }
+                {
+                  name: 'Scope'
+                  value: {
+                    resourceIds: [
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
+                    ]
+                  }
+                  isOptional: true
+                }
+                {
+                  name: 'PartId'
+                  value: '103e3a28-027f-4a5e-9a32-641c70776900'
+                  isOptional: true
+                }
+                {
+                  name: 'Version'
+                  value: '2.0'
+                  isOptional: true
+                }
+                {
+                  name: 'TimeRange'
+                  value: 'P7D'
+                  isOptional: true
+                }
+                {
+                  name: 'DashboardId'
+                  isOptional: true
+                }
+                {
+                  name: 'DraftRequestParameters'
+                  isOptional: true
+                }
+                {
+                  name: 'Query'
+                  value: 'customEvents\n| where name == "Import" and tostring(customDimensions.ImportStatus) == "Failed"\n| distinct  timestamp, tostring(customDimensions.ImportId)\n| order by timestamp desc\n| count as ExportFailed\n'
+                  isOptional: true
+                }
+                {
+                  name: 'ControlType'
+                  value: 'AnalyticsGrid'
+                  isOptional: true
+                }
+                {
+                  name: 'SpecificChart'
+                  isOptional: true
+                }
+                {
+                  name: 'PartTitle'
+                  value: 'Analytics'
+                  isOptional: true
+                }
+                {
+                  name: 'PartSubTitle'
+                  value: 'TestDurableFunc'
+                  isOptional: true
+                }
+                {
+                  name: 'Dimensions'
+                  isOptional: true
+                }
+                {
+                  name: 'LegendOptions'
+                  isOptional: true
+                }
+                {
+                  name: 'IsQueryContainTimeRange'
+                  value: false
+                  isOptional: true
+                }
+              ]
+              type: 'Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart'
+              settings: {
+                content: {
+                  Query: 'customEvents \n| where name == "Import" and tostring(customDimensions.ImportStatus) == "Completed"\n| extend SourceResourceCount = tostring(customDimensions.SourceResourceCount)\n| extend DestinationResourceCount = tostring(customDimensions.DestinationResourceCount)\n| distinct timestamp, SourceResourceCount, DestinationResourceCount \n| order by timestamp desc\n| take 1'
+                }
+              }
+              partHeader: {
+                title: 'Total Resource Count'
+                subtitle: 'Count'
+              }
+            }
+          }
+          {
+            position: {
+              x: 0
+              y: 15
+              colSpan: 4
+              rowSpan: 2
+            }
+            metadata: {
+              inputs: [
+                {
+                  name: 'resourceTypeMode'
+                  isOptional: true
+                }
+                {
+                  name: 'ComponentId'
+                  isOptional: true
+                }
+                {
+                  name: 'Scope'
+                  value: {
+                    resourceIds: [
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
+                    ]
+                  }
+                  isOptional: true
+                }
+                {
+                  name: 'PartId'
+                  value: '103e3a28-027f-4a5e-9a32-641c70776900'
+                  isOptional: true
+                }
+                {
+                  name: 'Version'
+                  value: '2.0'
+                  isOptional: true
+                }
+                {
+                  name: 'TimeRange'
+                  value: 'P7D'
+                  isOptional: true
+                }
+                {
+                  name: 'DashboardId'
+                  isOptional: true
+                }
+                {
+                  name: 'DraftRequestParameters'
+                  isOptional: true
+                }
+                {
+                  name: 'Query'
+                  value: 'customEvents\n| where name == "Import" and tostring(customDimensions.ImportStatus) == "Failed"\n| distinct  timestamp, tostring(customDimensions.ImportId)\n| order by timestamp desc\n| count as ExportFailed\n'
+                  isOptional: true
+                }
+                {
+                  name: 'ControlType'
+                  value: 'AnalyticsGrid'
+                  isOptional: true
+                }
+                {
+                  name: 'SpecificChart'
+                  isOptional: true
+                }
+                {
+                  name: 'PartTitle'
+                  value: 'Analytics'
+                  isOptional: true
+                }
+                {
+                  name: 'PartSubTitle'
+                  value: 'TestDurableFunc'
+                  isOptional: true
+                }
+                {
+                  name: 'Dimensions'
+                  isOptional: true
+                }
+                {
+                  name: 'LegendOptions'
+                  isOptional: true
+                }
+                {
+                  name: 'IsQueryContainTimeRange'
+                  value: false
+                  isOptional: true
+                }
+              ]
+              type: 'Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart'
+              settings: {
+                content: {
+                  Query: 'customEvents | where name == "Import" and tostring(customDimensions.ImportStatus) == "Completed"\n| extend TotalExpoertedResources = tostring(customDimensions.TotalExportResources)\n| extend TotalImportResources = tostring(customDimensions.TotalImportResources)\n| distinct timestamp, TotalExpoertedResources, TotalImportResources\n| order by timestamp desc  \n'
+                }
+              }
+              partHeader: {
+                title: 'Export and Import Resources'
+                subtitle: 'Details'
+              }
+            }
+          }
         ]
       }
     ]
