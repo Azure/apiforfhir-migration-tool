@@ -108,10 +108,7 @@ To quickly deploy the Migration tool, you can use the Azure deployment below. Pl
 		
 		</details>
 		<br />
-
-		
-
-			
+	
 ## Export FHIR Data from API for FHIR server
 
 The [built-in API for FHIR $export operation](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) is leveraged in this migration tool for exporting the data from API for FHIR server. The $export PaaS endpoints are asynchronous, long-running HTTP APIs. 
@@ -229,13 +226,13 @@ During the deployment of data migration tool , the table storage [chunk and expo
 There are two table storage created during deployment.
 
 1. Chunk: 
-	- It stores the how many run have been done or started for the migration.
-	- It stores the datetime value in since column. It indicate from which time the data should be exported from next run. This value is since in export URL for next export-import run.
+	- It store the how many run have been done or started for the migration.
+	- It store the datetime value in since column. It indicate from which time the data should be exported from next run. This value is since in export URL for next export-import run.
 
 2. Export:
-	- This contains each export-import details.
-	- It captures the time taken for each export and import.
-	- It captures the status of export and import.
+	- This contain each export-import details.
+	- It capture the time take for each export and import.
+	- It capture the status of export and import.
 	- The export-import content location is capture which can be used to get the extact error occured during export-import by fetching the details through URL.
 
 
