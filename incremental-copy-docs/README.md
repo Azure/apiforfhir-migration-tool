@@ -108,10 +108,7 @@ To quickly deploy the Migration tool, you can use the Azure deployment below. Pl
 		
 		</details>
 		<br />
-
-		
-
-			
+	
 ## Export FHIR Data from API for FHIR server
 
 The [built-in API for FHIR $export operation](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) is leveraged in this migration tool for exporting the data from API for FHIR server. The $export PaaS endpoints are asynchronous, long-running HTTP APIs. 
