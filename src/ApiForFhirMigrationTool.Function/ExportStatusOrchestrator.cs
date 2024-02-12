@@ -156,12 +156,14 @@ namespace ApiForFhirMigrationTool.Function
                             {
                                 logger?.LogInformation($"Export Status check returned: Unsuccessful.");
                                 import_body = string.Empty;
+                                string diagnosticsValue = JObject.Parse(response.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "N/A";
                                 TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                 exportEntity["IsExportComplete"] = true;
                                 exportEntity["IsExportRunning"] = "Failed";
                                 exportEntity["IsImportComplete"] = false;
                                 exportEntity["IsImportRunning"] = "Failed";
                                 exportEntity["ImportRequest"] = import_body;
+                                exportEntity["FailureReason"] = diagnosticsValue;
                                 isComplete = true;
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                 _telemetryClient.TrackEvent(
@@ -174,6 +176,7 @@ namespace ApiForFhirMigrationTool.Function
                                             { "Since", string.Empty },
                                             { "Till", string.Empty },
                                             { "TotalResources", string.Empty },
+                                            { "FailureReason",diagnosticsValue }
                                 });
                                 throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
                             }
