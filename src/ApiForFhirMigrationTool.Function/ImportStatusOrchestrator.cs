@@ -181,8 +181,8 @@ namespace ApiForFhirMigrationTool.Function
                             }
                             else
                             {
-                                logger?.LogInformation($"Import Status check returned: Unsuccessful.");
-                                string diagnosticsValue = JObject.Parse(response.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "N/A";
+                                string diagnosticsValue = JObject.Parse(response.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "For more information check Content location.";
+                                logger?.LogInformation($"Import Status check returned: Unsuccessful. Reason : {diagnosticsValue}");
                                 TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                 exportEntity["IsImportComplete"] = true;
                                 exportEntity["IsImportRunning"] = "Failed";
@@ -250,7 +250,7 @@ namespace ApiForFhirMigrationTool.Function
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(tuple.Item1, "?_summary=Count"),
+                    RequestUri = _options.ExportWithHistory || _options.ExportWithDelete ? new Uri(tuple.Item1, "/_history?_summary=count") : new Uri(tuple.Item1, "?_summary=Count"),
                     Headers =
                     {
                         { 

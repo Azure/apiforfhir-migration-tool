@@ -48,7 +48,7 @@ namespace ApiForFhirMigrationTool.Function.SurfaceCheck
                         var request = new HttpRequestMessage
                         {
                             Method = HttpMethod.Get,
-                            RequestUri = new Uri(baseUri, string.Format("{0}{1}", item, query)),
+                            RequestUri = new Uri(baseUri, string.Format("{0}/{1}", item, query)),
                         };
                         HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
 
@@ -59,7 +59,7 @@ namespace ApiForFhirMigrationTool.Function.SurfaceCheck
                         var desrequest = new HttpRequestMessage
                         {
                             Method = HttpMethod.Get,
-                            RequestUri = new Uri(desbaseUri, string.Format("{0}{1}", item, query)),
+                            RequestUri = new Uri(desbaseUri, string.Format("{0}/{1}", item, query)),
                         };
 
                         HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, destinationFhirEndpoint);

@@ -106,7 +106,19 @@ namespace ApiForFhirMigrationTool.Function
                 var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
                 logger.LogInformation("E2E Test for import status completed.");*/
 
-                if (_options.QuerySurface != null)
+                if (_options.ExportWithHistory == true || _options.ExportWithDelete == true)
+                {
+                    var surfaceCheckQuery = new List<string>(_options.HistoryDeleteQuerySurface);
+
+                    foreach (var item in surfaceCheckQuery)
+                    {
+                        // Run Surface test
+                        var surfaceCheck = await context.CallActivityAsync<string>("Count", item);
+                        JObject jsonObject = JObject.Parse(surfaceCheck);
+                        resSurface.Add(jsonObject);
+                    }
+                }
+                else
                 {
                     var surfaceCheckQuery = new List<string>(_options.QuerySurface);
 
@@ -118,8 +130,7 @@ namespace ApiForFhirMigrationTool.Function
                         resSurface.Add(jsonObject);
                     }
                 }
-
-                if(_options.ExportWithHistory==true || _options.ExportWithDelete==true)
+                if (_options.ExportWithHistory==true || _options.ExportWithDelete==true)
                 {
                     var deepCheckQuery = new List<string>(_options.HistoryDeleteQueryDeep);
                     foreach (var item in deepCheckQuery)

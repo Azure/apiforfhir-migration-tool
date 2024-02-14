@@ -81,8 +81,8 @@ namespace ApiForFhirMigrationTool.Function
                         }
                         else
                         {
-                            logger?.LogInformation($"Import Status check returned: Unsuccessful.");
-                            string diagnosticsValue = JObject.Parse(importResponse.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "N/A";
+                            string diagnosticsValue = JObject.Parse(importResponse.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "For more information check Content location.";
+                            logger?.LogInformation($"Import Status check returned: Unsuccessful. Reason : {diagnosticsValue}");
                             TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                             exportEntity["IsImportComplete"] = false;
                             exportEntity["IsImportRunning"] = "Failed";

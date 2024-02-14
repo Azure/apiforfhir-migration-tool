@@ -2162,7 +2162,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                 }
                 {
                   name: 'Query'
-                  value: 'customEvents\n| where name == "SurfaceCheck"\n| distinct  timestamp, tostring(customDimensions.Resource), tostring(customDimensions.SourceCount), tostring(customDimensions.DestinationCount), tostring(customDimensions.Result)\n| order by timestamp desc\n\n'
+                  value: 'customEvents\n| where name == "SurfaceCheck"\n| extend Resource = tostring(customDimensions.Resource)\n| extend SourceCount = tostring(customDimensions.SourceCount)\n| extend DestinationCount = tostring(customDimensions.DestinationCount)\n| extend Result= tostring(customDimensions.Result)\n| distinct timestamp,Resource,SourceCount,DestinationCount,Result\n| order by timestamp desc'
                   isOptional: true
                 }
                 {
@@ -2257,7 +2257,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                 }
                 {
                   name: 'Query'
-                  value: 'let completed = customEvents\n| where name == "Export" and tostring(customDimensions.ExportStatus) == "Failed"\n| distinct  endTime = timestamp, exportId = tostring(customDimensions.ExportId)\n| order by endTime desc;\nlet started = customEvents\n| where name == "Export" and tostring(customDimensions.ExportStatus) == "Started"\n| distinct  startTime = timestamp, exportId = tostring(customDimensions.ExportId)\n| order by startTime desc;\nlet result = completed\n| join kind=innerunique started on exportId;\nresult\n| distinct exportId, startTime, endTime\n'
+q                  value: 'let completed = customEvents\n| where name == "Export" and tostring(customDimensions.ExportStatus) == "Failed"\n| distinct  endTime = timestamp, exportId = tostring(customDimensions.ExportId), reason = tostring(customDimensions.FailureReason)\n| order by endTime desc;\nlet started = customEvents\n| where name == "Export" and tostring(customDimensions.ExportStatus) == "Started"\n| distinct  startTime = timestamp, exportId = tostring(customDimensions.ExportId)\n| order by startTime desc;\nlet result = completed\n| join kind=innerunique started on exportId;\nresult\n| distinct exportId,reason, startTime, endTime\n\n'
                   isOptional: true
                 }
                 {
@@ -2352,7 +2352,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                 }
                 {
                   name: 'Query'
-                  value: 'let failed = customEvents\n| where name == "Import" and tostring(customDimensions.ImportStatus) == "Failed"\n| distinct  endTime = timestamp, importId = tostring(customDimensions.ImportId)\n| order by endTime desc;\nlet started = customEvents\n| where name == "Import" and tostring(customDimensions.ImportStatus) == "Started"\n| distinct  startTime = timestamp, importId = tostring(customDimensions.ImportId)\n| order by startTime desc;\nlet result = failed\n| join kind=innerunique started on importId;\nresult\n| distinct importId, startTime, endTime\n'
+                  value: 'let failed = customEvents\n| where name == "Import" and tostring(customDimensions.ImportStatus) == "Failed"\n| distinct  endTime = timestamp, importId = tostring(customDimensions.ImportId), reason = tostring(customDimensions.FailureReason)\n| order by endTime desc;\nlet started = customEvents\n| where name == "Import" and tostring(customDimensions.ImportStatus) == "Started"\n| distinct  startTime = timestamp, importId = tostring(customDimensions.ImportId)\n| order by startTime desc;\nlet result = failed\n| join kind=innerunique started on importId;\nresult\n| distinct importId,reason, startTime, endTime\n\n'
                   isOptional: true
                 }
                 {

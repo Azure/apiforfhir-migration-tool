@@ -73,6 +73,7 @@ namespace ApiForFhirMigrationTool.Function
         public async Task<ResponseModel> ProcessExport([ActivityTrigger] string name, FunctionContext executionContext)
         {
             ResponseModel exportResponse = new ResponseModel();
+            ILogger logger = executionContext.GetLogger("ProcessExport");
             try
             {
                 HttpMethod method = HttpMethod.Get;
@@ -150,7 +151,8 @@ namespace ApiForFhirMigrationTool.Function
                     {
                         int jobId = (int)qEntity["JobId"];
                         string rowKey = _options.RowKey + jobId++;
-                        string diagnosticsValue = JObject.Parse(exportResponse.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "N/A";
+                        string diagnosticsValue = JObject.Parse(exportResponse.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "For more information check Content location.";
+                        logger?.LogInformation($"Export check returned: Unsuccessful. Reason : {diagnosticsValue}");
                         var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
                             {
                                 { "exportContentLocation", statusUrl },
