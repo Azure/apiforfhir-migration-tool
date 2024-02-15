@@ -108,48 +108,61 @@ namespace ApiForFhirMigrationTool.Function
 
                 if (_options.ExportWithHistory == true || _options.ExportWithDelete == true)
                 {
-                    var surfaceCheckQuery = new List<string>(_options.HistoryDeleteQuerySurface);
-
-                    foreach (var item in surfaceCheckQuery)
+                    if (_options.HistoryDeleteQuerySurface != null)
                     {
-                        // Run Surface test
-                        var surfaceCheck = await context.CallActivityAsync<string>("Count", item);
-                        JObject jsonObject = JObject.Parse(surfaceCheck);
-                        resSurface.Add(jsonObject);
+                        var surfaceCheckQuery = new List<string>(_options.HistoryDeleteQuerySurface);
+
+                        foreach (var item in surfaceCheckQuery)
+                        {
+                            // Run Surface test
+                            var surfaceCheck = await context.CallActivityAsync<string>("Count", item);
+                            JObject jsonObject = JObject.Parse(surfaceCheck);
+                            resSurface.Add(jsonObject);
+                        }
                     }
                 }
                 else
                 {
-                    var surfaceCheckQuery = new List<string>(_options.QuerySurface);
-
-                    foreach (var item in surfaceCheckQuery)
+                    if (_options.QuerySurface != null)
                     {
-                        // Run Surface test
-                        var surfaceCheck = await context.CallActivityAsync<string>("Count", item);
-                        JObject jsonObject = JObject.Parse(surfaceCheck);
-                        resSurface.Add(jsonObject);
+                        var surfaceCheckQuery = new List<string>(_options.QuerySurface);
+
+                        foreach (var item in surfaceCheckQuery)
+                        {
+                            // Run Surface test
+                            var surfaceCheck = await context.CallActivityAsync<string>("Count", item);
+                            JObject jsonObject = JObject.Parse(surfaceCheck);
+                            resSurface.Add(jsonObject);
+                        }
                     }
                 }
-                if (_options.ExportWithHistory==true || _options.ExportWithDelete==true)
+
+                if (_options.ExportWithHistory == true || _options.ExportWithDelete == true)
                 {
-                    var deepCheckQuery = new List<string>(_options.HistoryDeleteQueryDeep);
-                    foreach (var item in deepCheckQuery)
+                    if (_options.HistoryDeleteQueryDeep != null)
                     {
-                        // Run Deep Check test
-                        var deepCheck = await context.CallActivityAsync<string>("DeepResourceCheck", item);
-                        JObject jsonObject = JObject.Parse(deepCheck);
-                        resDeep.Add(jsonObject);
+                        var deepCheckQuery = new List<string>(_options.HistoryDeleteQueryDeep);
+                        foreach (var item in deepCheckQuery)
+                        {
+                            // Run Deep Check test
+                            var deepCheck = await context.CallActivityAsync<string>("DeepResourceCheck", item);
+                            JObject jsonObject = JObject.Parse(deepCheck);
+                            resDeep.Add(jsonObject);
+                        }
                     }
                 }
                 else
                 {
-                    var deepCheckQuery = new List<string>(_options.QueryDeep);
-                    foreach (var item in deepCheckQuery)
+                    if (_options.QueryDeep != null)
                     {
-                        // Run Deep Check test
-                        var deepCheck = await context.CallActivityAsync<string>("DeepResourceCheck", item);
-                        JObject jsonObject = JObject.Parse(deepCheck);
-                        resDeep.Add(jsonObject);
+                        var deepCheckQuery = new List<string>(_options.QueryDeep);
+                        foreach (var item in deepCheckQuery)
+                        {
+                            // Run Deep Check test
+                            var deepCheck = await context.CallActivityAsync<string>("DeepResourceCheck", item);
+                            JObject jsonObject = JObject.Parse(deepCheck);
+                            resDeep.Add(jsonObject);
+                        }
                     }
                 }
 

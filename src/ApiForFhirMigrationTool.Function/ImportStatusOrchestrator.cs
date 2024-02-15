@@ -264,11 +264,12 @@ namespace ApiForFhirMigrationTool.Function
                     var objFhirResponse = JObject.Parse(await fhirResponse.Content.ReadAsStringAsync());
                     int total = objFhirResponse.Value<int>("total");
                     return Tuple.Create<int?, string>(total, null);
+
                 }
                 else
                 {
                     var objFhirResponse = JObject.Parse(await fhirResponse.Content.ReadAsStringAsync());
-                    string error = objFhirResponse["issue"][0]["diagnostics"].ToString();
+                    string error = objFhirResponse["issue"]?[0]?["diagnostics"]?.ToString() ?? "";
                     return Tuple.Create<int?, string>(null, error);
                 }
             }
