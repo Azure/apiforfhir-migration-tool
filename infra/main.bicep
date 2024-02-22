@@ -19,9 +19,9 @@ param fhirid string = ''
 @description('Id of the API for FHIR to load resources into.')
 param apiForFhirid string = ''
 
-@description('URL to the deployment package containing code to build the migration tool.')
+@description('Repo URL containing code to build the migration tool.')
 #disable-next-line no-hardcoded-env-urls
-param deploymentPackageUrl string = 'https://gen1export.blob.core.windows.net/zipdeploy/ApiForFhirMigrationTool.zip'
+param deploymentRepoUrl string = 'https://github.com/Azure/apiforfhir-migration-tool/'
 
 @description('Used if you want to use an existing Log Analytics Workspace.')
 param existingLogAnalyticsWorkspaceName string = ''
@@ -96,7 +96,7 @@ module function './azureFunction.bicep'= {
                 AZURE_AppInsightConnectionstring: monitoring.outputs.appInsightsInstrumentationString
             }, functionAppCustomSettings)
         appTags: appTags
-        deploymentPackageUrl: deploymentPackageUrl
+        deploymentRepoUrl: deploymentRepoUrl
 
 
     }

@@ -7,7 +7,7 @@ param functionSettings object = {}
 param appTags object = {}
 param apiForFhirName string
 param fhirServiceName string
-param deploymentPackageUrl string
+param deploymentRepoUrl string
 param fhirserviceRg string
 param apiforFhirRg string
 param exportWithHistory bool
@@ -121,18 +121,16 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
               WEBSITE_RUN_FROM_PACKAGE: 0
           }, functionSettings)
   }
-
-  resource functionAppDeployment 'extensions' = {
-    name: any('ZipDeploy')
-    properties: {
-      packageUri: deploymentPackageUrl
-    }
-    dependsOn: [
-      functionAppSettings
-    ]
+}
+resource functionAppDeployment 'Microsoft.Web/sites/sourcecontrols@2021-03-01' = {
+  name: 'web'
+  parent: functionApp
+  properties: {
+    repoUrl: deploymentRepoUrl
+    branch: 'main'
+    isManualIntegration: true
   }
 }
-
 resource fhirService 'Microsoft.HealthcareApis/workspaces/fhirservices@2022-06-01' existing = if (createRoleAssignment == true) {
   //#disable-next-line prefer-interpolation
   name: fhirServiceName
