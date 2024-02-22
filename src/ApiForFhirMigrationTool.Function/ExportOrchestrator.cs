@@ -17,7 +17,6 @@ using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
 namespace ApiForFhirMigrationTool.Function
 {
     public class ExportOrchestrator
@@ -78,20 +77,33 @@ namespace ApiForFhirMigrationTool.Function
             {
                 HttpMethod method = HttpMethod.Get;
                 string query = GetQueryStringForExport();
+                string sinceValue = string.Empty;
+                string tillValue = string.Empty;
                 exportResponse = await _exportProcessor.CallProcess(method, string.Empty, _options.SourceUri, query, _options.SourceHttpClient);
 
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 var statusUrl = string.Empty;
 
-                int sinceStartIndex = query.IndexOf("=") + 1;
-                int tillStartIndex = query.IndexOf("_till=") + 6;
+                if (_options.ExportWithHistory == true || _options.ExportWithDelete == true)
+                {
+                    int sinceStartIndex = query.IndexOf("_since=") + 7;
+                    int tillStartIndex = query.IndexOf("_till=") + 6;
+                    sinceValue = query.Substring(sinceStartIndex, query.IndexOf("&", sinceStartIndex) - sinceStartIndex);
+                    tillValue = query.Substring(tillStartIndex);
+                }
+                else
+                {
+                    int sinceStartIndex = query.IndexOf("=") + 1;
+                    int tillStartIndex = query.IndexOf("_till=") + 6;
+                    sinceValue = query.Substring(sinceStartIndex, query.IndexOf("&") - sinceStartIndex);
+                    tillValue = query.Substring(tillStartIndex);
+                }
 
-                string sinceValue = query.Substring(sinceStartIndex, query.IndexOf("&") - sinceStartIndex);
-                string tillValue = query.Substring(tillStartIndex);
 
                 if (exportResponse.Status == ResponseStatus.Accepted)
                 {
+
                     statusUrl = exportResponse.Content;
 
                     TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
@@ -226,7 +238,16 @@ namespace ApiForFhirMigrationTool.Function
 
             since = since_new.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            string query = string.Format("?_since={0}&_till={1}", since, till);
+            string query= string.Empty;
+
+            if (_options.ExportWithHistory == true && _options.ExportWithDelete == true)
+                query = string.Format("?includeAssociatedData=_history,_deleted&_since={0}&_till={1}", since, till);
+            else if (_options.ExportWithHistory == true)
+                query = string.Format("?includeAssociatedData=_history&_since={0}&_till={1}", since, till);
+            else if (_options.ExportWithDelete == true)
+                query = string.Format("?includeAssociatedData=_deleted&_since={0}&_till={1}", since, till);
+            else
+                query = string.Format("?_since={0}&_till={1}", since, till); 
 
             return $"/$export{query}";
         }

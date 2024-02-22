@@ -119,7 +119,18 @@ namespace ApiForFhirMigrationTool.Function
                     }
                 }
 
-                if (_options.QueryDeep != null)
+                if(_options.ExportWithHistory==true || _options.ExportWithDelete==true)
+                {
+                    var deepCheckQuery = new List<string>(_options.HistoryDeleteQueryDeep);
+                    foreach (var item in deepCheckQuery)
+                    {
+                        // Run Deep Check test
+                        var deepCheck = await context.CallActivityAsync<string>("DeepResourceCheck", item);
+                        JObject jsonObject = JObject.Parse(deepCheck);
+                        resDeep.Add(jsonObject);
+                    }
+                }
+                else
                 {
                     var deepCheckQuery = new List<string>(_options.QueryDeep);
                     foreach (var item in deepCheckQuery)

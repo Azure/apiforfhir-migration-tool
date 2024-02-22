@@ -10,7 +10,8 @@ param fhirServiceName string
 param deploymentPackageUrl string
 param fhirserviceRg string
 param apiforFhirRg string
-
+param exportWithHistory bool
+param exportWithDelete bool
 @description('Automatically create a role assignment for the function app to access the FHIR service and API for FHIR.')
 param createRoleAssignment bool = true
 
@@ -108,6 +109,9 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
               AZURE_ExportTableName: 'export'
               AZURE_ChunkTableName: 'chunk'
               AZURE_ExportChunkTime: 30
+              AZURE_ExportWithHistory: exportWithHistory
+              AZURE_ExportWithDelete: exportWithDelete
+              
               AZURE_stagingStorageAccountName: storageAccountName
               AZURE_StagingStorageUri: 'https://${storageAccountName}.table.core.windows.net'
 
@@ -143,10 +147,10 @@ resource apiForFhir 'Microsoft.HealthcareApis/services@2021-11-01' existing = if
 @description('Setup access between FHIR and the deployment script managed identity')
 module functionFhirServiceRoleAssignment './roleAssignment.bicep' = if (createRoleAssignment == true) {
   name: 'functionFhirServiceRoleAssignment'
+  scope: resourceGroup(fhirserviceRg)
   params: {
     resourceId: fhirService.id
-    //FHIR Importer
-    roleId : '4465e953-8ced-4406-a58e-0f6e3f3b530b'
+    roleId : '5a1fc7df-4bf1-4951-a576-89034ee01acd'
     principalId: functionApp.identity.principalId
   }
 }
@@ -154,10 +158,10 @@ module functionFhirServiceRoleAssignment './roleAssignment.bicep' = if (createRo
 @description('Setup access between FHIR and the deployment script managed identity')
 module functionApiForFhirRoleAssignment './roleAssignment.bicep' = if (createRoleAssignment == true) {
   name: 'bulk-import-function-fhir-managed-id-role-assignment'
+  scope: resourceGroup(apiforFhirRg)
   params: {
     resourceId: apiForFhir.id
-    //FHIR Export
-    roleId: '3db33094-8700-4567-8da5-1501d4e7e843'
+    roleId: '5a1fc7df-4bf1-4951-a576-89034ee01acd'
     principalId: functionApp.identity.principalId
   }
 }

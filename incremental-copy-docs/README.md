@@ -108,10 +108,7 @@ To quickly deploy the Migration tool, you can use the Azure deployment below. Pl
 		
 		</details>
 		<br />
-
-		
-
-			
+	
 ## Export FHIR Data from API for FHIR server
 
 The [built-in API for FHIR $export operation](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) is leveraged in this migration tool for exporting the data from API for FHIR server. The $export PaaS endpoints are asynchronous, long-running HTTP APIs. 
@@ -151,6 +148,29 @@ Value: 30
 
 The user can configure the start date in Azure function from where the export should start from the API for FHIR server. AZURE_StartDate will help to export the data from that specific date. <br>
 If the start date is not provided the tool will fetch the first resource date from the server and start the migration.
+
+### Export with History and Delete
+
+Exporting with history and delete allows you to export current state of a resource as well as its previous versions.
+
+During the deployment of the migration tool, users have the option to enable or disable the exporting of history and deletion by specifying their values as true or false.
+
+Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with history and deletion is set to true. If you prefer to export without history and deletion, you can change the value to false.
+
+![Export](images/Export-with-history-delete.png)
+
+Upon the completion of deployment, users can still make adjustments to the export settings for history and deletion by modifying the values within the Azure function's environment variable. 
+
+Example:
+
+```
+Name: AZURE_ExportWithHistory
+Value: True
+
+Name: AZURE_ExportWithDelete
+Value: False
+
+```
 
 Once the $export operation is completed, the export operation content location is stored in Azure storage table and the next export status orchestrator in the durable function picks the details from the storage table and checks the status of the export.
 
@@ -206,13 +226,13 @@ During the deployment of data migration tool , the table storage [chunk and expo
 There are two table storage created during deployment.
 
 1. Chunk: 
-	- It store the how many run have been done or started for the migration.
-	- It store the datetime value in since column. It indicate from which time the data should be exported from next run. This value is since in export URL for next export-import run.
+	- It stores the how many run have been done or started for the migration.
+	- It stores the datetime value in since column. It indicate from which time the data should be exported from next run. This value is since in export URL for next export-import run.
 
 2. Export:
-	- This contain each export-import details.
-	- It capture the time take for each export and import.
-	- It capture the status of export and import.
+	- This contains each export-import details.
+	- It captures the time taken for each export and import.
+	- It captures the status of export and import.
 	- The export-import content location is capture which can be used to get the extact error occured during export-import by fetching the details through URL.
 
 
@@ -235,7 +255,7 @@ You can verify that the data was successfully copied over using the below checks
 
 	To configure SurfaceCheckResources paramter, follow below steps:
 
-	1. Open the Data migration azure function.
+	1. Open the Data migration Azure function.
 	2. Go the the environment variable. Under App setting set the below configuration:
 
 	```
@@ -252,7 +272,7 @@ You can verify that the data was successfully copied over using the below checks
 
 	To configure DeepCheckCount paramter, follow below steps:
 
-	1. Open the Data migration azure function.
+	1. Open the Data migration Azure function.
 	2. Go the the environment variable. Under App setting set the below configuration:
 
 	```
