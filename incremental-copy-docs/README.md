@@ -245,9 +245,13 @@ There are two table storage created during deployment.
 	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/export-data#troubleshoot) to handle issues on exporting the data.
 2. Azure Health Data Services FHIR service.
 	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#troubleshooting) to handle issues on importing the data.
-3. To troubleshoot the error or failure of export-import. Please check the export table storage created during deployment process linked to Azure function app.
-	- It contain the details for each export-import error status.
-	- To get the complete error fetch the content location URL and query the url to get the complete failure details of export/import.
+3. To troubleshoot the error or failure of export-import. 
+	- Please check the export table storage created during deployment process linked to Azure function app.
+		- It contain the details for each export-import error status.
+	- Please check the details of export-import failure on dashboard as well
+		- Export failure details can be found in Failed Export details 
+		- Import failure details can be found in Failed Import details 
+    
 
 ## Data Movement Verification
 
