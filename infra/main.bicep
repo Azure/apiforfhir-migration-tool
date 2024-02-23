@@ -98,7 +98,6 @@ module function './azureFunction.bicep'= {
         appTags: appTags
         deploymentRepoUrl: deploymentRepoUrl
 
-
     }
 }
 

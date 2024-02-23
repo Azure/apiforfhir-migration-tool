@@ -115,7 +115,7 @@
     "apiForfhirsegments": "[split(parameters('apiForFhirid'), '/')]",
     "fhirRg": "[variables('fhirsegments')[4]]",
     "apiForFhirRg": "[variables('apiForfhirsegments')[4]]",
-     "repoUrl": "https://github.com/Azure/apiforfhir-migration-tool/",
+    "repoUrl": "https://github.com/Azure/apiforfhir-migration-tool/",
     "uniqueResourceIdentifier": "[substring(uniqueString(resourceGroup().id, parameters('prefix')), 0, 4)]",
     "prefixNameClean": "[format('{0}{1}', replace(parameters('prefix'), '-', ''), variables('uniqueResourceIdentifier'))]",
     "prefixNameCleanShort": "[if(greater(length(variables('prefixNameClean')), 16), substring(variables('prefixNameClean'), 0, 8), variables('prefixNameClean'))]"

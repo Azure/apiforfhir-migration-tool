@@ -194,6 +194,7 @@ namespace ApiForFhirMigrationTool.Function
                                 var azureApiForFhirTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), source);
                                 var fhirServiceTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), destination);
 
+
                                 if (azureApiForFhirTotal.Item2 != string.Empty)
                                 {
                                     exportEntity["SourceError"] = azureApiForFhirTotal.Item2.ToString();
@@ -212,6 +213,7 @@ namespace ApiForFhirMigrationTool.Function
                                 }
                                
                                 exportEntity["FailureReason"] = diagnosticsValue;
+
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                 isComplete = true;
                                 _telemetryClient.TrackEvent(
