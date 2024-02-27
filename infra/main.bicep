@@ -55,6 +55,9 @@ var apiforfhirResourceIdSplit = split(apiForFhirid,'/')
 var fhirserviceRg = fhirResourceIdSplit[4]
 var apiforFhirRg = apiforfhirResourceIdSplit[4]
 
+var fhirsubid= fhirResourceIdSplit[2]
+var apiForFhirsubid= apiforfhirResourceIdSplit[2]
+
 @description('Deploy monitoring and logging')
 module monitoring './monitoring.bicep'= {
     name: 'monitoringDeploy'
@@ -97,6 +100,8 @@ module function './azureFunction.bicep'= {
             }, functionAppCustomSettings)
         appTags: appTags
         deploymentRepoUrl: deploymentRepoUrl
+        fhirsubid:fhirsubid
+        apiForFhirsubid:apiForFhirsubid
 
     }
 }

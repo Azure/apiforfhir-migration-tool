@@ -115,6 +115,8 @@
     "apiForfhirsegments": "[split(parameters('apiForFhirid'), '/')]",
     "fhirRg": "[variables('fhirsegments')[4]]",
     "apiForFhirRg": "[variables('apiForfhirsegments')[4]]",
+    "fhirsubid": "[variables('fhirsegments')[2]]",
+    "apiForFhirsubid": "[variables('apiForfhirsegments')[2]]",
     "repoUrl": "https://github.com/Azure/apiforfhir-migration-tool/",
     "uniqueResourceIdentifier": "[substring(uniqueString(resourceGroup().id, parameters('prefix')), 0, 4)]",
     "prefixNameClean": "[format('{0}{1}', replace(parameters('prefix'), '-', ''), variables('uniqueResourceIdentifier'))]",
@@ -296,6 +298,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "migration-function-fhir-managed-id-role-assignment",
+      "subscriptionId":"[variables('apiForFhirsubid')]",
       "resourceGroup": "[variables('apiForFhirRg')]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -369,6 +372,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "functionFhirServiceRoleAssignment",
+      "subscriptionId":"[variables('fhirsubid')]",
       "resourceGroup": "[variables('fhirRg')]",
       "properties": {
         "expressionEvaluationOptions": {
