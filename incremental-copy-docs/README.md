@@ -149,11 +149,11 @@ Value: 30
 The user can configure the start date in Azure function from where the export should start from the API for FHIR server. AZURE_StartDate will help to export the data from that specific date. <br>
 If the start date is not provided the tool will fetch the first resource date from the server and start the migration.
 
-### Export with History and Delete
+### Export with History and Soft Delete
 
-Exporting with history and delete allows you to export current state of a resource as well as its previous versions.
+Exporting with [history](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/purge-history) allows you to export current state of a resource as well as its previous versions. Exporting with [soft deletes](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/fhir-rest-api-capabilities#delete-hard--soft-delete) allows you to export soft deleted historic versions.
 
-During the deployment of the migration tool, users have the option to enable or disable the exporting of history and deletion by specifying their values as true or false.
+During the deployment of the migration tool, users have the option to enable or disable the exporting of history and soft deletes by specifying their values as true or false. This is the equivalent of setting the $export query parameter "includeAssociatedData" with _history and _deleted, as mentioned [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters).
 
 Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with history and deletion is set to true. If you prefer to export without history and deletion, you can change the value to false.
 
