@@ -27,6 +27,8 @@ To see the list of all recommended migration patterns, see here. #TODO add link 
 			```PowerShell
 			https://<<WORKSPACE_NAME>>-<<FHIR_SERVICE_NAME>>.fhir.azurehealthcareapis.com/
 			```
+4.  If you have custom search parameters that you would like migrated over, you will need to first query Azure API for FHIR for your custom search parameters and recieve a bundle. Then, POST that bundle of custom search parameters to the new Azure Health Data Services FHIR esrvice. This will need to be done before migrating any data. If you want the data to be properly indexed as it gets migrated to Azure Health Data Services FHIR service, use [incremental mode](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#incremental-mode) for $import. Otherwise, you will need to run a reindex at the end of migration. 
+
 ## Steps
 
 At a high level, the steps are:
@@ -93,6 +95,8 @@ Detailed steps:
 	1. Follow steps [here](https://learn.microsoft.com/azure/healthcare-apis/fhir/configure-import-data) to configure settings for import on Destination Azure Health Data Services FHIR Service.
 	
 		__Note__: Use the same storage account while configuring the import on AHDS FHIR service which was configured for $export.
+
+		__Note__: Please review the [$import documentation](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#import-operation-modes) carefully to see the differences between initial mode and incremental mode, and choose the mode that best suits your needs. For example, if you wish to migrate historical versions and lastUpdated field values, you will need to use incremental mode. 
 	
 	2. Prepare the $import body payload. <br> Options: <br> 
 	a. You can prepare this manually by following $import documentation [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#calling-import). <br>
