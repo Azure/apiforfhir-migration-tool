@@ -205,6 +205,7 @@ Dasboard contain below details.
 	- Running export details - This gives the details of current export run count on Azure API for FHIR.
 	- Failed export count - This gives the failed export run count on Azure API for FHIR.
 	- Failed export details - This gives the details of failed export run count on Azure API for FHIR.
+	- Export resources details - This gives the details of export resources run count on Azure API for FHIR.
 2. Import Operation Status.
 	- Completed Import counts - This gives the count of import executed on FHIR service.
 	- Completed Import details - This gives the details of each import executed on FHIR service.
@@ -212,12 +213,14 @@ Dasboard contain below details.
 	- Running import details - This gives the details of current import run count on FHIR service.
 	- Failed import count - This gives the failed import run count on FHIR service.
 	- Failed import details - This gives the details of failed import run count FHIR service.
+	- Import resources details - This gives the details of import resources run count on FHIR service.
 3. Surface Check - This give the details of surface check run for data movement verification.
 4. Function App
 	- Failures
 	- Server exceptions and dependency failures
 	- Avg processor / CPU utilization
 	- Average available memory.
+5. Total Resource Count - This gives the count of total resources on FHIR service and Azure API for FHIR.
 
 ### Table Storage Monitoring
 
@@ -242,9 +245,13 @@ There are two table storage created during deployment.
 	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/export-data#troubleshoot) to handle issues on exporting the data.
 2. Azure Health Data Services FHIR service.
 	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#troubleshooting) to handle issues on importing the data.
-3. To troubleshoot the error or failure of export-import. Please check the export table storage created during deployment process linked to Azure function app.
-	- It contain the details for each export-import error status.
-	- To get the complete error fetch the content location URL and query the url to get the complete failure details of export/import.
+3. To troubleshoot the error or failure of export-import. 
+	- Please check the export table storage created during deployment process linked to Azure function app.
+		- It contain the details for each export-import error status.
+	- Please check the details of export-import failure on dashboard as well
+		- Export failure details can be found in Failed Export details 
+		- Import failure details can be found in Failed Import details 
+    
 
 ## Data Movement Verification
 
@@ -253,7 +260,7 @@ You can verify that the data was successfully copied over using the below checks
 1. Surface Check <br>
     For a quick validation, you can use the surface check. It compares the number  of resources of a particular FHIR resource type between the API for FHIR and FHIR service. You can configure the name of the resource type in the parameter: SurfaceCheckResources. 
 
-	To configure SurfaceCheckResources paramter, follow below steps:
+	To configure SurfaceCheckResources parameter, follow below steps:
 
 	1. Open the Data migration Azure function.
 	2. Go the the environment variable. Under App setting set the below configuration:
@@ -265,7 +272,7 @@ You can verify that the data was successfully copied over using the below checks
 
 	Value can contain list of resources that will check the count on both the server.
 
-	3. Save the setting and hit the E2ETest_Http function. Below are the steps how to run it.
+	3. Save the setting and hit the E2ETest_Http function.
 
 2. Deep Check <br>
     For a deeper look, you can use the deep check to compare the JSON data of a subset of data from API for FHIR server and Azure Health Data Services FHIR service.You can configure the number of resources that will be compared in the parameter: DeepCheckCount.
@@ -281,7 +288,9 @@ You can verify that the data was successfully copied over using the below checks
 	```
 	The number of complete fhir resources that need to be compared on both the server.
 
-	3. Save the setting and hit the E2ETest_Http function. Below are the steps how to run it.
+	3. Save the setting and hit the E2ETest_Http function.
+	
+	 Follow these steps to perform surface check and deep check.
 
 	### How to run surface and deep check
 

@@ -94,7 +94,11 @@ namespace ApiForFhirMigrationTool.Function.Processors
                 // #TODO - not sure wny we are changing the response code? Uncomment if this is needed.
                 // response.Status = ResponseStatus.Completed;
             }
-
+            else
+            {
+                string responseBody = fhirResponse.Content.ReadAsStringAsync().Result;
+                response.Content = responseBody;
+            }
             return response;
         }
 
@@ -111,6 +115,7 @@ namespace ApiForFhirMigrationTool.Function.Processors
                     response.Status = ResponseStatus.Completed;
                     break;
                 default:
+                    response.Content = fhirResponse.Content.ReadAsStringAsync().Result;
                     response.Status = ResponseStatus.Failed;
                     break;
             }

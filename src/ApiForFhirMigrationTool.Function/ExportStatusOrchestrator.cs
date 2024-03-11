@@ -154,7 +154,8 @@ namespace ApiForFhirMigrationTool.Function
                             }
                             else
                             {
-                                logger?.LogInformation($"Export Status check returned: Unsuccessful.");
+                                string diagnosticsValue = JObject.Parse(response.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "For more information check Content location.";
+                                logger?.LogInformation($"Export Status check returned: Unsuccessful. Reason : {diagnosticsValue}");
                                 import_body = string.Empty;
                                 TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                 exportEntity["IsExportComplete"] = true;
@@ -162,6 +163,7 @@ namespace ApiForFhirMigrationTool.Function
                                 exportEntity["IsImportComplete"] = false;
                                 exportEntity["IsImportRunning"] = "Failed";
                                 exportEntity["ImportRequest"] = import_body;
+                                exportEntity["FailureReason"] = diagnosticsValue;
                                 isComplete = true;
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                 _telemetryClient.TrackEvent(
@@ -174,6 +176,7 @@ namespace ApiForFhirMigrationTool.Function
                                             { "Since", string.Empty },
                                             { "Till", string.Empty },
                                             { "TotalResources", string.Empty },
+                                            { "FailureReason",diagnosticsValue }
                                 });
                                 throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
                             }

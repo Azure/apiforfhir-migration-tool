@@ -73,6 +73,7 @@ namespace ApiForFhirMigrationTool.Function
         public async Task<ResponseModel> ProcessExport([ActivityTrigger] string name, FunctionContext executionContext)
         {
             ResponseModel exportResponse = new ResponseModel();
+            ILogger logger = executionContext.GetLogger("ProcessExport");
             try
             {
                 HttpMethod method = HttpMethod.Get;
@@ -150,6 +151,8 @@ namespace ApiForFhirMigrationTool.Function
                     {
                         int jobId = (int)qEntity["JobId"];
                         string rowKey = _options.RowKey + jobId++;
+                        string diagnosticsValue = JObject.Parse(exportResponse.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "For more information check Content location.";
+                        logger?.LogInformation($"Export check returned: Unsuccessful. Reason : {diagnosticsValue}");
                         var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
                             {
                                 { "exportContentLocation", statusUrl },
@@ -159,6 +162,7 @@ namespace ApiForFhirMigrationTool.Function
                                 { "IsImportComplete", false },
                                 { "IsImportRunning", "Failed" },
                                 { "ImportRequest", string.Empty },
+                                { "FailureReason",diagnosticsValue }
                             };
                         _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
                         TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
@@ -175,6 +179,7 @@ namespace ApiForFhirMigrationTool.Function
                             { "ExportStatus", "Failed" },
                             { "Since", sinceValue },
                             { "Till", tillValue },
+                           { "FailureReason", diagnosticsValue }
                        });
 
                         throw new HttpFailureException($"Status: {exportResponse.Status} Response: {exportResponse.Content} ");

@@ -14,6 +14,7 @@ using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace ApiForFhirMigrationTool.Function
 {
@@ -80,10 +81,12 @@ namespace ApiForFhirMigrationTool.Function
                         }
                         else
                         {
-                            logger?.LogInformation($"Import Status check returned: Unsuccessful.");
+                            string diagnosticsValue = JObject.Parse(importResponse.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "For more information check Content location.";
+                            logger?.LogInformation($"Import Status check returned: Unsuccessful. Reason : {diagnosticsValue}");
                             TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                             exportEntity["IsImportComplete"] = false;
                             exportEntity["IsImportRunning"] = "Failed";
+                            exportEntity["FailureReason"] = diagnosticsValue;
                             _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                             _telemetryClient.TrackEvent(
                             "Import",
@@ -92,6 +95,7 @@ namespace ApiForFhirMigrationTool.Function
                                 { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
                                 { "StatusUrl", statusUrl },
                                 { "ImportStatus", "Failed" },
+                                { "FailureReason", diagnosticsValue }
                             });
                             throw new HttpFailureException($"Response: {importResponse.Content} ");
                         }

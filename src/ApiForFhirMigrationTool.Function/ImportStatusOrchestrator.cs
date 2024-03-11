@@ -81,7 +81,7 @@ namespace ApiForFhirMigrationTool.Function
                                 var azureApiForFhirTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), source);
                                 var fhirServiceTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), destination);
 
-                                if (azureApiForFhirTotal.Item2 != null)
+                                if (azureApiForFhirTotal.Item2 != string.Empty)
                                 {
                                     exportEntity["SourceError"] = azureApiForFhirTotal.Item2.ToString();
                                 }
@@ -89,7 +89,7 @@ namespace ApiForFhirMigrationTool.Function
                                 {
                                     exportEntity["SourceResourceCount"] = azureApiForFhirTotal.Item1.ToString();
                                 }
-                                if (fhirServiceTotal.Item2 != null)
+                                if (fhirServiceTotal.Item2 != string.Empty)
                                 {
                                     exportEntity["DestinationError"] = fhirServiceTotal.Item2.ToString();
                                 }
@@ -139,7 +139,7 @@ namespace ApiForFhirMigrationTool.Function
                                 var azureApiForFhirTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), source);
                                 var fhirServiceTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), destination);
 
-                                if (azureApiForFhirTotal.Item2 != null)
+                                if (azureApiForFhirTotal.Item2 != string.Empty)
                                 {
                                     exportEntity["SourceError"] = azureApiForFhirTotal.Item2.ToString();
                                 }
@@ -147,7 +147,7 @@ namespace ApiForFhirMigrationTool.Function
                                 {
                                     exportEntity["SourceResourceCount"] = azureApiForFhirTotal.Item1.ToString();
                                 }
-                                if (fhirServiceTotal.Item2 != null)
+                                if (fhirServiceTotal.Item2 != string.Empty)
                                 {
                                     exportEntity["DestinationError"] = fhirServiceTotal.Item2.ToString();
                                 }
@@ -181,7 +181,8 @@ namespace ApiForFhirMigrationTool.Function
                             }
                             else
                             {
-                                logger?.LogInformation($"Import Status check returned: Unsuccessful.");
+                                string diagnosticsValue = JObject.Parse(response.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "For more information check Content location.";
+                                logger?.LogInformation($"Import Status check returned: Unsuccessful. Reason : {diagnosticsValue}");
                                 TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                 exportEntity["IsImportComplete"] = true;
                                 exportEntity["IsImportRunning"] = "Failed";
@@ -193,7 +194,8 @@ namespace ApiForFhirMigrationTool.Function
                                 var azureApiForFhirTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), source);
                                 var fhirServiceTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), destination);
 
-                                if (azureApiForFhirTotal.Item2 != null)
+
+                                if (azureApiForFhirTotal.Item2 != string.Empty)
                                 {
                                     exportEntity["SourceError"] = azureApiForFhirTotal.Item2.ToString();
                                 }
@@ -201,7 +203,7 @@ namespace ApiForFhirMigrationTool.Function
                                 {
                                     exportEntity["SourceResourceCount"] = azureApiForFhirTotal.Item1.ToString();
                                 }
-                                if (fhirServiceTotal.Item2 != null)
+                                if (fhirServiceTotal.Item2 != string.Empty)
                                 {
                                     exportEntity["DestinationError"] = fhirServiceTotal.Item2.ToString();
                                 }
@@ -210,6 +212,8 @@ namespace ApiForFhirMigrationTool.Function
                                     exportEntity["DestinationResourceCount"] = fhirServiceTotal.Item1.ToString();
                                 }
                                
+                                exportEntity["FailureReason"] = diagnosticsValue;
+
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                 isComplete = true;
                                 _telemetryClient.TrackEvent(
@@ -223,6 +227,7 @@ namespace ApiForFhirMigrationTool.Function
                                     { "DestinationResourceCount", fhirServiceTotal.Item1.HasValue ? fhirServiceTotal.Item1.Value.ToString() : " " },
                                     { "SourceError", azureApiForFhirTotal.Item2 ?? " " },
                                     { "DestinationError", fhirServiceTotal.Item2 ?? " " },
+                                    { "FailureReason", diagnosticsValue}
                                 });
                                 throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
                             }
@@ -247,7 +252,7 @@ namespace ApiForFhirMigrationTool.Function
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(tuple.Item1, "?_summary=Count"),
+                    RequestUri = _options.ExportWithHistory || _options.ExportWithDelete ? new Uri(tuple.Item1, "/_history?_summary=count") : new Uri(tuple.Item1, "?_summary=Count"),
                     Headers =
                     {
                         { 
@@ -260,12 +265,13 @@ namespace ApiForFhirMigrationTool.Function
                 {
                     var objFhirResponse = JObject.Parse(await fhirResponse.Content.ReadAsStringAsync());
                     int total = objFhirResponse.Value<int>("total");
-                    return Tuple.Create<int?, string>(total, null);
+                    return Tuple.Create<int?, string>(total, string.Empty);
+
                 }
                 else
                 {
                     var objFhirResponse = JObject.Parse(await fhirResponse.Content.ReadAsStringAsync());
-                    string error = objFhirResponse["issue"][0]["diagnostics"].ToString();
+                    string error = objFhirResponse["issue"]?[0]?["diagnostics"]?.ToString() ?? "";
                     return Tuple.Create<int?, string>(null, error);
                 }
             }
