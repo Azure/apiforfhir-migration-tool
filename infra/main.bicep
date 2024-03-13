@@ -102,7 +102,6 @@ module function './azureFunction.bicep'= {
         deploymentRepoUrl: deploymentRepoUrl
         fhirsubid:fhirsubid
         apiForFhirsubid:apiForFhirsubid
-
     }
 }
 
