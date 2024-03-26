@@ -95,11 +95,16 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         public string RowKey { get; set; } = "myrowkey";
 
         [JsonProperty("exportWithHistory")]
-        public bool ExportWithHistory { get; set; } = true;
+        public bool ExportWithHistory { get; set; } = false;
 
         [JsonProperty("exportWithDelete")]
-        public bool ExportWithDelete { get; set; } = true;
+        public bool ExportWithDelete { get; set; } = false;
 
+        [JsonProperty("isParallel")]
+        public string IsParallel { get; set; } = "true";
+
+        [JsonProperty("chunkLimit")]
+        public int ChunkLimit = 100000000;
         public bool ValidateConfig()
         {
             if (SourceUri != null
