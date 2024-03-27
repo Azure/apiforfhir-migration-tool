@@ -246,13 +246,13 @@ namespace ApiForFhirMigrationTool.Function
             string query= string.Empty;
 
             if (_options.ExportWithHistory == true && _options.ExportWithDelete == true)
-                query = string.Format("?includeAssociatedData=_history,_deleted&_since={0}&_till={1}", since, till);
+                query = string.Format("?includeAssociatedData=_history,_deleted&_isParallel=true&_since={0}&_till={1}", since, till);
             else if (_options.ExportWithHistory == true)
-                query = string.Format("?includeAssociatedData=_history&_since={0}&_till={1}", since, till);
+                query = string.Format("?includeAssociatedData=_history&_isParallel=true&_since={0}&_till={1}", since, till);
             else if (_options.ExportWithDelete == true)
-                query = string.Format("?includeAssociatedData=_deleted&_since={0}&_till={1}", since, till);
+                query = string.Format("?includeAssociatedData=_deleted&_isParallel=true&_since={0}&_till={1}", since, till);
             else
-                query = string.Format("?_since={0}&_till={1}", since, till); 
+                query = string.Format("?_since={0}&_till={1}&_isParallel=true", since, till);
 
             return $"/$export{query}";
         }
