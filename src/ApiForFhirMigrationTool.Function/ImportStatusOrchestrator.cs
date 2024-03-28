@@ -157,10 +157,25 @@ namespace ApiForFhirMigrationTool.Function
                                 }
                                 
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                if (_options.IsParallel == true)
+                                {
+                                    TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                                    qEntitynew["since"] = exportEntity["Till"];
+                                    _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                                }
+                                else
+                                {
+                                    TableEntity qEntityResourceType = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                                    qEntityResourceType["ResourceTypeIndex"] = (int)qEntityResourceType["ResourceTypeIndex"]+1; // all the import will done so will reset index
+                                    _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceType);
 
-                                TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
-                                qEntitynew["since"] = exportEntity["Till"];
-                                _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                                    if ((int)qEntityResourceType["noOfResources"] - 1 == (int)qEntityResourceType["ResourceTypeIndex"])
+                                    {
+                                        qEntityResourceType["sinceExportType"] = exportEntity["Till"];
+                                        qEntityResourceType["ResourceTypeIndex"] = 0; // all the import will done so will reset index
+                                        _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceType);
+                                    }
+                                }
 
                                 _telemetryClient.TrackEvent(
                                 "Import",

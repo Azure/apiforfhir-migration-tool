@@ -33,7 +33,7 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IAzureTableClientFactory _azureTableClientFactory;
         private readonly IMetadataStore _azureTableMetadataStore;
         private readonly IOrchestrationHelper _orchestrationHelper;
-        private readonly TelemetryClient _telemetryClient; 
+        private readonly TelemetryClient _telemetryClient;
 
         public ExportOrchestrator(IFhirProcessor exportProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IFhirClient fhirClient, IOrchestrationHelper orchestrationHelper, TelemetryClient telemetryClient)
         {
@@ -86,7 +86,8 @@ namespace ApiForFhirMigrationTool.Function
                 string query = GetQueryStringForExport();
                 string sinceValue = string.Empty;
                 string tillValue = string.Empty;
-                exportResponse = await _exportProcessor.CallProcess(method, string.Empty, _options.SourceUri, query, _options.SourceHttpClient);
+                string resourceTypeValue = string.Empty;
+                  exportResponse = await _exportProcessor.CallProcess(method, string.Empty, _options.SourceUri, query, _options.SourceHttpClient);
 
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
@@ -99,7 +100,18 @@ namespace ApiForFhirMigrationTool.Function
                     sinceValue = match.Groups[1].Value;
                     tillValue = match.Groups[2].Value;
                 }
+                if (!_options.IsParallel)
+                {
+                    string patternResourceType = @"[?&]_type=([^&]+)";
+                    // Match the pattern against the URL
+                    Match matchResourceType = Regex.Match(query, patternResourceType);
 
+                    // Check if a match is found
+                    if (matchResourceType.Success)
+                    {
+                        resourceTypeValue = matchResourceType.Groups[1].Value;
+                    }
+                }
                 if (exportResponse.Status == ResponseStatus.Accepted)
                 {
 
@@ -123,6 +135,7 @@ namespace ApiForFhirMigrationTool.Function
                                 { "Since", sinceValue },
                                 { "Till", tillValue },
                                 { "StartTime", DateTime.UtcNow },
+                                {"resourceTypeValue",resourceTypeValue }
                             };
                         _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
                         TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
@@ -201,7 +214,7 @@ namespace ApiForFhirMigrationTool.Function
             TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
             TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
             TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
-            since = (string)qEntity["since"];
+            since = _options.IsParallel==true? (string)qEntity["since"]: (string)qEntity["sinceExportType"];
             var duration = _options.ExportChunkDuration;
 
             if (_options.StartDate == DateTime.MinValue && string.IsNullOrEmpty(since))
@@ -222,15 +235,15 @@ namespace ApiForFhirMigrationTool.Function
             {
                 if (duration == "Days")
                 {
-                    updateSinceDate = since_new.AddDays(_options.ExportChunkTime);
+                    updateSinceDate = _options.IsParallel == true ? since_new.AddDays(_options.ExportChunkTime) : since_new.AddDays(_options.ResourceExportChunkTime);
                 }
                 else if (duration == "Hours")
                 {
-                    updateSinceDate = since_new.AddHours(_options.ExportChunkTime);
+                    updateSinceDate = _options.IsParallel == true ? since_new.AddHours(_options.ExportChunkTime) : since_new.AddDays(_options.ResourceExportChunkTime);
                 }
                 else
                 {
-                    updateSinceDate = since_new.AddMinutes(_options.ExportChunkTime);
+                    updateSinceDate = _options.IsParallel == true ? since_new.AddMinutes(_options.ExportChunkTime) : since_new.AddDays(_options.ResourceExportChunkTime);
                 }
             }
 
@@ -242,11 +255,54 @@ namespace ApiForFhirMigrationTool.Function
             since = since_new.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
 
-            //need to check count whether getting data from gen1  
-            var checkValidRequest = CheckResourceCount(since, till, _options.ExportChunkTime, _options.ExportChunkDuration);
-            till = checkValidRequest.Result.ToString();
+            //need to check count whether getting data from gen1
+            string? resourceType = string.Empty;
+            string setUrl = string.Empty;
+            List<string>? completedResourceTypeList = new List<string>();
+       
+            if (_options.IsParallel == true)
+            {
+                setUrl = $"/$export?_isParallel={_options.IsParallel.ToString().ToLower()}";
+                var checkValidRequest = CheckResourceCount(since, till, _options.ExportChunkTime, _options.ExportChunkDuration);
+                till = checkValidRequest.Result.ToString();
+            }
+            else
+            {
+                // can we add since , till and totalreSourcecount, index of which is running 
+                setUrl = $"/$export?_type={resourceType}";
+                List<string>? resourceTypefromConfig = _options.ResourceTypes; // need to modify as global
+                int resoureceCount= resourceTypefromConfig.Count();
+                // add db column since till and tot , index add only when since till all are not empty 
+                TableEntity qEntityResourceType = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                //need to add check mark if data presnt avoid next time 
+                //if ((int)qEntityResourceType["ResourceTypeIndex"]!=0 &&  )
+                //{ 
+                //qEntityResourceType["sinceExportType"] = since;
+                //qEntityResourceType["tillExportType"] = till;
+                //qEntityResourceType["noOfResources"] = resoureceCount;
+                //qEntityResourceType["ResourceTypeIndex"] = 0;
+                //_azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceType);
+                //}
+                int tot = 0;
 
+                TableEntity qEntityGetResourceIndex = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                int index = (int)qEntityGetResourceIndex["ResourceTypeIndex"];  //(db call)
 
+                do
+                {
+                    resourceType = resourceTypefromConfig[index];
+                    var response = CheckResourceTypeCount(since, till, resourceType);
+                    tot = response.Result;
+                    
+                    if (tot > 0 && index != (int)qEntityGetResourceIndex["ResourceTypeIndex"])
+                    {
+                        qEntityResourceType["ResourceTypeIndex"] = index; // 
+                        _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceType);
+                    }
+                    index++;
+                    // maark index in DB 
+                } while (tot == 0);
+            }
 
             string query = string.Empty;
 
@@ -259,7 +315,7 @@ namespace ApiForFhirMigrationTool.Function
             else
                 query = string.Format("_since={0}&_till={1}", since, till);
 
-            return $"/$export?_isParallel={_options.IsParallel.ToString().ToLower()}&{query}";
+            return $"{setUrl}&{query}";
         }
 
         private async Task<DateTimeOffset> SinceDate()
@@ -311,7 +367,7 @@ namespace ApiForFhirMigrationTool.Function
             return sinceDate;
         }
 
-        private async Task<string> CheckResourceCount(string since, string till, int duration, string chunckDuration)
+        private async Task<string> CheckResourceCount(string since, string till, int chunkTimeDuration, string chunckDuration)
         {
             try
             {
@@ -328,7 +384,7 @@ namespace ApiForFhirMigrationTool.Function
                 if (response != null && response.IsSuccessStatusCode)
                 {
                     var objResponse = JObject.Parse(response.Content.ReadAsStringAsync().Result);
-                    int? total = (int?)objResponse.GetValue("total");
+                    int? total =  (int?)objResponse.GetValue("total");
                     if (total <= _options.ChunkLimit)
                     {
                         return till;
@@ -336,30 +392,30 @@ namespace ApiForFhirMigrationTool.Function
                     else
                     {
                         // if data>100M in one day then chunktime reduced in hours, till one hour diffrence between till and since 
-                        if ((duration == 1 && chunckDuration == "Days") || duration > 1)
+                        if ((chunkTimeDuration == 1 && chunckDuration == "Days") || chunkTimeDuration > 1)
                         {
                             DateTimeOffset till_reduced;
                             DateTimeOffset sinceDateTime = DateTimeOffset.Parse(since);
-                            if (duration == 1 && chunckDuration == "Days")
+                            if (chunkTimeDuration == 1 && chunckDuration == "Days")
                             {
                                 chunckDuration = "Hours";
-                                duration = 24;
+                                chunkTimeDuration = 24;
                             }
-                            duration = duration / 2;
+                            chunkTimeDuration = chunkTimeDuration / 2;
                             if (chunckDuration == "Days")
                             {
-                                till_reduced = sinceDateTime.AddDays(duration);
+                                till_reduced = sinceDateTime.AddDays(chunkTimeDuration);
                             }
                             else if (chunckDuration == "Hours")
                             {
-                                till_reduced = sinceDateTime.AddHours(duration);
+                                till_reduced = sinceDateTime.AddHours(chunkTimeDuration);
                             }
                             else
                             {
-                                till_reduced = sinceDateTime.AddMinutes(duration);
+                                till_reduced = sinceDateTime.AddMinutes(chunkTimeDuration);
                             }
                             till = till_reduced.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-                            return await CheckResourceCount(since, till, duration, chunckDuration);
+                            return await CheckResourceCount(since, till, chunkTimeDuration, chunckDuration);
                         }
                     }
                 }
@@ -368,8 +424,39 @@ namespace ApiForFhirMigrationTool.Function
             catch (Exception ex)
             {
                 // _logger.LogError($"Error occurred during migration process: {ex.Message}");
-              
+
                 return till;
+            }
+        }
+
+        private async Task<int> CheckResourceTypeCount(string since, string till,string resourceType)
+        {
+            int? total = 0;
+            try
+            {
+                Uri baseUri = _options.SourceUri;
+                string sourceFhirEndpoint = _options.SourceHttpClient;
+
+                var request = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(baseUri, $"/?_type={resourceType}&_summary=count&_lastUpdated=ge{since}&_lastUpdated=lt{till}"),
+                };
+                HttpResponseMessage response = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
+
+                if (response != null && response.IsSuccessStatusCode)
+                {
+                    var objResponse = JObject.Parse(response.Content.ReadAsStringAsync().Result);
+                    total =(int?)objResponse.GetValue("total");  
+                }
+                  return (int)total;
+             
+            }
+            catch (Exception ex)
+            {
+                // _logger.LogError($"Error occurred during migration process: {ex.Message}");
+
+                return (int)total;
             }
         }
     }

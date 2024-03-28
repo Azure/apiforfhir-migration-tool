@@ -101,10 +101,18 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         public bool ExportWithDelete { get; set; } = false;
 
         [JsonProperty("isParallel")]
-        public string IsParallel { get; set; } = "true";
+        public bool IsParallel { get; set; } = false;
 
         [JsonProperty("chunkLimit")]
         public int ChunkLimit = 100000000;
+
+        [JsonProperty("resourceExportChunkTime")]
+        public int ResourceExportChunkTime { get; set; } = 365;
+
+        [JsonProperty("resourceTypes")]
+        public List<string>? ResourceTypes { get; set; } = new List<string> { "Practitioner", "Patient", "Observation", "Encounter" };
+
+
         public bool ValidateConfig()
         {
             if (SourceUri != null

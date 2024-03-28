@@ -53,24 +53,44 @@ namespace ApiForFhirMigrationTool.Function
             {
                 _options.ValidateConfig();
                 logger.LogInformation("Start MigrationOrchestration.");
-                TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-
-                Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
-                if (jobList.Count() <= 0)
+                if (_options.IsParallel == true)
                 {
-                    var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
-                    {
-                        { "JobId", 0 }
-                    };
-                    _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
-                }
+                    TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
 
+                    Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
+                    if (jobList.Count() <= 0)
+                    {
+                        var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
+                        {
+                            { "JobId", 0 }
+                        };
+                        _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
+                    }
+                }
+                else
+                {
+                    TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+
+                    Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
+                    if (jobList.Count() <= 0)
+                    {
+                        var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
+                        {
+                            { "JobId", 0 },
+                            { "sinceExportType", "" },
+                            { "tillExportType", "" },
+                            { "noOfResources", _options.ResourceTypes.Count() },
+                            { "ResourceTypeIndex", 0 }
+                        };
+                        _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
+                    }
+                }
                 var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
                         maxNumberOfAttempts: 3,
                         firstRetryInterval: TimeSpan.FromSeconds(5)));
 
                 // Run Activity for Search Parameter
-                await context.CallActivityAsync("SearchParameterMigration");
+                 await context.CallActivityAsync("SearchParameterMigration");
 
                 // Run sub orchestration for export and export status
                 var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
