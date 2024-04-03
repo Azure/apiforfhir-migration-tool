@@ -166,15 +166,51 @@ namespace ApiForFhirMigrationTool.Function
                                 else
                                 {
                                     TableEntity qEntityResourceType = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
-                                    qEntityResourceType["ResourceTypeIndex"] = (int)qEntityResourceType["ResourceTypeIndex"]+1; // all the import will done so will reset index
-                                    _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceType);
-
-                                    if ((int)qEntityResourceType["noOfResources"] - 1 == (int)qEntityResourceType["ResourceTypeIndex"])
+                                    if (qEntityResourceType["multiExport"].ToString() != "Running")
                                     {
-                                        qEntityResourceType["sinceExportType"] = exportEntity["Till"];
-                                        qEntityResourceType["ResourceTypeIndex"] = 0; // all the import will done so will reset index
+                                        if ((int)qEntityResourceType["noOfResources"]-1 == (int)qEntityResourceType["resourceTypeIndex"])
+                                        {
+                                            qEntityResourceType = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                                            qEntityResourceType["globalSinceExportType"] = qEntityResourceType["globalTillExportType"];
+                                            qEntityResourceType["globalTillExportType"] = "";
+                                            qEntityResourceType["resourceTypeIndex"] = 0; // all the import will done so will reset index
+                                            qEntityResourceType["subSinceExportType"] = "";
+                                            qEntityResourceType["subTillExportType"] = "";
+                                            _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceType);
+                                        }
+                                        else
+                                        { 
+                                        qEntityResourceType["resourceTypeIndex"] = (int)qEntityResourceType["resourceTypeIndex"] + 1; //   import done then increment counter index
                                         _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceType);
+                                        }
                                     }
+                                    else
+                                    {
+                                        // check for all sub export done or not
+                                        TableEntity qEntityResourceTypenew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                                        if (qEntityResourceTypenew["subTillExportType"].ToString() == qEntityResourceTypenew["globalTillExportType"].ToString())
+                                        {
+                                            if ((int)qEntityResourceTypenew["noOfResources"] - 1 == (int)qEntityResourceTypenew["resourceTypeIndex"])
+                                            {
+
+                                                qEntityResourceTypenew["globalSinceExportType"] = qEntityResourceTypenew["globalTillExportType"];
+                                                qEntityResourceTypenew["globalTillExportType"] = "";
+                                                qEntityResourceTypenew["resourceTypeIndex"] = 0; // all the import will done so will reset index
+                                                qEntityResourceTypenew["multiExport"] = "";
+                                                qEntityResourceTypenew["subSinceExportType"] = "";
+                                                qEntityResourceTypenew["subTillExportType"] = "";
+                                                _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceTypenew);
+                                            }
+                                            else
+                                            {
+                                                qEntityResourceTypenew["multiExport"] = ""; // if global and sub till date matches for this all export done for those chunk  and increment the counter
+                                                qEntityResourceTypenew["resourceTypeIndex"] = (int)qEntityResourceTypenew["resourceTypeIndex"] + 1;
+                                                _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceTypenew);
+                                            }
+
+                                        }
+                                    }
+                                    
                                 }
 
                                 _telemetryClient.TrackEvent(

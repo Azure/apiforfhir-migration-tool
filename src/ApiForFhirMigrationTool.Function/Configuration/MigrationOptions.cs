@@ -107,10 +107,10 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         public int ChunkLimit = 100000000;
 
         [JsonProperty("resourceExportChunkTime")]
-        public int ResourceExportChunkTime { get; set; } = 365;
+        public int ResourceExportChunkTime { get; set; } = 30;
 
         [JsonProperty("resourceTypes")]
-        public List<string>? ResourceTypes { get; set; } = new List<string> { "Practitioner", "Patient", "Observation", "Encounter" };
+        public List<string> ResourceTypes { get; set; } = new List<string>{"Observation","patient", "Appointment" };
 
 
         public bool ValidateConfig()

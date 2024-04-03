@@ -77,10 +77,11 @@ namespace ApiForFhirMigrationTool.Function
                         var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
                         {
                             { "JobId", 0 },
-                            { "sinceExportType", "" },
-                            { "tillExportType", "" },
-                            { "noOfResources", _options.ResourceTypes.Count() },
-                            { "ResourceTypeIndex", 0 }
+                            { "globalSinceExportType", "" },
+                            { "globalTillExportType", "" },
+                            { "noOfResources", _options.ResourceTypes?.Count() },
+                            { "resourceTypeIndex", 0 },
+                            { "multiExport", "" }
                         };
                         _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
                     }
@@ -97,8 +98,8 @@ namespace ApiForFhirMigrationTool.Function
                 var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
 
                 // Run sub orchestration for Import and Import status
-                var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
-                var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
+               var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
+               var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
             }
             catch (Exception ex)
             {
