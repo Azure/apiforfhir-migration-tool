@@ -192,7 +192,7 @@ namespace ApiForFhirMigrationTool.Function
                                         {
                                             if ((int)qEntityResourceTypenew["noOfResources"] - 1 == (int)qEntityResourceTypenew["resourceTypeIndex"])
                                             {
-
+                                                //Its last run to reset value and assigning till to since
                                                 qEntityResourceTypenew["globalSinceExportType"] = qEntityResourceTypenew["globalTillExportType"];
                                                 qEntityResourceTypenew["globalTillExportType"] = "";
                                                 qEntityResourceTypenew["resourceTypeIndex"] = 0; // all the import will done so will reset index
@@ -208,6 +208,13 @@ namespace ApiForFhirMigrationTool.Function
                                                 _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceTypenew);
                                             }
 
+                                        }
+                                        else
+                                        {
+                                            // multiexport run and completed sub export then assigining till to since and global till to sub till
+                                            qEntityResourceTypenew["subSinceExportType"] = qEntityResourceTypenew["subTillExportType"];
+                                            qEntityResourceTypenew["subTillExportType"]= qEntityResourceTypenew["globalTillExportType"];
+                                            _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceTypenew);
                                         }
                                     }
                                     

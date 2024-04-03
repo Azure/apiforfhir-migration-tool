@@ -291,8 +291,8 @@ namespace ApiForFhirMigrationTool.Function
                     resourceType = _options.ResourceTypes?[index];
                     if (qEntityGetResourceIndex?["multiExport"].ToString() == "Running")
                     {
-                        since = qEntityGetResourceIndex["subTillExportType"].ToString(); // set till to since for next round trip
-                        till = qEntityGetResourceIndex["globalTillExportType"].ToString();
+                        since = qEntityGetResourceIndex["subSinceExportType"].ToString(); // set till to since for next round trip
+                        till = qEntityGetResourceIndex["subTillExportType"].ToString();
 
                     }
                     var response = CheckResourceTypeCount(since!, till!, resourceType!, _options.ResourceExportChunkTime, _options.ExportChunkDuration);
