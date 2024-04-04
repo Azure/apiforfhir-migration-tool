@@ -265,10 +265,10 @@ namespace ApiForFhirMigrationTool.Function
 
             if (_options.IsParallel == true)
             {
-                setUrl = $"/$export?_isParallel={_options.IsParallel.ToString().ToLower()}";
+               // setUrl = $"/$export?_isParallel={_options.IsParallel.ToString().ToLower()}";
                 var checkValidRequest = CheckResourceCount(since, till, _options.ExportChunkTime, _options.ExportChunkDuration);
                 till = checkValidRequest.Result.ToString();
-                setUrl = $"/$export?_type={resourceType}";
+                setUrl = $"/$export?_isParallel={_options.IsParallel.ToString().ToLower()}";
             }
             else
             {
@@ -291,9 +291,8 @@ namespace ApiForFhirMigrationTool.Function
                     resourceType = _options.ResourceTypes?[index];
                     if (qEntityGetResourceIndex?["multiExport"].ToString() == "Running")
                     {
-                        since = qEntityGetResourceIndex["subSinceExportType"].ToString(); // set till to since for next round trip
+                        since = qEntityGetResourceIndex["subSinceExportType"].ToString(); //
                         till = qEntityGetResourceIndex["subTillExportType"].ToString();
-
                     }
                     var response = CheckResourceTypeCount(since!, till!, resourceType!, _options.ResourceExportChunkTime, _options.ExportChunkDuration);
                     tot = response.Result;
@@ -304,8 +303,14 @@ namespace ApiForFhirMigrationTool.Function
                         qEntityGetResourceIndex["resourceTypeIndex"] = index; // 
                         _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityGetResourceIndex);
                     }
-
                     IsLastRun = CheckLastCount(index);
+                    if (tot == 0 && qEntityGetResourceIndex?["multiExport"].ToString() == "Running")
+                    {
+                        // multiexport run and no data to export then assigining till to since and global till to sub till
+                        qEntityGetResourceIndex["subSinceExportType"] = qEntityGetResourceIndex["subTillExportType"];
+                        qEntityGetResourceIndex["subTillExportType"] = qEntityGetResourceIndex["globalTillExportType"];
+                        _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityGetResourceIndex);
+                    }
                     if (qEntityGetResourceIndex?["multiExport"].ToString() != "Running" && tot == 0 && index < _options.ResourceTypes?.Count() - 1)
                     {
                         index++;
