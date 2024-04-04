@@ -97,7 +97,9 @@ namespace ApiForFhirMigrationTool.Function
                                     var objOutput = objResponse["output"] as JArray;
                                     if (objOutput != null && objOutput.Any())
                                     {
-                                        // import_body = _orchestrationHelper.CreateImportRequest(resContent, _options.ImportMode);
+                                        // import_body = _orchestrationHelper.CreateImportRequest(resContent, _options.ImportMode); 
+                                 
+                                        var payload_count = _orchestrationHelper.CreateImportRequest(response.Content, _options.ImportMode, statusUrl);
                                         var resourceCount = _orchestrationHelper.CalculateSumOfResources(objOutput).ToString(CultureInfo.InvariantCulture);
                                         TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                         exportEntity["IsExportComplete"] = true;
@@ -105,6 +107,10 @@ namespace ApiForFhirMigrationTool.Function
                                         exportEntity["ImportRequest"] = "Yes";
                                         exportEntity["ExportEndTime"] = DateTime.UtcNow;
                                         exportEntity["TotalExportResourceCount"] = resourceCount;
+                                        exportEntity["IsFirst"] = true;
+                                        exportEntity["IsProcessed"] = false;
+                                        exportEntity["PayloadCount"] = payload_count;
+                                        exportEntity["CompletedCount"] = 0;
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                         _telemetryClient.TrackEvent(
                                             "Export",

@@ -61,7 +61,8 @@ namespace ApiForFhirMigrationTool.Function
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
 
-                Pageable<TableEntity> jobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Running" || ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running" || ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Not Started");
+                //Pageable<TableEntity> jobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Running" || ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running" || ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Not Started");
+                Pageable<TableEntity> jobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Running" || ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running" || ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Not Started" || ent.GetBoolean("IsProcessed") == false);
                 if (jobList.Count() <= 0)
                 {
                     ResponseModel exportResponse = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExport));

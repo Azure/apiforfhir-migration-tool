@@ -26,6 +26,9 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         [JsonProperty("stagingStorageUri")]
         public string StagingStorageUri { get; set; } = string.Empty;
 
+        [JsonProperty("blobStorageUri")]
+        public string BlobStorageUri { get; set; } = string.Empty;
+
         [JsonProperty("stagingContainerName")]
         public string StagingContainerName { get; set; } = string.Empty;
 
@@ -101,7 +104,7 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         public bool ExportWithDelete { get; set; } = false;
 
         [JsonProperty("isParallel")]
-        public bool IsParallel { get; set; } = false;
+        public bool IsParallel { get; set; } = true;
 
         [JsonProperty("chunkLimit")]
         public int ChunkLimit = 100000000;
@@ -110,7 +113,7 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         public int ResourceExportChunkTime { get; set; } = 30;
 
         [JsonProperty("resourceTypes")]
-        public List<string> ResourceTypes { get; set; } = new List<string>{"Observation","patient", "Appointment" };
+        public List<string> ResourceTypes { get; set; } = new List<string>{ "Practitioner", "Patient", "Appointment" };
 
 
         public bool ValidateConfig()

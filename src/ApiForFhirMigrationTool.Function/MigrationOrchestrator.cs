@@ -62,7 +62,8 @@ namespace ApiForFhirMigrationTool.Function
                     {
                         var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
                         {
-                            { "JobId", 0 }
+                            { "JobId", 0 },  
+                            {"ImportId",0 }
                         };
                         _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
                     }
