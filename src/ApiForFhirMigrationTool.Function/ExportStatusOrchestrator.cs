@@ -142,11 +142,13 @@ namespace ApiForFhirMigrationTool.Function
                                             { "Till", string.Empty },
                                             { "TotalResources", string.Empty },
                                         });
+                                        if (_options.IsParallel == true)
+                                        {
+                                            TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
 
-                                        TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
-
-                                        qEntitynew["since"] = exportEntity["Till"];
-                                        _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                                            qEntitynew["since"] = exportEntity["Till"];
+                                            _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                                        }
                                     }
                                 }
 
