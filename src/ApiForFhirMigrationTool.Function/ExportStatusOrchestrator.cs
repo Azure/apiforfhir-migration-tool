@@ -111,6 +111,7 @@ namespace ApiForFhirMigrationTool.Function
                                         exportEntity["IsProcessed"] = false;
                                         exportEntity["PayloadCount"] = payload_count;
                                         exportEntity["CompletedCount"] = 0;
+                                        exportEntity["ExportId"] = _orchestrationHelper.GetProcessId(statusUrl);
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                         _telemetryClient.TrackEvent(
                                             "Export",

@@ -51,6 +51,8 @@ namespace ApiForFhirMigrationTool.Function
             var statusRespose = new HttpResponseMessage();
             var statusUrl = string.Empty;
             bool isComplete = false;
+            string? resContent = string.Empty;
+            var resourceCount = string.Empty;
 
             try
             {
@@ -59,9 +61,10 @@ namespace ApiForFhirMigrationTool.Function
                 Pageable<TableEntity> jobListimportRunning = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running");
                 if (jobListimportRunning.Count() > 0)
                 {
-                    foreach (TableEntity item in jobListimportRunning)
-                    {
-                        while (isComplete == false)
+                    //foreach (TableEntity item in jobListimportRunning)
+                    //{
+                    var item = jobListimportRunning.First();
+                    while (isComplete == false)
                         {
                             statusUrl = item.GetString("importContentLocation");
                             ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImportStatusCheck), statusUrl);
@@ -78,26 +81,26 @@ namespace ApiForFhirMigrationTool.Function
                                 Tuple<Uri, string> source = new Tuple<Uri, string>(_options.SourceUri, _options.SourceHttpClient);
                                 Tuple<Uri, string> destination = new Tuple<Uri, string>(_options.DestinationUri, _options.DestinationHttpClient);
 
-                                var azureApiForFhirTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), source);
-                                var fhirServiceTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), destination);
+                            var azureApiForFhirTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), source);
+                            var fhirServiceTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), destination);
 
-                                if (azureApiForFhirTotal.Item2 != string.Empty)
-                                {
-                                    exportEntity["SourceError"] = azureApiForFhirTotal.Item2.ToString();
-                                }
-                                else
-                                {
-                                    exportEntity["SourceResourceCount"] = azureApiForFhirTotal.Item1.ToString();
-                                }
-                                if (fhirServiceTotal.Item2 != string.Empty)
-                                {
-                                    exportEntity["DestinationError"] = fhirServiceTotal.Item2.ToString();
-                                }
-                                else
-                                {
-                                    exportEntity["DestinationResourceCount"] = fhirServiceTotal.Item1.ToString();
-                                }
-                                _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                            if (azureApiForFhirTotal.Item2 != string.Empty)
+                            {
+                                exportEntity["SourceError"] = azureApiForFhirTotal.Item2.ToString();
+                            }
+                            else
+                            {
+                                exportEntity["SourceResourceCount"] = azureApiForFhirTotal.Item1.ToString();
+                            }
+                            if (fhirServiceTotal.Item2 != string.Empty)
+                            {
+                                exportEntity["DestinationError"] = fhirServiceTotal.Item2.ToString();
+                            }
+                            else
+                            {
+                                exportEntity["DestinationResourceCount"] = fhirServiceTotal.Item1.ToString();
+                            }
+                            _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                 _telemetryClient.TrackEvent(
                                 "Import",
                                 new Dictionary<string, string>()
@@ -114,8 +117,8 @@ namespace ApiForFhirMigrationTool.Function
                             }
                             else if (response.Status == ResponseStatus.Completed)
                             {
-                                string? resContent = response.Content;
-                                var resourceCount = string.Empty;
+                     
+                                resContent = response.Content;
                                 if (!string.IsNullOrEmpty(resContent))
                                 {
                                     JObject objResponse = JObject.Parse(resContent);
@@ -136,27 +139,27 @@ namespace ApiForFhirMigrationTool.Function
                                 Tuple<Uri, string> source = new Tuple<Uri, string>(_options.SourceUri, _options.SourceHttpClient);
                                 Tuple<Uri, string> destination = new Tuple<Uri, string>(_options.DestinationUri, _options.DestinationHttpClient);
 
-                                var azureApiForFhirTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), source);
-                                var fhirServiceTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), destination);
+                            var azureApiForFhirTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), source);
+                            var fhirServiceTotal = await context.CallActivityAsync<Tuple<int?, string>>(nameof(GetTotalFromFhirAsync), destination);
 
-                                if (azureApiForFhirTotal.Item2 != string.Empty)
-                                {
-                                    exportEntity["SourceError"] = azureApiForFhirTotal.Item2.ToString();
-                                }
-                                else
-                                {
-                                    exportEntity["SourceResourceCount"] = azureApiForFhirTotal.Item1.ToString();
-                                }
-                                if (fhirServiceTotal.Item2 != string.Empty)
-                                {
-                                    exportEntity["DestinationError"] = fhirServiceTotal.Item2.ToString();
-                                }
-                                else
-                                {
-                                    exportEntity["DestinationResourceCount"] = fhirServiceTotal.Item1.ToString();
-                                }
-                                
-                                _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                            if (azureApiForFhirTotal.Item2 != string.Empty)
+                            {
+                                exportEntity["SourceError"] = azureApiForFhirTotal.Item2.ToString();
+                            }
+                            else
+                            {
+                                exportEntity["SourceResourceCount"] = azureApiForFhirTotal.Item1.ToString();
+                            }
+                            if (fhirServiceTotal.Item2 != string.Empty)
+                            {
+                                exportEntity["DestinationError"] = fhirServiceTotal.Item2.ToString();
+                            }
+                            else
+                            {
+                                exportEntity["DestinationResourceCount"] = fhirServiceTotal.Item1.ToString();
+                            }
+
+                            _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                 #region old
                                 //if (_options.IsParallel == true)
                                 //{
@@ -300,6 +303,9 @@ namespace ApiForFhirMigrationTool.Function
 
                                         exportEntity1["CompletedCount"] = completeCount;
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity1);
+                                          resContent = string.Empty;
+                                          resourceCount = string.Empty;
+                                        statusUrl=string.Empty;
                                     }
                                 }
 
@@ -395,7 +401,7 @@ namespace ApiForFhirMigrationTool.Function
                         }
 
                         isComplete = false;
-                    }
+                  //  }
                 }
             }
             catch
