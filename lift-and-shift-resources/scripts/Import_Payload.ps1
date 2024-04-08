@@ -48,7 +48,7 @@ try {
         [System.Collections.ArrayList]$input_part= @()
 
         $parameter.Add(@{"name"="inputFormat";"valueString"="application/fhir+ndjson"}) > $null
-        $parameter.Add(@{"name"="mode";"valueString"="InitialLoad"}) > $null
+        $parameter.Add(@{"name"="mode";"valueString"="IncrementalLoad"}) > $null
 
         foreach ($i in $output.output){
             $type = $i.type
@@ -82,7 +82,7 @@ try {
         [System.Collections.ArrayList]$parameter= @()
         [System.Collections.ArrayList]$input_part= @()
         $parameter.Add(@{"name"="inputFormat";"valueString"="application/fhir+ndjson"}) > $null
-        $parameter.Add(@{"name"="mode";"valueString"="InitialLoad"}) > $null
+        $parameter.Add(@{"name"="mode";"valueString"="IncrementalLoad"}) > $null
 
         for ($i = 0; $i -le $output.output.Count; $i++) {
             
@@ -102,7 +102,7 @@ try {
                 [System.Collections.ArrayList]$parameter= @()
                 [System.Collections.ArrayList]$input_part= @()
                 $parameter.Add(@{"name"="inputFormat";"valueString"="application/fhir+ndjson"}) > $null
-                $parameter.Add(@{"name"="mode";"valueString"="InitialLoad"}) > $null
+                $parameter.Add(@{"name"="mode";"valueString"="IncrementalLoad"}) > $null
 
                 $counter = 0
                 $import_payload_count++
