@@ -82,7 +82,8 @@ namespace ApiForFhirMigrationTool.Function
                             { "globalTillExportType", "" },
                             { "noOfResources", _options.ResourceTypes?.Count() },
                             { "resourceTypeIndex", 0 },
-                            { "multiExport", "" }
+                            { "multiExport", "" },
+                             {"ImportId",0 }
                         };
                         _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
                     }

@@ -330,6 +330,10 @@ namespace ApiForFhirMigrationTool.Function
                     TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                     qEntitynew["globalSinceExportType"] = qEntitynew["globalTillExportType"];
                     qEntitynew["globalTillExportType"] = "";
+                    qEntitynew["resourceTypeIndex"] = 0; // all the import will done so will reset index
+                    qEntitynew["multiExport"] = "";
+                    qEntitynew["subSinceExportType"] = "";
+                    qEntitynew["subTillExportType"] = "";
                     _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
                    return "";
                 }
