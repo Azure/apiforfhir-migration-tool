@@ -12,6 +12,7 @@ param fhirserviceRg string
 param apiforFhirRg string
 param exportWithHistory bool
 param exportWithDelete bool
+param isParallel bool
 @description('Automatically create a role assignment for the function app to access the FHIR service and API for FHIR.')
 param createRoleAssignment bool = true
 param apiForFhirsubid string
@@ -113,9 +114,11 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
               AZURE_ExportChunkTime: 30
               AZURE_ExportWithHistory: exportWithHistory
               AZURE_ExportWithDelete: exportWithDelete
+              AZURE_IsParallel:isParallel
               
               AZURE_stagingStorageAccountName: storageAccountName
               AZURE_StagingStorageUri: 'https://${storageAccountName}.table.core.windows.net'
+              AZURE_BlobStorageUri: 'https://${storageAccountName}.blob.core.windows.net'
 
               // This will trigger the custom deployment script to run during deployment
               SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
