@@ -25,7 +25,7 @@ namespace ApiForFhirMigrationTool.Function.OrchestrationHelper
 
         public int CreateImportRequest(string content, string importMode, string statusUrl)
         {
-            int fileCount = 25;
+            int fileCount = 10000;
             string statusId = GetProcessId(statusUrl);
             int importPayloadCount = 1;
             try

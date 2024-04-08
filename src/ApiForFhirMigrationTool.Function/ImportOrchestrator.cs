@@ -69,7 +69,7 @@ namespace ApiForFhirMigrationTool.Function
                 {
                     foreach (TableEntity item in jobListimport)
                     {
-                        string importResponse = await context.CallActivityAsync<string>(nameof(ProcessImport));
+                        var importResponse = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImport));
 
                     }
                 }
@@ -82,10 +82,11 @@ namespace ApiForFhirMigrationTool.Function
         }
 
         [Function(nameof(ProcessImport))]
-        public async Task<string> ProcessImport([ActivityTrigger] string requestContent, FunctionContext executionContext)
+        public async Task<ResponseModel> ProcessImport([ActivityTrigger] string requestContent, FunctionContext executionContext)
         {
             ILogger logger = executionContext.GetLogger(nameof(ProcessImport));
             logger.LogInformation("Starting import activities.");
+            ResponseModel importResponse = new ResponseModel();
             try
             {
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
@@ -115,7 +116,7 @@ namespace ApiForFhirMigrationTool.Function
                                 string statusUrl = String.Empty;
 
                                 HttpMethod method = HttpMethod.Post;
-                                ResponseModel importResponse = await _importProcessor.CallProcess(method, content, _options.DestinationUri, "/$import", _options.DestinationHttpClient);
+                                  importResponse = await _importProcessor.CallProcess(method, content, _options.DestinationUri, "/$import", _options.DestinationHttpClient);
                                 if (importResponse.Status == ResponseStatus.Accepted)
                                 {
                                     logger?.LogInformation($"Import  returned: Success.");
@@ -288,7 +289,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 throw;
             }
-            return "Complete";
+            return importResponse;
         }
         public string GetProcessId(string statusUrl)
         {
