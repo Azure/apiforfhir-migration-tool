@@ -49,8 +49,6 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
                     RequestUri = new Uri(baseUri, string.Format("/{0}{1}", query, resourceCount)),
                 };
                 HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
-
-                // var response = srcTask.Result;
                 var objResponse = JObject.Parse(srcTask.Content.ReadAsStringAsync().Result);
                 JToken? entry = objResponse["entry"];
                 JObject? gen2Response = null;
@@ -90,7 +88,6 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
 
                                     HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, destinationFhirEndpoint);
 
-                                    // var desResponse = desTask.Result;
                                     gen2Response = JObject.Parse(desTask.Content.ReadAsStringAsync().Result);
                                     metaToken = gen2Response["meta"];
                                     if (metaToken != null && metaToken is JObject metaObject1)
@@ -109,7 +106,6 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
 
                                 HttpResponseMessage desTask = await _fhirClient.Send(desrequest, desbaseUri, destinationFhirEndpoint);
 
-                                // var desResponse = desTask.Result;
                                 gen2Response = JObject.Parse(desTask.Content.ReadAsStringAsync().Result);
                                 metaToken = gen2Response["meta"];
                                 if (metaToken != null && metaToken is JObject metaObject1)

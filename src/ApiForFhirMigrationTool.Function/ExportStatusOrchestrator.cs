@@ -97,8 +97,6 @@ namespace ApiForFhirMigrationTool.Function
                                     var objOutput = objResponse["output"] as JArray;
                                     if (objOutput != null && objOutput.Any())
                                     {
-                                        // import_body = _orchestrationHelper.CreateImportRequest(resContent, _options.ImportMode); 
-                                 
                                         var payload_count = _orchestrationHelper.CreateImportRequest(response.Content, _options.ImportMode, statusUrl);
                                         var resourceCount = _orchestrationHelper.CalculateSumOfResources(objOutput).ToString(CultureInfo.InvariantCulture);
                                         TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
@@ -129,7 +127,6 @@ namespace ApiForFhirMigrationTool.Function
                                     {
                                         logger?.LogInformation($"Output is null. No Output content in export:{statusUrl}");
 
-                                        // import_body = string.Empty;
                                         TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                         exportEntity["IsExportComplete"] = true;
                                         exportEntity["IsExportRunning"] = "Completed";

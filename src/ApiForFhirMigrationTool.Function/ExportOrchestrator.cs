@@ -61,7 +61,6 @@ namespace ApiForFhirMigrationTool.Function
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
 
-                //Pageable<TableEntity> jobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Running" || ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running" || ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Not Started");
                 Pageable<TableEntity> jobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Running" || ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running" || ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Not Started" || ent.GetBoolean("IsProcessed") == false);
                 if (jobList.Count() <= 0)
                 {
@@ -142,7 +141,6 @@ namespace ApiForFhirMigrationTool.Function
                             _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
 
-                            // qEntitynew["since"] = tillValue;
                             qEntitynew["JobId"] = jobId++;
                             _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
                             _telemetryClient.TrackEvent(
@@ -253,7 +251,9 @@ namespace ApiForFhirMigrationTool.Function
 
             if (updateSinceDate > DateTimeOffset.UtcNow)
             {
-                updateSinceDate = _options.IsParallel == true? DateTimeOffset.UtcNow: DateTimeOffset.Parse(qEntity["globalTillExportType"].ToString());   
+#pragma warning disable CS8604 // Possible null reference argument.
+                updateSinceDate = _options.IsParallel == true? DateTimeOffset.UtcNow: DateTimeOffset.Parse(qEntity["globalTillExportType"].ToString());
+#pragma warning restore CS8604 // Possible null reference argument.
             }
 
             since = since_new.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
@@ -266,7 +266,6 @@ namespace ApiForFhirMigrationTool.Function
 
             if (_options.IsParallel == true)
             {
-               // setUrl = $"/$export?_isParallel={_options.IsParallel.ToString().ToLower()}";
                 var checkValidRequest = CheckResourceCount(since, till, _options.ExportChunkTime, _options.ExportChunkDuration);
                 till = checkValidRequest.Result.ToString();
                 setUrl = $"/$export?_isParallel={_options.IsParallel.ToString().ToLower()}";
@@ -274,8 +273,6 @@ namespace ApiForFhirMigrationTool.Function
             else
             {
                 bool IsLastRun = false;
-                // add db column since till and tot , index add only when since till all are not empty 
-                //TableEntity qEntityResourceType = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);    
                 int tot = 0;
                 TableEntity qEntityGetResourceIndex = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                 int index = (int)qEntityGetResourceIndex["resourceTypeIndex"];  // get index from DB
@@ -292,7 +289,7 @@ namespace ApiForFhirMigrationTool.Function
                     resourceType = _options.ResourceTypes?[index];
                     if (qEntityGetResourceIndex?["multiExport"].ToString() == "Running")
                     {
-                        since = qEntityGetResourceIndex["subSinceExportType"].ToString(); //
+                        since = qEntityGetResourceIndex["subSinceExportType"].ToString();
                         till = qEntityGetResourceIndex["subTillExportType"].ToString();
                     }
                     var response = CheckResourceTypeCount(since!, till!, resourceType!, _options.ResourceExportChunkTime, _options.ExportChunkDuration);
@@ -316,8 +313,7 @@ namespace ApiForFhirMigrationTool.Function
                     {
                         index++;
                     }
-                    // mark index in DB 
-                    //  } while (tot == 0 && index< _options.ResourceTypes?.Count()); // check if last index is 0 then update till to since 
+                    
                 } while (tot == 0 && IsLastRun == false);
                 if (qEntityGetResourceIndex?["multiExport"].ToString() == "Running")
                 {
@@ -401,8 +397,6 @@ namespace ApiForFhirMigrationTool.Function
                 var firstTimestamp = JsonConvert.SerializeObject(firstResource, settings).Trim('"');
                 sinceDate = DateTimeOffset.ParseExact(firstTimestamp, "yyyy-MM-ddTH:mm:ss.fffZ", null);
             }
-
-            // since = sinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             return sinceDate;
         }
 

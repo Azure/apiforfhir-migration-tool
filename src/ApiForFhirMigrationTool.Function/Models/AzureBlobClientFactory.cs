@@ -20,7 +20,6 @@ namespace ApiForFhirMigrationTool.Function.Models
         public BlobContainerClient Create(string containerName)
         {
             EnsureArg.IsNotNullOrWhiteSpace(containerName, nameof(containerName));
-            //BlobClient blobClient = _blobServiceClient.GetBlobContainerClient(containerName);
             BlobContainerClient blobContainerClient = _blobServiceClient.CreateBlobContainer(containerName);
 
             return blobContainerClient;
@@ -29,7 +28,6 @@ namespace ApiForFhirMigrationTool.Function.Models
         public BlobContainerClient GetBlobContainerClient(string containerName)
         {
             EnsureArg.IsNotNullOrWhiteSpace(containerName, nameof(containerName));
-            //BlobClient blobClient = _blobServiceClient.GetBlobContainerClient(containerName);
             BlobContainerClient blobContainerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
             return blobContainerClient;

@@ -65,9 +65,6 @@ public class Program
 
         services.AddTransient<IOrchestrationHelper, OrchestrationHelper>();
 
-        // services.AddTransient<IExportProcessor, ExportProcessor>();
-        // services.AddTransient<IImportProcessor, ImportProcessor>();
-
         services.AddTransient<ISurfaceCheck, SurfaceCheck>();
         services.AddTransient<IDeepCheck, DeepCheck>();
 

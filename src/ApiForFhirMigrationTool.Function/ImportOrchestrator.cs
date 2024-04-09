@@ -60,7 +60,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-                //Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetString("IsImportRunning") == "Not Started" && ent.GetBoolean("IsFirst") == true);
+               
                 Pageable<TableEntity> jobListimportRunning = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running");
                 Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true && jobListimportRunning.Count() == 0);
 
@@ -90,7 +90,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-                // Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetString("IsImportRunning") == "Not Started" && ent.GetBoolean("IsFirst") == true);
+               
                 Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true);
 
                 if (jobListimport != null && jobListimport.Count() == 1)
@@ -107,7 +107,7 @@ namespace ApiForFhirMigrationTool.Function
                     int payloadCounter = 0;
                     foreach (BlobItem blobItem in containerClient.GetBlobs())
                     {
-                        if (payloadCounter < 5 && containerClient.GetBlobs().Count() > 0)
+                        if (payloadCounter < _options.PayloadCount && containerClient.GetBlobs().Count() > 0)
                         {
                             BlobClient blobClient = containerClient.GetBlobClient(blobItem.Name);
                             BlobDownloadInfo download = blobClient.Download();
@@ -122,7 +122,7 @@ namespace ApiForFhirMigrationTool.Function
                                 if (importResponse.Status == ResponseStatus.Accepted)
                                 {
                                     logger?.LogInformation($"Import  returned: Success.");
-                                    // Pageable<TableEntity> jobListimport1 = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetString("ExportId") == statusId && ent.GetString("IsImportRunning") == "Not Started" && ent.GetBoolean("IsFirst") == true);
+                                   
                                     Pageable<TableEntity> jobListimport1 = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetString("ExportId") == statusId && ent.GetString("IsImportRunning") == "Not Started" && ent.GetBoolean("IsFirst") == true);
                                     if (jobListimport1.Count() == 1)
                                     {
@@ -210,7 +210,7 @@ namespace ApiForFhirMigrationTool.Function
                                     { "ImportStatus", "Failed" },
                                     { "FailureReason", diagnosticsValue }
                                         });
-                                        //throw new HttpFailureException($"Response: {importResponse.Content} ");
+                                        
 
                                     }
                                     else
@@ -256,8 +256,7 @@ namespace ApiForFhirMigrationTool.Function
                                     { "ImportStatus", "Failed" },
                                     { "FailureReason", diagnosticsValue }
                                         });
-                                            //throw new HttpFailureException($"Response: {importResponse.Content} ");
-
+                                            
                                         }
                                     }
                                 }
