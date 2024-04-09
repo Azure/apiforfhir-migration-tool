@@ -84,17 +84,19 @@ namespace ApiForFhirMigrationTool.Function
         [Function(nameof(ProcessImport))]
         public async Task<ResponseModel> ProcessImport([ActivityTrigger] string requestContent, FunctionContext executionContext)
         {
-            ILogger logger = executionContext.GetLogger(nameof(ProcessImport));
-            logger.LogInformation("Starting import activities.");
             ResponseModel importResponse = new ResponseModel();
+            HttpMethod method = HttpMethod.Post;
             try
             {
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 // Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetString("IsImportRunning") == "Not Started" && ent.GetBoolean("IsFirst") == true);
                 Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true);
-                if (jobListimport.Count() == 1)
+
+                if (jobListimport != null && jobListimport.Count() == 1)
                 {
+                    ILogger logger = executionContext.GetLogger(nameof(ProcessImport));
+                    logger.LogInformation("Starting import activities.");
                     var item = jobListimport.First();
 
                     string? statusUrl_new = item.GetString("exportContentLocation");
@@ -115,8 +117,8 @@ namespace ApiForFhirMigrationTool.Function
                                 string content = await streamReader.ReadToEndAsync();
                                 string statusUrl = String.Empty;
 
-                                HttpMethod method = HttpMethod.Post;
-                                  importResponse = await _importProcessor.CallProcess(method, content, _options.DestinationUri, "/$import", _options.DestinationHttpClient);
+                                method = HttpMethod.Post;
+                                importResponse = await _importProcessor.CallProcess(method, content, _options.DestinationUri, "/$import", _options.DestinationHttpClient);
                                 if (importResponse.Status == ResponseStatus.Accepted)
                                 {
                                     logger?.LogInformation($"Import  returned: Success.");
@@ -136,9 +138,9 @@ namespace ApiForFhirMigrationTool.Function
                                         "Import",
                                         new Dictionary<string, string>()
                                         {
-                                     { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
-                                     { "StatusUrl", statusUrl },
-                                     { "ImportStatus", "Started" },
+                                    { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                    { "StatusUrl", statusUrl },
+                                    { "ImportStatus", "Started" },
                                         });
                                     }
                                     else
@@ -150,23 +152,23 @@ namespace ApiForFhirMigrationTool.Function
                                             string rowKey = _options.RowKey + statusId + importId++;
 
                                             var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
-                                    {
-                                        { "exportContentLocation", item.GetString("exportContentLocation") },
-                                        { "importContentLocation", importResponse.Content },
-                                        { "IsExportComplete", true },
-                                        { "IsExportRunning", "Completed" },
-                                        { "IsImportComplete", false },
-                                        { "IsImportRunning", "Started" },
-                                        { "ImportRequest", "Yes" },
-                                        { "Since",item.GetString("Since") },
-                                        { "Till", item.GetString("Till") },
-                                        { "StartTime", item.GetDateTime("StartTime") },
-                                        {"TotalExportResourceCount",item.GetString("TotalExportResourceCount") },
-                                        { "ImportStartTime", DateTime.UtcNow },
-                                        {"ExportEndTime",item.GetDateTime("ExportEndTime")  },
-                                        { "ExportId",  statusId },
-                                        { "ImportNo",blobItem.Name},
-                                    };
+                                {
+                                    { "exportContentLocation", item.GetString("exportContentLocation") },
+                                    { "importContentLocation", importResponse.Content },
+                                    { "IsExportComplete", true },
+                                    { "IsExportRunning", "Completed" },
+                                    { "IsImportComplete", false },
+                                    { "IsImportRunning", "Started" },
+                                    { "ImportRequest", "Yes" },
+                                    { "Since",item.GetString("Since") },
+                                    { "Till", item.GetString("Till") },
+                                    { "StartTime", item.GetDateTime("StartTime") },
+                                    {"TotalExportResourceCount",item.GetString("TotalExportResourceCount") },
+                                    { "ImportStartTime", DateTime.UtcNow },
+                                    {"ExportEndTime",item.GetDateTime("ExportEndTime")  },
+                                    { "ExportId",  statusId },
+                                    { "ImportNo",blobItem.Name},
+                                };
                                             _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
 
                                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
@@ -177,9 +179,9 @@ namespace ApiForFhirMigrationTool.Function
                                         "Import",
                                         new Dictionary<string, string>()
                                         {
-                                     { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
-                                     { "StatusUrl", statusUrl },
-                                     { "ImportStatus", "Started" },
+                                    { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                    { "StatusUrl", statusUrl },
+                                    { "ImportStatus", "Started" },
                                         });
 
                                         }
@@ -203,10 +205,10 @@ namespace ApiForFhirMigrationTool.Function
                                         "Import",
                                         new Dictionary<string, string>()
                                         {
-                                     { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
-                                     { "StatusUrl", statusUrl },
-                                     { "ImportStatus", "Failed" },
-                                     { "FailureReason", diagnosticsValue }
+                                    { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                    { "StatusUrl", statusUrl },
+                                    { "ImportStatus", "Failed" },
+                                    { "FailureReason", diagnosticsValue }
                                         });
                                         //throw new HttpFailureException($"Response: {importResponse.Content} ");
 
@@ -222,23 +224,23 @@ namespace ApiForFhirMigrationTool.Function
                                             logger?.LogInformation($"Import Status check returned: Unsuccessful. Reason : {diagnosticsValue}");
 
                                             var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
-                                    {
-                                        { "exportContentLocation", item.GetString("exportContentLocation") },
-                                        { "IsExportComplete", true },
-                                        { "IsExportRunning", "Completed" },
-                                        { "IsImportComplete", false },
-                                        { "IsImportRunning", "failed" },
-                                        { "FailureReason",diagnosticsValue},
-                                        { "ImportRequest", "Yes" },
-                                        { "Since",item.GetString("Since") },
-                                        { "Till", item.GetString("Till") },
-                                        { "StartTime", item.GetDateTime("StartTime") },
-                                        {"TotalExportResourceCount",item.GetString("TotalExportResourceCount") },
-                                        {"ExportEndTime",item.GetDateTime("ExportEndTime")  },
-                                        { "ExportId",  statusId },
-                                        { "ImportNo",blobItem.Name},
+                                {
+                                    { "exportContentLocation", item.GetString("exportContentLocation") },
+                                    { "IsExportComplete", true },
+                                    { "IsExportRunning", "Completed" },
+                                    { "IsImportComplete", false },
+                                    { "IsImportRunning", "failed" },
+                                    { "FailureReason",diagnosticsValue},
+                                    { "ImportRequest", "Yes" },
+                                    { "Since",item.GetString("Since") },
+                                    { "Till", item.GetString("Till") },
+                                    { "StartTime", item.GetDateTime("StartTime") },
+                                    {"TotalExportResourceCount",item.GetString("TotalExportResourceCount") },
+                                    {"ExportEndTime",item.GetDateTime("ExportEndTime")  },
+                                    { "ExportId",  statusId },
+                                    { "ImportNo",blobItem.Name},
 
-                                    };
+                                };
                                             _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
 
                                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
@@ -246,14 +248,14 @@ namespace ApiForFhirMigrationTool.Function
                                             _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
 
                                             _telemetryClient.TrackEvent(
-                                       "Import",
-                                       new Dictionary<string, string>()
-                                       {
-                                     { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
-                                     { "StatusUrl", statusUrl },
-                                     { "ImportStatus", "Failed" },
-                                     { "FailureReason", diagnosticsValue }
-                                       });
+                                        "Import",
+                                        new Dictionary<string, string>()
+                                        {
+                                    { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                    { "StatusUrl", statusUrl },
+                                    { "ImportStatus", "Failed" },
+                                    { "FailureReason", diagnosticsValue }
+                                        });
                                             //throw new HttpFailureException($"Response: {importResponse.Content} ");
 
                                         }
@@ -282,6 +284,10 @@ namespace ApiForFhirMigrationTool.Function
                         }
 
                     }
+                }
+                else
+                {
+                    importResponse = await _importProcessor.CallProcess(method, requestContent, _options.DestinationUri, "/$import", _options.DestinationHttpClient);
                 }
             }
 
