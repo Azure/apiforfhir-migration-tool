@@ -27,7 +27,10 @@ To see the list of all recommended migration patterns, see here. #TODO add link 
 			```PowerShell
 			https://<<WORKSPACE_NAME>>-<<FHIR_SERVICE_NAME>>.fhir.azurehealthcareapis.com/
 			```
-4.  If you have custom search parameters that you would like migrated over, you will need to first query Azure API for FHIR for your custom search parameters and recieve a bundle. Then, POST that bundle of custom search parameters to the new Azure Health Data Services FHIR esrvice. This will need to be done before migrating any data. If you want the data to be properly indexed as it gets migrated to Azure Health Data Services FHIR service, use [incremental mode](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#incremental-mode) for $import. Otherwise, you will need to run a reindex at the end of migration. 
+4.  If you have custom search parameters that you would like migrated over, you will need to first query Azure API for FHIR for your custom search parameters and receive a bundle. Then, POST that bundle of custom search parameters to the new Azure Health Data Services FHIR service. This will need to be done before migrating any data. If you want the data to be properly indexed as it gets migrated to Azure Health Data Services FHIR service, use [incremental mode](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#incremental-mode) for $import. Otherwise, you will need to run a reindex at the end of migration. 
+
+	- You can use the Powershell script that will automatically migrate the FHIR custom search parameter from Azure API for FHIR server to Azure Health Data Services FHIR service for you.
+	Follow this [document](https://github.com/Azure-Samples/azure-health-data-and-ai-samples/tree/main/samples/lift-shift) to run the powershell script.
 
 ## Steps
 
@@ -94,16 +97,37 @@ Detailed steps:
 
 	1. Follow steps [here](https://learn.microsoft.com/azure/healthcare-apis/fhir/configure-import-data) to configure settings for import on Destination Azure Health Data Services FHIR Service.
 	
-		__Note__: Use the same storage account while configuring the import on AHDS FHIR service which was configured for $export.
+		__Advise__: Use the same storage account while configuring the import on AHDS FHIR service which was configured for $export.
 
 		__Note__: Please review the [$import documentation](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#import-operation-modes) carefully to see the differences between initial mode and incremental mode, and choose the mode that best suits your needs. For example, if you wish to migrate historical versions and lastUpdated field values, you will need to use incremental mode. 
 	
 	2. Prepare the $import body payload. <br> Options: <br> 
 	a. You can prepare this manually by following $import documentation [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#calling-import). <br>
-	b. Or, you can use the included OSS Powershell script in this repo that will automatically create the $import body payload from the export storage container for you. The following explains how to use the $import body payload script:
-   
 
-		The PowerShell script will take the $export Content-Location as a parameter and will create the $import body payload that will be used when executing the $import command.
+		- If you have different storage accounts configured for Azure API for FHIR server and AHDS FHIR server, then use AzCopy command to copy the exported data to the import container configured for the AHDS FHIR server. Subsequently, you can proceed to create import payloads manually, and initiate the import process.This ensures smooth data migration within the same and across subscriptions.
+
+		- How to use AzCopy 
+			- Download [AzCopy](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10) if you don't already have it.
+
+    		1. Go to the downloaded folder of azcopy.
+    		2. Login to Azcopy with tenant id using below command
+				```Powershell
+				azcopy login --tenant-id 'xxxx-xxxx-xxxx-xxxx'  
+				```
+    		3. Run below command to copy the exported data from storage account configured for Azure API for FHIR to another storage account which is configured with Azure Health Data service FHIR service for import
+
+				```Powershell
+				azcopy copy 'https://{SourcestorageAccountName}.blob.core.windows.net/{ContainerName}/*' 'https://{DestinationstorageAccountName}.blob.core.windows.net/{ContainerName}' --recursive
+				```
+
+
+	b. Or, you can use the included OSS Powershell script in this repo that will automatically create the $import body payload from the export storage container for you.<br> 
+		
+	__Note__: When creating import payloads with a PowerShell script, make sure to use the same storage account while configuring the import on AHDS FHIR service which was configured for $export.This ensures smooth data migration of resources within the same and across subscriptions.
+	
+	The following explains how to use the $import body payload script:
+   
+   	- The PowerShell script will take the $export Content-Location as a parameter and will create the $import body payload that will be used when executing the $import command.
 	
 		- To run the PowerShell Script, you need to have the "FHIR Data Contributor" role for the Azure Health Data Services FHIR Service, as the script require access to the $export command output. Follow [steps](https://learn.microsoft.com/azure/healthcare-apis/configure-azure-rbac#assign-roles-for-the-fhir-service) to configure roles on AHDS FHIR services.
 		
@@ -143,10 +167,12 @@ Detailed steps:
 				./Import_Payload.ps1 -url 'https://<<SOURCE_ACCOUNT_NAME>>.azurehealthcareapis.com/_operations/export/<<JOB_ID>>'"
 				```
 
-	4. Once the import configuration is setup and $import body payload is created (optional), run the import command on Azure Health Data Services FHIR service.
+	- Once the import configuration is setup and $import body payload is created (optional), run the import command on Azure Health Data Services FHIR service.
 	Follow the [steps](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) to run the import command.
 
-	5. Follow steps [here](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#checking-import-status) to check the $import operation status .
+	- Follow steps [here](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#checking-import-status) to check the $import operation status .
+
+	__Note__: Check the [performance consideration](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#performance-considerations) for better throughput of $import operation.
 
 ## Troubleshooting
 
