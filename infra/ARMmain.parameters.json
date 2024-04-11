@@ -28,6 +28,9 @@
         },
         "exportWithDelete":{
             "value":true
+        },
+        "isParallel":{
+            "value": true
         }
     }
 }

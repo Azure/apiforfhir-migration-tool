@@ -122,9 +122,9 @@ In the migration tool we are using $export [query](https://learn.microsoft.com/a
 
 The migration tool hits the HTTP APIs endpoint for the $export operation, the response contains export operation Content-Location URL. The content-location URL give the status on export operation. Each $export operation status is stored in Azure storage table.
 
-The migration tool exports 30 days which is configurable by using parameters: ExportChunkTime and ExportChunkDuration of data from API for FHIR in each export operation.
+The migration tool exports 100M resources under 30 days which is configurable by using parameters: ExportChunkTime, ExportChunkDuration and ChunkLimit of data from API for FHIR in each export operation.
 
-#### How to configure Chunk Duration and Time for export.
+#### How to configure Chunk Duration,Time and Size for export.
 1. Open the Data migration Azure function.
 2. Go to the environment variable setting and under it go to App Setting.
 3. Set the below configuration as per the need:
@@ -134,20 +134,28 @@ Value: "Days" or "Hours" or "Minutes"
 
 Name: AZURE_ExportChunkTime
 Value: <<Int number>>
+
+Name: AZURE_ChunkLimit
+Value: <<Int number>>
 ```
 AZURE_ExportChunkDuration it can take Days, Hours or Minutes as value. If the user want the data to be exported on Days basis, put "Days" as value in it. If the user want data to be exported on Hourly basis, put "Hours" as value OR if user want to export in minutes put "Minutes" as value.
 
-AZURE_ExportChunkTime it will take integer as value.
+AZURE_ExportChunkTime it will take integer as value. 
+
+AZURE_ChunkLimit it will take interger as value which specify how many resources will be exported in a single chunk.
 
 Example:
 
-Below setting in azure function will export 30 days data in single chunk: 
+Below setting in azure function will export 100M resources under 30 days data in single chunk: 
 ```
 Name: AZURE_ExportChunkDuration
 Value: "Days"
 
 Name: AZURE_ExportChunkTime
 Value: 30
+
+Name: AZURE_ChunkLimit
+Value: 100000000
 ```
 
 The user can configure the start date in Azure function from where the export should start from the API for FHIR server. AZURE_StartDate will help to export the data from that specific date. <br>
@@ -175,6 +183,37 @@ Name: AZURE_ExportWithDelete
 Value: False
 
 ```
+### Export with isParallel
+
+Exporting with isParallel allows you to export the resources in threads which make the export operation faster. <br>
+__Note__: The isparallel parameter with export consume more RU's in Azure API for FHIR compared to without isparallel parameter which may lead to high cost for Azure API for FHIR.
+
+During the deployment of the migration tool, users have the option to enable or disable the exporting with isParallel by specifying their values as true or false. This is the equivalent of setting the $export query parameter "_isparallel", as mentioned [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters).
+
+Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with isParallel is set to true. If you prefer to export without isParallel, you can change the value to false.
+
+![Export](images/isParallel.png)
+
+Upon the completion of deployment, users can still make adjustments to the export settings for isParallel by modifying the values within the Azure function's environment variable. 
+
+Example:
+
+```
+Name: AZURE_IsParallel
+Value: True
+```
+
+If you set the isparallel parameter value to false for export, then the export will be based on the FHIR resource type rather than at the system level of the Azure API for FHIR.
+
+The list of resources is set under the parameter: AZURE_ResourceTypes. It is a list of FHIR resource type names as strings. By default, it contains all FHIR R4 resource types. The list can be modified as per your requirements, or you can specify the type of resources you want to export under this parameter.
+
+Example:
+
+```
+Name: AZURE_ResourceTypes
+Value: {"Patient", "Observation", "Encounter"}
+```
+
 
 Once the $export operation is completed, the export operation content location is stored in Azure storage table and the next export status orchestrator in the durable function picks the details from the storage table and checks the status of the export.
 
@@ -184,12 +223,14 @@ New export will not start until the previous import is completed on FHIR service
 
 ## Import FHIR Data to Azure Health Data Services FHIR service
 
-The [built-in Azure Health Data Service FHIR service $import operation](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) is leveraged inthe  migration tool for importing the data to the destination Azure Health Data Services FHIR server.The $import PaaS endpoints are asynchronous, long-running HTTP APIs. 
-The storage account is used for getting the NDJSON files between the $export and $import. The storage account is also used by Azure Durable Functions to store state. 
+The [built-in Azure Health Data Service FHIR service $import operation](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) is leveraged in the  migration tool for importing the data to the destination Azure Health Data Services FHIR server.The $import PaaS endpoints are asynchronous, long-running HTTP APIs. 
+The storage account is used for getting the NDJSON files between the $export and $import. The storage account is also used by Azure Durable Functions to store state and the payload created for $import operation.
 
 In the migration tool we are using $import for importing the data which got exported from the $export orchestrator.
 
 The migration tool hits the HTTP APIs endpoint for the $import operation, the response contains import operation Content-Location URL. The content-location URL gives the status on import operation. Each $import operation status is stored in Azure storage table.
+
+You can run multiple import jobs at the same time, but running multiple jobs might affect the overall throughput of the import operation. The FHIR server can handle up to five parallel import jobs. If you exceed this limit, the FHIR server might throttle or reject your requests. The data migration tool handle five import job at a time and once all the jobs are completed, then only it will start the remaining jobs for $import operation.
 
 Once the $import operation is completed, the import operation content location is stored in Azure storage table and the next import status orchestrator in the durable function picks the details from storage table and checks the status of the import.
 

@@ -116,12 +116,13 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
             var importProcessor = new Mock<IFhirProcessor>()
                                     .SetupSuccessfulImportOperationResponse()
                                     .SetupSuccessfulImportStatusResponse();
+            var azureBlobClientFactory=new Mock<IAzureBlobClientFactory>();
 
             var exportResponse = await TestHelpers.GetTestExportOrchestrator(_config, exportProcessor.Object)
                                         .ProcessExport(string.Empty, _mockFunctionContext.Object);
             var exportStatusResponse = await TestHelpers.GetTestExportStatusOrchestrator(_config, exportProcessor.Object)
                                         .ProcessExportStatusCheck(exportResponse.Content, _mockFunctionContext.Object);
-            var importResponse = await TestHelpers.GetTestImportOrchestrator(_config, importProcessor.Object)
+            var importResponse = await TestHelpers.GetTestImportOrchestrator(_config, importProcessor.Object, azureBlobClientFactory.Object)
                                         .ProcessImport(exportStatusResponse.Content, _mockFunctionContext.Object);
             var importStatusResponse = await TestHelpers.GetTestImportStatusOrchestrator(_config, importProcessor.Object)
                                         .ProcessImportStatusCheck(importResponse.Content, _mockFunctionContext.Object);
@@ -169,12 +170,13 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
 
             var importProcessor = new Mock<IFhirProcessor>()
                                     .SetupFailedImportOperationResponse();
+            var azureBlobClientFactory =new Mock <IAzureBlobClientFactory>();
 
             var exportResponse = await TestHelpers.GetTestExportOrchestrator(_config, exportProcessor.Object)
                                         .ProcessExport(string.Empty, _mockFunctionContext.Object);
             var exportStatusResponse = await TestHelpers.GetTestExportStatusOrchestrator(_config, exportProcessor.Object)
                                         .ProcessExportStatusCheck(exportResponse.Content, _mockFunctionContext.Object);
-            var importResponse = await TestHelpers.GetTestImportOrchestrator(_config, importProcessor.Object)
+            var importResponse = await TestHelpers.GetTestImportOrchestrator(_config, importProcessor.Object, azureBlobClientFactory.Object)
                                         .ProcessImport(exportStatusResponse.Content, _mockFunctionContext.Object);
 
             Assert.Equal(ResponseStatus.Accepted, exportResponse.Status);
@@ -192,12 +194,13 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
             var importProcessor = new Mock<IFhirProcessor>()
                                     .SetupSuccessfulImportOperationResponse()
                                     .SetupFailedImportStatusResponse();
+            var azureBlobClientFactory=new Mock<IAzureBlobClientFactory>();
 
             var exportResponse = await TestHelpers.GetTestExportOrchestrator(_config, exportProcessor.Object)
                                             .ProcessExport(string.Empty, _mockFunctionContext.Object);
             var exportStatusResponse = await TestHelpers.GetTestExportStatusOrchestrator(_config, exportProcessor.Object)
                                             .ProcessExportStatusCheck(exportResponse.Content, _mockFunctionContext.Object);
-            var importResponse = await TestHelpers.GetTestImportOrchestrator(_config, importProcessor.Object)
+            var importResponse = await TestHelpers.GetTestImportOrchestrator(_config, importProcessor.Object,azureBlobClientFactory.Object)
                                             .ProcessImport(exportStatusResponse.Content, _mockFunctionContext.Object);
             var importStatusResponse = await TestHelpers.GetTestImportStatusOrchestrator(_config, importProcessor.Object)
                                             .ProcessImportStatusCheck(importResponse.Content, _mockFunctionContext.Object);

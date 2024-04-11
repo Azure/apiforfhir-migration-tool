@@ -16,6 +16,7 @@ using ApiForFhirMigrationTool.Function.SurfaceCheck;
 using Azure.Core;
 using Azure.Data.Tables;
 using Azure.Identity;
+using Azure.Storage.Blobs;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
@@ -64,13 +65,11 @@ public class Program
 
         services.AddTransient<IOrchestrationHelper, OrchestrationHelper>();
 
-        // services.AddTransient<IExportProcessor, ExportProcessor>();
-        // services.AddTransient<IImportProcessor, ImportProcessor>();
-
         services.AddTransient<ISurfaceCheck, SurfaceCheck>();
         services.AddTransient<IDeepCheck, DeepCheck>();
 
         services.AddTransient<IAzureTableClientFactory, AzureTableClientFactory>();
+        services.AddTransient<IAzureBlobClientFactory, AzureBlobClientFactory>();
         services.AddTransient<IMetadataStore, AzureTableMetadataStore>();
 
         TableClientOptions opts = new TableClientOptions(TableClientOptions.ServiceVersion.V2019_02_02);
@@ -78,7 +77,16 @@ public class Program
         opts.Retry.Mode = RetryMode.Fixed;
         opts.Retry.MaxRetries = 3;
 
+        BlobClientOptions blobOpts = new BlobClientOptions(BlobClientOptions.ServiceVersion.V2019_02_02);
+        blobOpts.Retry.Delay = TimeSpan.FromSeconds(5);
+        blobOpts.Retry.Mode = RetryMode.Fixed;
+        blobOpts.Retry.MaxRetries = 3;
+
+
         services.AddSingleton<TableServiceClient>(new TableServiceClient(new Uri(config.StagingStorageUri), credential, opts));
+
+        services.AddSingleton<BlobServiceClient>(new BlobServiceClient(new Uri(config.BlobStorageUri), credential, blobOpts));
+
 
         services.AddTransient<IFhirProcessor, FhirProcessor>();
 
@@ -98,7 +106,7 @@ public class Program
             httpClient.BaseAddress = baseUri;
         })
         .AddPolicyHandler(GetRetryPolicy())
-        .AddHttpMessageHandler(x => new BearerTokenHandler(credential, baseUri, scopes));
+       .AddHttpMessageHandler(x => new BearerTokenHandler(credential, baseUri, scopes));
 
 #pragma warning restore CS8604 // Possible null reference argument.
 

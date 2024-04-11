@@ -47,15 +47,11 @@ namespace ApiForFhirMigrationTool.Function
         {
             ILogger logger = executionContext.GetLogger("E2ETest_Http");
 
-            // Function input comes from the request content.
             string body = await new StreamReader(req.Body).ReadToEndAsync();
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
                 nameof(E2ETestOrchestration), body);
 
             logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
-
-            // Returns an HTTP 202 response with an instance management payload.
-            // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
             return client.CreateCheckStatusResponse(req, instanceId);
         }
 
@@ -65,47 +61,13 @@ namespace ApiForFhirMigrationTool.Function
         {
             ILogger logger = context.CreateReplaySafeLogger(nameof(E2ETestOrchestration));
             logger.LogInformation("Start E2E Test.");
-
-            // int count = 0;
             var resSurface = new JArray();
             var resDeep = new JArray();
             JObject check = new JObject();
 
-            /*string? externalInput = context.GetInput<string>();
-            if (!string.IsNullOrEmpty(externalInput))
-            {
-                JObject jsonObject = JObject.Parse(externalInput);
-
-                // Get the specific value by property name
-                if (jsonObject != null)
-                {
-                    count = (int)jsonObject["Count"]!;
-                }
-            }*/
-
             try
             {
-                /*if (count == 2 || count == 3)
-                {
-                    string e2eImportGen1 = await context.CallActivityAsync<string>("E2ETestActivity", count);
-                }
-
-                var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
-                        maxNumberOfAttempts: 3,
-                        firstRetryInterval: TimeSpan.FromSeconds(5)));
-
-                var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
-                logger.LogInformation("E2E Test for export completed.");
-
-                var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
-                logger.LogInformation("E2E Test for export status completed.");
-
-                var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
-                logger.LogInformation("E2E Test for import completed.");
-
-                var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
-                logger.LogInformation("E2E Test for import status completed.");*/
-
+               
                 if (_options.ExportWithHistory == true || _options.ExportWithDelete == true)
                 {
                     if (_options.HistoryDeleteQuerySurface != null)

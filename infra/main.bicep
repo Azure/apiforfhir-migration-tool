@@ -35,6 +35,9 @@ param exportWithHistory bool
 @description('Export With Delete')
 param exportWithDelete bool 
 
+@description('Export Using isParallel')
+param isParallel bool 
+
 
 var envRandomString = toLower(uniqueString(subscription().id, name, location))
 var nameShort = length(name) > 10 ? substring(name, 0, 10) : name
@@ -92,6 +95,7 @@ module function './azureFunction.bicep'= {
         location: location
         exportWithHistory : exportWithHistory
         exportWithDelete : exportWithDelete
+        isParallel :isParallel
         appInsightsInstrumentationKey: monitoring.outputs.appInsightsInstrumentationKey
         functionSettings: union({
                 AZURE_DestinationUri: fhirServiceNameUrl

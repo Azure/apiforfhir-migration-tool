@@ -113,7 +113,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                                         GetMockTelemetryClient());
         }
 
-        internal static ImportOrchestrator GetTestImportOrchestrator(MigrationOptions config, IFhirProcessor importProcessor)
+        internal static ImportOrchestrator GetTestImportOrchestrator(MigrationOptions config, IFhirProcessor importProcessor, IAzureBlobClientFactory azureBlobClientFactory)
         {
             var orchestrationHelper = new Mock<IOrchestrationHelper>();
 
@@ -123,7 +123,8 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                                         GetMockAzureTableClientFactory().Object,
                                         GetMockMetadataStore().Object,
                                         orchestrationHelper.Object,
-                                        GetMockTelemetryClient());
+                                        GetMockTelemetryClient(),
+                                        azureBlobClientFactory);
         }
 
         internal static ImportStatusOrchestrator GetTestImportStatusOrchestrator(MigrationOptions config, IFhirProcessor importProcessor)
