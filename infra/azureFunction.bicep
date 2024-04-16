@@ -180,6 +180,16 @@ module functionstorageTableRoleAssignment './roleAssignment.bicep' = if (createR
   }
 }
 
+@description('Setup access between FHIR and the deployment script managed identity')
+module functionstorageBlobRoleAssignment './roleAssignment.bicep' = if (createRoleAssignment == true) {
+  name: 'storageBlob-access'
+  params: {
+    resourceId: functionApp.identity.principalId
+    roleId: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+    principalId: functionApp.identity.principalId
+  }
+}
+
 var defaultHostKey = listkeys('${functionApp.id}/host/default', '2016-08-01').functionKeys.default
 output functionAppKey string = defaultHostKey
 output functionAppName string = functionAppName
