@@ -96,10 +96,14 @@ Detailed steps:
 2. Import data to the **destination** Azure Health Data Services FHIR service.
 
 	1. Follow steps [here](https://learn.microsoft.com/azure/healthcare-apis/fhir/configure-import-data) to configure settings for import on Destination Azure Health Data Services FHIR Service.
+
+
+	   __Note__: Please review the [$import documentation](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#import-operation-modes) carefully to see the differences between initial mode and incremental mode, and choose the mode that best suits your needs. For example, if you wish to migrate historical versions and lastUpdated field values, you will need to use incremental mode. 
 	
 		__Note__: These instructions assume using the same storage account for $export from Azure API for FHIR and $import for Azure Health Data Services FHIR service. However, if you need to migrate data across two different subscriptions (the two subscriptions should be in the same region and Tenant ID) and cannot use the same storage account for $import and $export, you can follow the below steps to get the data copied over to the $import storage account:
 
 		- Use AzCopy command to copy the exported data from the export storage account to the import container configured for the AHDS FHIR server. Subsequently, you can proceed to create import payloads manually, and initiate the import process.This ensures smooth data migration within the same and across subscriptions.
+		
 
 		- How to use AzCopy 
 			- Download [AzCopy](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10) if you don't already have it.
@@ -115,16 +119,16 @@ Detailed steps:
 				azcopy copy 'https://{SourcestorageAccountName}.blob.core.windows.net/{ContainerName}/*' 'https://{DestinationstorageAccountName}.blob.core.windows.net/{ContainerName}' --recursive
 				```
 
-		__Note__: Please review the [$import documentation](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#import-operation-modes) carefully to see the differences between initial mode and incremental mode, and choose the mode that best suits your needs. For example, if you wish to migrate historical versions and lastUpdated field values, you will need to use incremental mode. 
-	
-	2. Prepare the $import body payload. <br> Options: <br> 
-	  a. You can prepare this manually by following $import documentation [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#calling-import). <br>
-
-	  b. Or, you can use the included OSS Powershell script in this repo that will automatically create the $import body payload from the export storage container for you.<br> 
+        - Move on to step 2a. If you are using different storage accounts, you must prepare the $import body payload manually. You cannot use the automated powershell script in this case.
 		
-	__Note__: When creating import payloads with a PowerShell script, make sure to use the same storage account while configuring the import on AHDS FHIR service which was configured for $export.This ensures smooth data migration of resources within the same and across subscriptions.
 	
-	The following explains how to use the $import body payload script:
+	2. Prepare the $import body payload. <br> 
+	
+	   Options: <br> 
+	  a. You can prepare this manually by following $import documentation [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#calling-import). Please note, if you are using two different storage accounts, you must use this option. <br> <br>
+	  b. Or, you can use the included OSS Powershell script in this repo that will automatically create the $import body payload from the export storage container for you. Please note, this Powershell script assumes that you have the same storage account for both $import and $export. If you are using two different storage accounts (for example, migrating data across subscriptions), you will need to use option A above  "prepare the $import body payload manually". <br> <br>
+		__Note__: When creating import payloads with a PowerShell script, make sure to use the same storage account while configuring the import on AHDS FHIR service which was configured for $export.This ensures smooth data migration of resources within the same and across subscriptions.
+	 The following explains how to use the $import body payload Powershell script:
    
    	- The PowerShell script will take the $export Content-Location as a parameter and will create the $import body payload that will be used when executing the $import command.
 	
