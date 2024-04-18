@@ -52,7 +52,7 @@ The  FHIR data migration tool executes a series of smaller export-import rounds 
 > Please ensure that your $import is set to **incremental import mode** in order for the migration tool to work. If needed, you may switch back to initial import mode post-migration. Set incremental import mode following these [configuration settings](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/configure-import-data#step-3b-set-import-configuration-for-incremental-import-mode) and [parameter value](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#body). Learn more about incremental and initial import [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data).
 
 
-__Note__ : The Data Migration tool supports cross-subscription deployment. <br>
+__Note__ : The Data Migration tool supports cross-subscription deployment, as long as they are in the same region and Tenant ID. <br>
 If your Azure API for FHIR server is in subscription A and Azure Health Data Services FHIR server is in subscription B, and the same storage account is configured as export and import configurations for Azure API for FHIR server and Azure Health Data Services FHIR server respectively. The Data migration tool will migrate the data from Azure API for FHIR in Subscription A to Azure Health Data Services FHIR service in subscription B.
 ## Deployed Components
 During the deployment of the FHIR data migration tool, the following components will be deployed:
