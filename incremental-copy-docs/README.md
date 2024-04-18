@@ -1,6 +1,6 @@
-# Incremental Copy Migration Tool
+# FHIR Data Migration Tool
 
-The incremental copy migration tool helps you continuously copy data from an Azure API for FHIR server to an Azure Health Data Services FHIR service. This migration tool is an Azure function app solution that utilizes [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) to export data from a source Azure API for FHIR server, and [$import](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) to import to a destination Azure Health Data Services FHIR service.
+The FHIR data migration tool helps you continuously copy data from an Azure API for FHIR server to an Azure Health Data Services FHIR service. This migration tool is an Azure function app solution that utilizes [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) to export data from a source Azure API for FHIR server, and [$import](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) to import to a destination Azure Health Data Services FHIR service.
 
 The API for FHIR migration tool is an [Azure durable function](https://learn.microsoft.com/azure/azure-functions/durable/) application and uses [Azure storage table](https://learn.microsoft.com/azure/storage/tables/table-storage-overview) for capturing and maintaining the status of the export-import operation.
 
@@ -9,7 +9,7 @@ The API for FHIR migration tool is an [Azure durable function](https://learn.mic
 ![Architecture](images/Migration-tool-V1.2-Architecture.png)
 
 ### Concepts
-The  incremental copy migration tool executes a series of smaller export-import rounds in succession in order to incrementally copy over **chunks** of data (default chunk is set at 30 days of data), checking every five minutes to check if the last export-import finished, and if there is new data to migrate. The five minute interval is set by the **orchestrator**. 
+The  FHIR data migration tool executes a series of smaller export-import rounds in succession in order to continuously copy over **chunks** of data (default chunk is set at 30 days of data), checking every five minutes to check if the last export-import finished, and if there is new data to migrate. The five minute interval is set by the **orchestrator**. 
   - **Chunks**: The migration tool will "chunk" the data into 30-day segments (based on the resources' lastUpdated timestamp) for each round of export-import. The default is 30 days and can be adjusted (more information below). Reducing the size of the export and imports helps with the efficiency of the migration tool and helps to minimize errors.
   - **Orchestrator**: Immediately after deploying the migration tool, the migration tool will find the earliest "chunk" of data and kick off a export, followed by an import. The orchestrator then checks every 5 minutes to see if the previous export-import round has finished. If the previous export-import round has indeed finished, it will kick off the migration of the next "chunk" of data to migrate, with the process continuing on and on until you choose to end the migration tool. The orchestrator will check every 5 minutes to see if there is new data since the last export-import in the origin Azure API for FHIR server to migrate over to the destination Azure Health Data Services FHIR server. This way, you can keep your Azure API for FHIR server up and running during the migration process, and choose exactly when to cut over to the new FHIR server.
 
@@ -43,7 +43,7 @@ If your Azure API for FHIR server is in subscription A and Azure Health Data Ser
 > Please ensure that your $import is set to **incremental import mode** in order for the migration tool to work. If needed, you may switch back to initial import mode post-migration. Set incremental import mode following these [configuration settings](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/configure-import-data#step-3b-set-import-configuration-for-incremental-import-mode) and [parameter value](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#body). Learn more about incremental and initial import [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data).
 
 ## Deployed Components
-During the deployment of the incremental copy migration tool, the following components will be deployed:
+During the deployment of the FHIR data migration tool, the following components will be deployed:
 
 1. Azure Functions app
 	- The data migration tool code is deployed in Azure Functions. The migration tool function app acts as the orchestrator.
