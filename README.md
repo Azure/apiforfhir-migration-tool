@@ -33,7 +33,7 @@ At a high level, this migration pattern involves:
 3. Configure a workflow to [\$export](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/export-data) your data on Azure API for FHIR, then [\$import](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/configure-import-data) into Azure Health Data Services FHIR Service. The Github repo has some tips on running these commands, as well as a script to help automate creating the \$import payload in the "Lift and Shift" folder [here](/lift-and-shift-resources/Liftandshiftresources_README.md).  Or, you can create your own tool to migrate the data using \$export and \$import.
 
 ## FHIR data migration tool
-### FHIR data Migration Tool Overview
+### FHIR Data Migration Tool Overview
 The OSS migration tool is an Azure Durable Function-based tool layered on top of existing FHIR server \$export and \$import functionality to orchestrate one-way migration of FHIR data. It continuously migrates new data to give you time to test your new FHIR server with your data, and flexibility to align your cutover with your organization’s existing maintenance windows.
 
 At a high level, this migration pattern involves:

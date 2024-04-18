@@ -4,6 +4,17 @@ The FHIR data migration tool helps you continuously copy data from an Azure API 
 
 The API for FHIR migration tool is an [Azure durable function](https://learn.microsoft.com/azure/azure-functions/durable/) application and uses [Azure storage table](https://learn.microsoft.com/azure/storage/tables/table-storage-overview) for capturing and maintaining the status of the export-import operation.
 
+### FHIR Data Migration Tool Overview
+The OSS migration tool is an Azure Durable Function-based tool layered on top of existing FHIR server \$export and \$import functionality to orchestrate one-way migration of FHIR data. It continuously migrates new data to give you time to test your new FHIR server with your data, and flexibility to align your cutover with your organization’s existing maintenance windows.
+
+At a high level, this migration pattern involves:
+
+1. Start moving chunks of data from Azure API for FHIR to Azure Health Data Services. The Azure API for FHIR can continue having new writes, updates, and soft deletes during this process. As long as [incremental mode $import](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#incremental-mode) is used, the writes, updates, and soft deletes that happen during the migration will be copied over to your new FHIR server. However, hard deletes that happen during the migration process will not be automatically copied over. Please see the [Appendix](/incremental-copy-docs/Appendix.md) for more information on hard deletes.
+2. Continuously copy new data from Azure API for FHIR to Azure Health Data Services. 
+3. After a majority of the data has been copied, stop all writes to Azure API for FHIR. Wait for the final $export/$imports to complete. 
+4. Cutover and point all applications and workloads to the new Azure Health Data Services FHIR service.
+5. Decommission Azure API for FHIR and stop the migration tool. 
+
 ## Architecture Overview
 
 ![Architecture](images/Migration-tool-V1.2-Architecture.png)
@@ -350,13 +361,16 @@ You can verify that the data was successfully copied over using the below checks
 		5. Hit the URL to check the status of surface and deep check.
 		6. Once the statusQueryGetUri response runtimeStatus is complete. There will be output for surface and deep check which will contain the resources checks for both the server.
 		
-## Stop Migration Tool
+## Stopping the Migration Tool
+
+Towards the end of migration, after a majority of the data has been copied, we recommend stopping all writes to Azure API for FHIR, and then waiting for the final $export/$imports to complete and for all the data to be migrated over to the new AHDS FHIR server prior to cutting over and starting to write to the new FHIR server. However, if you wish to start writing to the new AHDS FHIR server before the migration finishes, you can search, read, and POST new resources, but you should not update any resources. 
+
 
 You can stop the migration tool once the data migration from Azure API for FHIR instance to Azure Health Data Service FHIR service is completed.
 
-You can verfiy the data migration completion from Data Movement Verification step mentioned above.
+You can verify the data migration completion from Data Movement Verification step mentioned above.
 
-Please follow below step to stop the migration tool.
+Please follow below steps to stop the migration tool.
 
 ### Azure Portal
 1. Go to the resource group on Azure Portal where the data migration tool is deployed.
