@@ -9,7 +9,7 @@ The OSS migration tool is an Azure Durable Function-based tool layered on top of
 
 At a high level, this migration pattern involves:
 
-1. Start moving chunks of data from Azure API for FHIR to Azure Health Data Services. The Azure API for FHIR can continue having new writes, updates, and soft deletes during this process. As long as [incremental mode $import](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#incremental-mode) is used, the writes, updates, and soft deletes that happen during the migration will be copied over to your new FHIR server. However, hard deletes that happen during the migration process will not be automatically copied over. Please see the [Appendix](/incremental-copy-docs/Appendix.md) for more information on hard deletes.
+1. Start moving chunks of data from Azure API for FHIR to Azure Health Data Services. The Azure API for FHIR can continue having new writes, updates, and soft deletes during this process. As long as [incremental mode $import](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#incremental-mode) is used, the writes, updates, and soft deletes that happen during the migration will be copied over to your new FHIR server. However, hard deletes that happen during the migration process will not be automatically copied over. Please see the [Appendix](/FHIR-data-migration-tool-docs/Appendix.md) for more information on hard deletes.
 2. Continuously copy new data from Azure API for FHIR to Azure Health Data Services. 
 3. After a majority of the data has been copied, stop all writes to Azure API for FHIR. Wait for the final $export/$imports to complete. 
 4. Cutover and point all applications and workloads to the new Azure Health Data Services FHIR service.
@@ -27,7 +27,7 @@ The  FHIR data migration tool executes a series of smaller export-import rounds 
 
 
 # Prerequisites needed
-1. Review [general migration strategies]( https://learn.microsoft.com/azure/healthcare-apis/fhir/migration-strategies) and [limitations and list of configurations to configure](/incremental-copy-docs/Appendix.md) first. 
+1. Review [general migration strategies]( https://learn.microsoft.com/azure/healthcare-apis/fhir/migration-strategies) and [limitations and list of configurations to configure](/FHIR-data-migration-tool-docs/Appendix.md) first. 
 2.	Microsoft work or school account
 3.	FHIR instances.
 	-	**Source**: Azure API for FHIR server instance from where the data will be exported from.
@@ -70,7 +70,7 @@ During the deployment of the FHIR data migration tool, the following components 
 ## Deployment
 ### Portal Deployment
 
-To quickly deploy the Migration tool, you can use the Azure deployment below. Please note, if you are using Azure Private Link, please follow separate instructions for [deploying the migration tool with Azure Private Link](/incremental-copy-docs/private-link-sample/ReadMe.md).
+To quickly deploy the Migration tool, you can use the Azure deployment below. Please note, if you are using Azure Private Link, please follow separate instructions for [deploying the migration tool with Azure Private Link](/FHIR-data-migration-tool-docs/private-link-sample/ReadMe.md).
 
 1. Deploy the infrastructure for migration tool.
 	1. **OPTION A**: Deploy the migration tool through Azure Portal using the Deploy to Azure button
