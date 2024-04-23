@@ -88,7 +88,7 @@ namespace ApiForFhirMigrationTool.Function
                     string sinceValue = string.Empty;
                     string tillValue = string.Empty;
                     string resourceTypeValue = string.Empty;
-                    exportResponse = await _exportProcessor.CallProcess(method, string.Empty, _options.SourceUri, query, _options.SourceHttpClient);
+                     exportResponse = await _exportProcessor.CallProcess(method, string.Empty, _options.SourceUri, query, _options.SourceHttpClient);
 
                     TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                     TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
@@ -251,9 +251,16 @@ namespace ApiForFhirMigrationTool.Function
 
             if (updateSinceDate > DateTimeOffset.UtcNow)
             {
-#pragma warning disable CS8604 // Possible null reference argument.
-                updateSinceDate = _options.IsParallel == true? DateTimeOffset.UtcNow: DateTimeOffset.Parse(qEntity["globalTillExportType"].ToString());
-#pragma warning restore CS8604 // Possible null reference argument.
+                if (_options.IsParallel == true)
+                {
+                    updateSinceDate = DateTimeOffset.UtcNow;
+                }
+                else
+                {
+                    updateSinceDate = qEntity["globalTillExportType"]?.ToString() != ""
+                    ? DateTimeOffset.Parse((string)qEntity["globalTillExportType"])
+                    : DateTimeOffset.UtcNow;
+                }
             }
 
             since = since_new.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
@@ -313,7 +320,7 @@ namespace ApiForFhirMigrationTool.Function
                     {
                         index++;
                     }
-                    
+
                 } while (tot == 0 && IsLastRun == false);
                 if (qEntityGetResourceIndex?["multiExport"].ToString() == "Running")
                 {
@@ -331,7 +338,7 @@ namespace ApiForFhirMigrationTool.Function
                     qEntitynew["subSinceExportType"] = "";
                     qEntitynew["subTillExportType"] = "";
                     _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
-                   return "";
+                    return "";
                 }
                 else
                 {
