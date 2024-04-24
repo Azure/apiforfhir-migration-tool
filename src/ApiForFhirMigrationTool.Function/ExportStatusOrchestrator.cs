@@ -72,6 +72,9 @@ namespace ApiForFhirMigrationTool.Function
                                 bool conditionMet = false;
                                 for (int i = 2; i <= 3 && !conditionMet; i++)
                                 {
+                                    logger?.LogInformation($"200 response- Waiting for next complete status check for 1 minutes.");
+                                    DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(1));
+                                    await context.CreateTimer(waitTime, CancellationToken.None);
                                     response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExportStatusCheck), statusUrl);
                                     if (response.Status == ResponseStatus.Completed)
                                     {
