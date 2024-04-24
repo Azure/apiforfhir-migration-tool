@@ -65,6 +65,26 @@ namespace ApiForFhirMigrationTool.Function
                         {
                             statusUrl = item.GetString("exportContentLocation");
                             ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExportStatusCheck), statusUrl);
+
+                            if (response.Status == ResponseStatus.Completed)
+                            {
+                                logger?.LogInformation($"200 response no:- 1 for completed export- {statusUrl} ");
+                                bool conditionMet = false;
+                                for (int i = 2; i <= 3 && !conditionMet; i++)
+                                {
+                                    response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExportStatusCheck), statusUrl);
+                                    if (response.Status == ResponseStatus.Completed)
+                                    {
+                                        logger?.LogInformation($"200 response no:- {i} for completed export- {statusUrl}");
+                                    }
+                                    else
+                                    {
+                                        conditionMet = true;
+                                        logger?.LogInformation($"202 response for export- {statusUrl} ");
+                                    }
+                                }
+                            }
+
                             if (response.Status == ResponseStatus.Accepted)
                             {
                                 logger?.LogInformation($"Export Status check returned: InProgress.");
