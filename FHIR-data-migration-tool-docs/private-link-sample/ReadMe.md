@@ -1,4 +1,4 @@
-# Deploy the incremental copy migration tool manually (needed if you are using Azure Private Link)
+# Deploy the FHIR migration tool manually (needed if you are using Azure Private Link)
 
 If you are using Azure Private Link, the Deploy to Azure deployment of the migration tool will not work. Follow this tutorial to learn how to deploy the migration tool manually with Azure Private Link.
 
