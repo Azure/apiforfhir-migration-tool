@@ -1,4 +1,4 @@
-# Incremental Copy migration tool demo
+# FHIR data migration tool demo
 This sample will guide you through deploying a demo of the migration tool using an ARM/Bicep Template and subsequently testing the server using a Postman collection.
 
 
@@ -66,16 +66,16 @@ These steps guide you through deploying Azure resources using an ARM/Bicep Templ
 
 Now, you have deployed a brand new Azure API for FHIR server, intermediate storage account, and a new Azure Health Data Services FHIR server. These azure resources can be used to test out the migration tool.
 
-## Deploy Incremental Copy Migration Tool
+## Deploy FHIR Data Migration Tool
 
-- Follow the [instructions](/incremental-copy-docs/README.md) in this repository to deploy the incremental copy migration tool. It can now be used with your new FHIR servers for testing and demo purposes!
+- Follow the [instructions](/FHIR-data-migration-tool-docs/README.md) in this repository to deploy the FHIR data migration tool. It can now be used with your new FHIR servers for testing and demo purposes!
 
 - Follow the above step only if you haven't already deployed the migration tool app. If you have already deployed it, you can skip the above step.
 
-- After deploying the migration tool app, you can verify data movement from the ***API for the FHIR server*** to ***Azure Health Data Service FHIR*** using the [Data Movement Verification](/incremental-copy-docs/README.md#data-movement-verification) step.
+- After deploying the migration tool app, you can verify data movement from the ***API for the FHIR server*** to ***Azure Health Data Service FHIR*** using the [Data Movement Verification](/FHIR-data-migration-tool-docs/README.md#data-movement-verification) step.
 
-## Postman setup to test Incremental Copy Functionality 
-This section explains how to set up Postman for testing incremental copy functionality.
+## Postman setup to test FHIR Data Migration Tool Functionality 
+This section explains how to set up Postman for testing FHIR data migration tool functionality.
 
 **1. Set Up App Registration and Assign FHIR Data Contributor Role**
 
@@ -95,7 +95,7 @@ This section explains how to set up Postman for testing incremental copy functio
 - For the `fhir-migration-demo` Postman environment, retrieve the following values:
   - `tenantId` - AAD tenant ID (go to **AAD** -> **Overview** -> **Tenant ID**)
   - `clientId` - Application (client) ID for the Postman service client app (go to **AAD** -> **App registrations** -> `<postman-service-client-name>` -> **Overview** -> **Application (client) ID**)
-  - `clientSecret` - Client secret stored for Postman (see the [Deploy Incremental Copy Migration Tool](#deploy-incremental-copy-migration-tool) step) 
+  - `clientSecret` - Client secret stored for Postman (see the [Deploy FHIR Data Migration Tool](#deploy-FHIR-Data-migration-tool) step) 
     - hint - *client secret is generated during App Registration in AAD*
   - `sourceFhirUrl` - ***API for FHIR server*** service endpoint - e.g., `https://<fhir-service-name>.fhir.azurehealthcareapis.com` (go to **Resource Group** -> **Overview** -> `<fhir-service-name>` -> **FHIR metadata endpoint** and copy *without* "/metadata" at the end)
   - `sourceResource` - ***API for FHIR server*** service endpoint - e.g., `https://<fhir-service-name>.fhir.azurehealthcareapis.com` (same as `sourceFhirUrl`)
@@ -115,8 +115,8 @@ This section explains how to set up Postman for testing incremental copy functio
 
 **IMPORTANT:** Ensure that the `fhir-migration-demo` environment is active by selecting it from the dropdown menu above the **Send** button.
 
-## Test incremental copy functionality
-This section explains how to test incremental copy functionality using Postman.
+## Test FHIR data migration tool functionality
+This section explains how to test FHIR data migration tool functionality using Postman.
 
 **1. Inject Data into API for FHIR Server**
 
@@ -135,7 +135,7 @@ This section explains how to test incremental copy functionality using Postman.
 
 ![ReadUpdate-MsgHeader](images/ReadUpdate-MsgHeader.png)
 
-**3. Test Incremental Copy Functionality for MessageHeader**
+**3. Test FHIR data migration tool Functionality for MessageHeader**
 
 - Open the 'Fetch Source MessageHeader' request from the FHIR-DEMO. Select the GET method and proceed to click the send button to initiate the execution.
 
@@ -145,7 +145,7 @@ This section explains how to test incremental copy functionality using Postman.
 
 - Now, open the 'Fetch Dest MessageHeader' request from the FHIR-DEMO. Select the GET method and proceed to click the send button to initiate the execution.
 
-- Verify the 'versionId' with the 'versionId' from the 'Fetch Source MessageHeader' response. If the versionIds are the same, that means the data has been migrated from API for FHIR Server to Azure Health Data Service FHIR and the Incremental Copy Functionality is working fine.
+- Verify the 'versionId' with the 'versionId' from the 'Fetch Source MessageHeader' response. If the versionIds are the same, that means the data has been migrated from API for FHIR Server to Azure Health Data Service FHIR and the FHIR Data Migration Tool Functionality is working fine.
 
 
 ![Fetch-Dest-MsgHeader](images/Fetch-Dest-MsgHeader.png)
@@ -176,7 +176,7 @@ This section explains how to test incremental copy functionality using Postman.
 
 - **Note** - check only for those resource which you updated. In our case it would be the first patient resource containing id : 'PQC00000011'.
 
-**6. Test Incremental Copy Functionality for Post Bundle**
+**6. Test FHIR Data Migration Tool Functionality for Post Bundle**
 
 - Open the 'Fetch Source Patient' request from the FHIR-DEMO. Select the GET method and click the send button to initiate the execution.
 
@@ -187,7 +187,7 @@ This section explains how to test incremental copy functionality using Postman.
 
 - Now, open the 'Fetch Dest Patient' request from the FHIR-DEMO. Select the GET method and proceed to click the send button to initiate the execution.
 
-- Verify the 'versionId' with the 'versionId' from the 'Fetch Source Patient' response. If the versionIds are the same, that means the data has been migrated from API for FHIR Server to Azure Health Data Service FHIR and the Incremental Copy Functionality is working fine.
+- Verify the 'versionId' with the 'versionId' from the 'Fetch Source Patient' response. If the versionIds are the same, that means the data has been migrated from API for FHIR Server to Azure Health Data Service FHIR and the FHIR Data Migration Tool Functionality is working fine.
 
 
 ![Fetch-Dest-Patient](images/Fetch-Dest-Patient.png)

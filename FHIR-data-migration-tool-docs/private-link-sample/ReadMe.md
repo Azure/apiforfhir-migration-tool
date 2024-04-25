@@ -1,4 +1,4 @@
-# Deploy the incremental copy migration tool manually (needed if you are using Azure Private Link)
+# Deploy the FHIR migration tool manually (needed if you are using Azure Private Link)
 
 If you are using Azure Private Link, the Deploy to Azure deployment of the migration tool will not work. Follow this tutorial to learn how to deploy the migration tool manually with Azure Private Link.
 
@@ -104,7 +104,7 @@ If you are using Azure Private Link, the Deploy to Azure deployment of the migra
  For detailed instructions on securing the FHIR service's  import operation.
 
  ## 5. Deploy migration tool using ARM
- - To deploy the migration tool using Azure Resource Manager (ARM), please refer to the section "Deploy the migration tool manually" in this [documentation](/incremental-copy-docs/README.md).
+ - To deploy the migration tool using Azure Resource Manager (ARM), please refer to the section "Deploy the migration tool manually" in this [documentation](/FHIR-data-migration-tool-docs/README.md).
 
 ## 6. Configuring secure storage of data migration tool.
 This step provides detailed instructions for configuring secure storage of data migration tool. The process involves setting up networking configurations and creating a private endpoint to ensure secure access to your storage account.
