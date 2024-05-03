@@ -100,7 +100,7 @@ Detailed steps:
 
 	   __Note__: Please review the [$import documentation](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#import-operation-modes) carefully to see the differences between initial mode and incremental mode, and choose the mode that best suits your needs. For example, if you wish to migrate historical versions and lastUpdated field values, you will need to use incremental mode. 
 	
-		__Note__: These instructions assume using the same storage account for $export from Azure API for FHIR and $import for Azure Health Data Services FHIR service. However, if you need to migrate data across two different subscriptions (the two subscriptions should be in the same region and Tenant ID) and cannot use the same storage account for $import and $export, you can follow the below steps to get the data copied over to the $import storage account:
+		__Note__: These instructions assume using the same storage account for $export from Azure API for FHIR and $import for Azure Health Data Services FHIR service. However, if you need to migrate data across two different subscriptions (the two subscriptions should be in the same Tenant ID and $export storage account should be in same subscription as the Azure API for FHIR server) and cannot use the same storage account for $import and $export, you can follow the below steps to get the data copied over to the $import storage account:
 
 		- Use AzCopy command to copy the exported data from the export storage account to the import container configured for the AHDS FHIR server. Subsequently, you can proceed to create import payloads manually, and initiate the import process.This ensures smooth data migration within the same and across subscriptions.
 		
