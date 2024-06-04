@@ -235,12 +235,9 @@ namespace ApiForFhirMigrationTool.Function
 
                                             }
                                         }
-
                                         exportEntity1["CompletedCount"] = completeCount;
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity1);
-                                          resContent = string.Empty;
-                                          resourceCount = string.Empty;
-                                        statusUrl=string.Empty;
+                                        
                                     }
                                 }
 
@@ -259,7 +256,6 @@ namespace ApiForFhirMigrationTool.Function
                                     { "DestinationError", fhirServiceTotal.Item2 ?? " " },
                                 });
                                 isComplete = true;
-                                Console.WriteLine(item.GetString("TotalExportResourceCount"));
                             }
                             else
                             {
