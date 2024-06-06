@@ -1521,7 +1521,7 @@
                           "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
                           "settings": {
                             "content": {
-                              "Query": "let completed = customEvents\n| where name == \"Import\" and tostring(customDimensions.ImportStatus) == \"Completed\"\n| distinct  endTime = timestamp, importId = tostring(customDimensions.ImportId), resources = tostring(customDimensions.TotalResources)\n| order by endTime desc;\nlet started = customEvents\n| where name == \"Import\" and tostring(customDimensions.ImportStatus) == \"Started\"\n| distinct  startTime = timestamp, importId = tostring(customDimensions.ImportId)\n| order by startTime desc;\nlet result = completed\n| join kind=innerunique started on importId;\nresult\n| distinct importId, startTime, endTime, resources\n"
+                              "Query": "let completed = customEvents\n| where name == \"Import\" and tostring(customDimensions.ImportStatus) == \"Completed\"\n| distinct  endTime = timestamp, importId = tostring(customDimensions.ImportId), resources = tostring(customDimensions.TotalImportResources)\n| order by endTime desc;\nlet started = customEvents\n| where name == \"Import\" and tostring(customDimensions.ImportStatus) == \"Started\"\n| distinct  startTime = timestamp, importId = tostring(customDimensions.ImportId)\n| order by startTime desc;\nlet result = completed\n| join kind=innerunique started on importId;\nresult\n| distinct importId, startTime, endTime, resources\n"
                             }
                           },
                           "partHeader": {
