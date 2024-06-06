@@ -26,6 +26,9 @@ resource funcStorageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
     sku: {
         name: 'Standard_LRS'
     }
+    properties: {
+      allowSharedKeyAccess: false
+    }
     tags: appTags
 }
 
@@ -98,7 +101,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
     resource functionAppSettings 'config' = {
       name: 'appsettings'
       properties: union({
-              AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${funcStorageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${funcStorageAccount.listKeys().keys[0].value}'
+              AzureWebJobsStorage__accountname: storageAccountName
               FUNCTIONS_EXTENSION_VERSION: '~4'
               FUNCTIONS_WORKER_RUNTIME: 'dotnet-isolated'
               APPINSIGHTS_INSTRUMENTATIONKEY: appInsightsInstrumentationKey
@@ -186,6 +189,36 @@ module functionstorageBlobRoleAssignment './roleAssignment.bicep' = if (createRo
   params: {
     resourceId: functionApp.identity.principalId
     roleId: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+    principalId: functionApp.identity.principalId
+  }
+}
+
+@description('Setup access between FHIR and the deployment script managed identity')
+module functionstorageAccountAssignment './roleAssignment.bicep' = if (createRoleAssignment == true) {
+  name: 'storageAccount-access'
+  params: {
+    resourceId: functionApp.identity.principalId
+    roleId: '17d1049b-9a84-46fb-8f53-869881c3d3ab'
+    principalId: functionApp.identity.principalId
+  }
+}
+
+@description('Setup access between FHIR and the deployment script managed identity')
+module functionstorageBlobDataOwnerAssignment './roleAssignment.bicep' = if (createRoleAssignment == true) {
+  name: 'storageBlobDataOwner-access'
+  params: {
+    resourceId: functionApp.identity.principalId
+    roleId: 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b'
+    principalId: functionApp.identity.principalId
+  }
+}
+
+@description('Setup access between FHIR and the deployment script managed identity')
+module functionstorageQueueDataAssignment './roleAssignment.bicep' = if (createRoleAssignment == true) {
+  name: 'storageQueueData-access'
+  params: {
+    resourceId: functionApp.identity.principalId
+    roleId: '974c5e8b-45b9-4653-ba55-5f855dd0fb88'
     principalId: functionApp.identity.principalId
   }
 }
