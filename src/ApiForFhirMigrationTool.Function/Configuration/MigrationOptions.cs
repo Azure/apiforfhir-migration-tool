@@ -236,7 +236,6 @@ namespace ApiForFhirMigrationTool.Function.Configuration
                 "RiskAssessment",
                 "RiskEvidenceSynthesis",
                 "Schedule",
-                "SearchParameter",
                 "ServiceRequest",
                 "Slot",
                 "Specimen",
