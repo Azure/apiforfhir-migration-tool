@@ -51,6 +51,10 @@ namespace ApiForFhirMigrationTool.Function.OrchestrationHelper
                 {
                     foreach (var item in objOutput)
                     {
+                        if (item["type"].ToString() == "SearchParameter")
+                        {
+                            continue;
+                        }
                         if (counter == fileCount)
                         {
                             importRequest.Add("parameter", paramArray);
