@@ -53,25 +53,23 @@ namespace ApiForFhirMigrationTool.Function
             {
                 _options.ValidateConfig();
                 logger.LogInformation("Start MigrationOrchestration.");
+                TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 if (_options.IsParallel == true)
                 {
-                    TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-
                     Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
                     if (jobList.Count() <= 0)
                     {
                         var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
                         {
                             { "JobId", 0 },  
-                            {"ImportId",0 }
+                            {"ImportId",0 },
+                            {"SearchParameterMigration", false }
                         };
                         _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
                     }
                 }
                 else
                 {
-                    TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-
                     Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
                     if (jobList.Count() <= 0)
                     {
@@ -83,7 +81,8 @@ namespace ApiForFhirMigrationTool.Function
                             { "noOfResources", _options.ResourceTypes?.Count() },
                             { "resourceTypeIndex", 0 },
                             { "multiExport", "" },
-                             {"ImportId",0 }
+                             {"ImportId",0 },
+                             {"SearchParameterMigration", false }
                         };
                         _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
                     }
@@ -92,8 +91,16 @@ namespace ApiForFhirMigrationTool.Function
                         maxNumberOfAttempts: 3,
                         firstRetryInterval: TimeSpan.FromSeconds(5)));
 
-                // Run Activity for Search Parameter
-                 await context.CallActivityAsync("SearchParameterMigration");
+
+                Pageable<TableEntity> jobListSeacrh = chunktableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("SearchParameterMigration") == false);
+                if (jobListSeacrh.Count() > 0)
+                {
+                    // Run Activity for Search Parameter
+                    await context.CallActivityAsync("SearchParameterMigration");
+                    TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                    qEntitynew["SearchParameterMigration"] = true;
+                    _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                }
 
                 // Run sub orchestration for export and export status
                 var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
