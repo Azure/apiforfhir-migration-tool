@@ -296,6 +296,33 @@ There are two table storage created during deployment.
 	- The export-import content location is capture which can be used to get the extact error occured during export-import by fetching the details through URL.
 
 
+## Post Migration Steps
+
+### Migrating Search Parameters
+- The Data Migration tool moves the search parameters only once, which is before the migration starts, i.e., in the first iteration of Data Migration. 
+- If you add or update any SearchParameter resources after the first step of the migration tool, you must manually move those SearchParameter resources to the FHIR service.
+- To do this, get the newly added or updated SearchParameter resources from the Azure API for FHIR server one at a time and post them to the Azure Health Data Services FHIR service
+
+#### example
+
+- Use the FHIR API to get the details of the newly added or updated SearchParameter resource from the Azure API for FHIR server.
+
+	```
+	GET https://<AzureAPIForFHIRServer>/SearchParameter/[SearchParameter ID]
+	```			
+- Use the FHIR API to post the retrieved SearchParameter resource to the Azure Health Data Services FHIR service.
+    - Note: Use the response of the GET API as the body for the POST operation.
+	```
+	POST https://<AzureHealthDataServicesFHIRService>/SearchParameter
+	```		
+
+### Reindexing After Adding Custom Search Parameters and Completion of Migration
+- After completing the Data Migration from Azure API for FHIR server to Azure Health Data Services FHIR service, including the migration of SearchParameter resources, you need to run a reindex on the FHIR server to ensure the search parameters are recognized and used correctly.
+- You can run a reindex job on the entire FHIR service database or run a reindex job against a specific custom search parameter.
+- Refer this document for instructions on how to [run a reindex job on the entire FHIR service database.](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/how-to-run-a-reindex#run-reindex-job-on-entire-fhir-service-database)
+
+- Refer this document for instructions on how to [run a reindex job against a specific custom search parameter.](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/how-to-run-a-reindex#run-reindex-job-against-specific-custom-search-parameter)
+
 ## Troubleshooting
 
 1. Azure API for FHIR.

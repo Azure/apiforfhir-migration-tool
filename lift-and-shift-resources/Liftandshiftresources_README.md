@@ -126,8 +126,16 @@ Detailed steps:
 	
 	   Options: <br> 
 	  a. You can prepare this manually by following $import documentation [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#calling-import). Please note, if you are using two different storage accounts, you must use this option. <br> <br>
+	  __Note__: 
+		
+	  - To create an import body payload manually, you should avoid using the SearchParameter resource type since the import operation does not support it. 
+
 	  b. Or, you can use the included OSS Powershell script in this repo that will automatically create the $import body payload from the export storage container for you. Please note, this Powershell script assumes that you have the same storage account for both $import and $export. If you are using two different storage accounts (for example, migrating data across subscriptions), you will need to use option A above  "prepare the $import body payload manually". <br> <br>
-		__Note__: When creating import payloads with a PowerShell script, make sure to use the same storage account while configuring the import on AHDS FHIR service which was configured for $export.This ensures smooth data migration of resources within the same and across subscriptions.
+		__Note__: 
+		
+	-  When creating import payloads with a PowerShell script, make sure to use the same storage account while configuring the import on AHDS FHIR service which was configured for $export.This ensures smooth data migration of resources within the same and across subscriptions.<br>
+	- The PowerShell script excludes Custom Search Parameter NDJSON files while creating the import payload, as the Import operation is not supported for the SearchParameter resource type.
+		
 	 The following explains how to use the $import body payload Powershell script:
    
    	- The PowerShell script will take the $export Content-Location as a parameter and will create the $import body payload that will be used when executing the $import command.
