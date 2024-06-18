@@ -51,38 +51,37 @@ namespace ApiForFhirMigrationTool.Function.OrchestrationHelper
                 {
                     foreach (var item in objOutput)
                     {
-                        if (item["type"].ToString() == "SearchParameter")
+                        if (item?["type"]?.ToString() != "SearchParameter")
                         {
-                            continue;
-                        }
-                        if (counter == fileCount)
-                        {
-                            importRequest.Add("parameter", paramArray);
-                            SaveImportRequestToFile(importRequest, importPayloadCount, statusId);
-                            importRequest = new JObject();
-                            importRequest.Add("resourceType", "Parameters");
-                            paramArray = new JArray();
-                            paramArray.Add(inputFormat);
-                            paramArray.Add(mode);
+                            if (counter == fileCount)
+                            {
+                                importRequest.Add("parameter", paramArray);
+                                SaveImportRequestToFile(importRequest, importPayloadCount, statusId);
+                                importRequest = new JObject();
+                                importRequest.Add("resourceType", "Parameters");
+                                paramArray = new JArray();
+                                paramArray.Add(inputFormat);
+                                paramArray.Add(mode);
 
-                            counter = 0;
-                            importPayloadCount++;
-                        }
-                        JObject input = new JObject();
-                        input.Add("name", "input");
-                        JArray partArray = new JArray();
-                        JObject type = new JObject();
-                        type.Add("name", "type");
-                        type.Add("valueString", item["type"]);
-                        partArray.Add(type);
-                        JObject url = new JObject();
-                        url.Add("name", "url");
-                        url.Add("valueString", item["url"]);
-                        partArray.Add(url);
+                                counter = 0;
+                                importPayloadCount++;
+                            }
+                            JObject input = new JObject();
+                            input.Add("name", "input");
+                            JArray partArray = new JArray();
+                            JObject type = new JObject();
+                            type.Add("name", "type");
+                            type.Add("valueString", item["type"]);
+                            partArray.Add(type);
+                            JObject url = new JObject();
+                            url.Add("name", "url");
+                            url.Add("valueString", item["url"]);
+                            partArray.Add(url);
 
-                        input.Add("part", partArray);
-                        paramArray.Add(input);
-                        counter++;
+                            input.Add("part", partArray);
+                            paramArray.Add(input);
+                            counter++;
+                        }
                     }
                     importRequest.Add("parameter", paramArray);
                     SaveImportRequestToFile(importRequest, importPayloadCount, statusId);

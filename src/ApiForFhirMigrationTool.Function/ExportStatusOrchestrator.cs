@@ -228,11 +228,14 @@ namespace ApiForFhirMigrationTool.Function
 
         private bool CheckIfAllTypesAreSearchParameter(JArray? objOutput)
         {
-            foreach (var item in objOutput)
+            if (objOutput != null)
             {
-                if (item["type"].ToString() != "SearchParameter")
+                foreach (var item in objOutput)
                 {
-                    return false;
+                    if (item?["type"]?.ToString() != "SearchParameter")
+                    {
+                        return false;
+                    }
                 }
             }
 
