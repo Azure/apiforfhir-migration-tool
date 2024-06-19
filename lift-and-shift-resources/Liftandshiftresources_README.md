@@ -128,7 +128,7 @@ Detailed steps:
 	  a. You can prepare this manually by following $import documentation [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#calling-import). Please note, if you are using two different storage accounts, you must use this option. <br> <br>
 	  __Note__: 
 		
-	  - To create an import body payload manually, you should avoid using the SearchParameter resource type since the import operation does not support it. 
+	  - While creating an import body payload manually, you should avoid using the SearchParameter resource type in import payload since the import operation does not support it. 
 
 	  b. Or, you can use the included OSS Powershell script in this repo that will automatically create the $import body payload from the export storage container for you. Please note, this Powershell script assumes that you have the same storage account for both $import and $export. If you are using two different storage accounts (for example, migrating data across subscriptions), you will need to use option A above  "prepare the $import body payload manually". <br> <br>
 		__Note__: 
