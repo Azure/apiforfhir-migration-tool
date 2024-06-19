@@ -303,7 +303,7 @@ There are two table storage created during deployment.
 - If you add or update any SearchParameter resources after the first step of the migration tool, you must manually move those SearchParameter resources to the FHIR service.
 - To do this, get the newly added or updated SearchParameter resources from the Azure API for FHIR server one at a time and post them to the Azure Health Data Services FHIR service
 
-#### example
+#### Example
 
 - Use the FHIR API to get the details of the newly added or updated SearchParameter resource from the Azure API for FHIR server.
 
