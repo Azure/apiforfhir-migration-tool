@@ -22,6 +22,27 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
             position: {
               x: 0
               y: 0
+              colSpan: 8
+              rowSpan: 2
+            }
+            metadata: {
+              inputs: []
+              type: 'Extension/HubsExtension/PartType/MarkdownPart'
+              settings: {
+                content: {
+                  content: '<h3><strong><span style="color: black;">Post Migration Step</span></strong><h3>\n<h4><strong><span style="color: black;">Mandatory Step: $Reindex Operation on FHIR Service</span></strong><h4>\n\nAfter completing the data migration from the Azure API for FHIR server to the Azure Health Data Services FHIR service, including the migration of SearchParameter resources, it is essential to run a reindex on the FHIR server. \nThis step ensures that the search parameters are properly recognized and utilized. \n\nRefer this document for instructions on how to [run a reindex job on the entire FHIR service database.](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/how-to-run-a-reindex#run-reindex-job-on-entire-fhir-service-database)\n\nRefer this document for instructions on how to [run a reindex job against a specific custom search parameter.](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/how-to-run-a-reindex#run-reindex-job-against-specific-custom-search-parameter)\n'
+                  title: ''
+                  subtitle: ''
+                  markdownSource: 1
+                  markdownUri: ''
+                }
+              }
+            }
+          }
+          {
+            position: {
+              x: 0
+              y: 2
               colSpan: 4
               rowSpan: 1
             }
@@ -46,7 +67,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 4
-              y: 0
+              y: 2
               colSpan: 4
               rowSpan: 1
             }
@@ -79,7 +100,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
               inputs: [
                 {
                   name: 'id'
-                  value: applicationInsights.id
+                  value: resourceId('Microsoft.Insights/components', applicationInsightsName)
                 }
                 {
                   name: 'Version'
@@ -106,7 +127,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                 {
                   name: 'ComponentId'
                   value: {
-                    Name: applicationInsights.name
+                    Name: applicationInsightsName
                     SubscriptionId: subscription().subscriptionId
                     ResourceGroup: resourceGroup().name
                   }
@@ -136,14 +157,14 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                 {
                   name: 'ComponentId'
                   value: {
-                    Name: applicationInsights.name
+                    Name: applicationInsightsName
                     SubscriptionId: subscription().subscriptionId
                     ResourceGroup: resourceGroup().name
                   }
                 }
                 {
                   name: 'ResourceId'
-                  value: applicationInsights.id
+                  value: resourceId('Microsoft.Insights/components', applicationInsightsName)
                 }
               ]
               type: 'Extension/AppInsightsExtension/PartType/QuickPulseButtonSmallPart'
@@ -165,7 +186,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                 {
                   name: 'ComponentId'
                   value: {
-                    Name: applicationInsights.name
+                    Name: applicationInsightsName
                     SubscriptionId: subscription().subscriptionId
                     ResourceGroup: resourceGroup().name
                   }
@@ -213,7 +234,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                 {
                   name: 'ComponentId'
                   value: {
-                    Name: applicationInsights.name
+                    Name: applicationInsightsName
                     SubscriptionId: subscription().subscriptionId
                     ResourceGroup: resourceGroup().name
                   }
@@ -269,7 +290,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 0
-              y: 1
+              y: 3
               colSpan: 4
               rowSpan: 2
             }
@@ -287,7 +308,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -368,7 +389,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 4
-              y: 1
+              y: 3
               colSpan: 4
               rowSpan: 2
             }
@@ -386,7 +407,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -492,7 +513,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
               inputs: [
                 {
                   name: 'ResourceId'
-                  value: applicationInsights.id
+                  value: resourceId('Microsoft.Insights/components', applicationInsightsName)
                 }
                 {
                   name: 'DataModel'
@@ -555,7 +576,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
               inputs: [
                 {
                   name: 'ResourceId'
-                  value: applicationInsights.id
+                  value: resourceId('Microsoft.Insights/components', applicationInsightsName)
                 }
                 {
                   name: 'DataModel'
@@ -602,7 +623,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                       metrics: [
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'requests/failed'
                           aggregationType: 7
@@ -638,7 +659,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                           extensionName: 'HubsExtension'
                           bladeName: 'ResourceMenuBlade'
                           parameters: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                             menuid: 'failures'
                           }
                         }
@@ -659,7 +680,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                       metrics: [
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'requests/failed'
                           aggregationType: 7
@@ -696,7 +717,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                           extensionName: 'HubsExtension'
                           bladeName: 'ResourceMenuBlade'
                           parameters: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                             menuid: 'failures'
                           }
                         }
@@ -723,7 +744,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                       metrics: [
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'requests/duration'
                           aggregationType: 4
@@ -759,7 +780,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                           extensionName: 'HubsExtension'
                           bladeName: 'ResourceMenuBlade'
                           parameters: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                             menuid: 'performance'
                           }
                         }
@@ -780,7 +801,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                       metrics: [
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'requests/duration'
                           aggregationType: 4
@@ -817,7 +838,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                           extensionName: 'HubsExtension'
                           bladeName: 'ResourceMenuBlade'
                           parameters: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                             menuid: 'performance'
                           }
                         }
@@ -831,7 +852,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 0
-              y: 3
+              y: 5
               colSpan: 4
               rowSpan: 2
             }
@@ -849,7 +870,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -934,7 +955,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 4
-              y: 3
+              y: 5
               colSpan: 4
               rowSpan: 2
             }
@@ -952,7 +973,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -1033,7 +1054,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 0
-              y: 5
+              y: 7
               colSpan: 4
               rowSpan: 2
             }
@@ -1051,7 +1072,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -1128,7 +1149,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 4
-              y: 5
+              y: 7
               colSpan: 4
               rowSpan: 2
             }
@@ -1146,7 +1167,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -1236,7 +1257,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                       metrics: [
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'exceptions/server'
                           aggregationType: 7
@@ -1248,7 +1269,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                         }
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'dependencies/failed'
                           aggregationType: 7
@@ -1294,7 +1315,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                       metrics: [
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'exceptions/server'
                           aggregationType: 7
@@ -1306,7 +1327,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                         }
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'dependencies/failed'
                           aggregationType: 7
@@ -1359,7 +1380,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                       metrics: [
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'performanceCounters/processorCpuPercentage'
                           aggregationType: 4
@@ -1371,7 +1392,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                         }
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'performanceCounters/processCpuPercentage'
                           aggregationType: 4
@@ -1417,7 +1438,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                       metrics: [
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'performanceCounters/processorCpuPercentage'
                           aggregationType: 4
@@ -1429,7 +1450,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                         }
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'performanceCounters/processCpuPercentage'
                           aggregationType: 4
@@ -1469,7 +1490,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 0
-              y: 7
+              y: 9
               colSpan: 4
               rowSpan: 2
             }
@@ -1487,7 +1508,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -1564,7 +1585,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 4
-              y: 7
+              y: 9
               colSpan: 4
               rowSpan: 2
             }
@@ -1582,7 +1603,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -1672,7 +1693,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                       metrics: [
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'performanceCounters/processIOBytesPerSecond'
                           aggregationType: 4
@@ -1718,7 +1739,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                       metrics: [
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'performanceCounters/processIOBytesPerSecond'
                           aggregationType: 4
@@ -1857,7 +1878,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 0
-              y: 9
+              y: 11
               colSpan: 4
               rowSpan: 2
             }
@@ -1875,7 +1896,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -1952,7 +1973,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 4
-              y: 9
+              y: 11
               colSpan: 4
               rowSpan: 2
             }
@@ -1970,7 +1991,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -2074,7 +2095,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                       metrics: [
                         {
                           resourceMetadata: {
-                            id: applicationInsights.id
+                            id: resourceId('Microsoft.Insights/components', applicationInsightsName)
                           }
                           name: 'availabilityResults/count'
                           aggregationType: 1
@@ -2114,7 +2135,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 4
-              y: 13
+              y: 15
               colSpan: 4
               rowSpan: 2
             }
@@ -2132,7 +2153,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -2209,7 +2230,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 0
-              y: 11
+              y: 13
               colSpan: 4
               rowSpan: 2
             }
@@ -2227,7 +2248,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -2257,7 +2278,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                 }
                 {
                   name: 'Query'
-                 value: 'let completed = customEvents\n| where name == "Export" and tostring(customDimensions.ExportStatus) == "Failed"\n| distinct  endTime = timestamp, exportId = tostring(customDimensions.ExportId), reason = tostring(customDimensions.FailureReason)\n| order by endTime desc;\nlet started = customEvents\n| where name == "Export" and tostring(customDimensions.ExportStatus) == "Started"\n| distinct  startTime = timestamp, exportId = tostring(customDimensions.ExportId)\n| order by startTime desc;\nlet result = completed\n| join kind=innerunique started on exportId;\nresult\n| distinct exportId,reason, startTime, endTime\n\n'
+                  value: 'let completed = customEvents\n| where name == "Export" and tostring(customDimensions.ExportStatus) == "Failed"\n| distinct  endTime = timestamp, exportId = tostring(customDimensions.ExportId), reason = tostring(customDimensions.FailureReason)\n| order by endTime desc;\nlet started = customEvents\n| where name == "Export" and tostring(customDimensions.ExportStatus) == "Started"\n| distinct  startTime = timestamp, exportId = tostring(customDimensions.ExportId)\n| order by startTime desc;\nlet result = completed\n| join kind=innerunique started on exportId;\nresult\n| distinct exportId,reason, startTime, endTime\n\n'
                   isOptional: true
                 }
                 {
@@ -2304,7 +2325,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 4
-              y: 11
+              y: 13
               colSpan: 4
               rowSpan: 2
             }
@@ -2322,7 +2343,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   name: 'Scope'
                   value: {
                     resourceIds: [
-                      applicationInsights.id
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
                     ]
                   }
                   isOptional: true
@@ -2399,7 +2420,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 0
-              y: 13
+              y: 15
               colSpan: 4
               rowSpan: 2
             }
@@ -2498,7 +2519,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           {
             position: {
               x: 0
-              y: 15
+              y: 17
               colSpan: 4
               rowSpan: 2
             }
