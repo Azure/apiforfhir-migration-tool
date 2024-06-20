@@ -118,7 +118,9 @@ namespace ApiForFhirMigrationTool.Function
                                 {
                                     JObject objResponse = JObject.Parse(resContent);
                                     var objOutput = objResponse["output"] as JArray;
-                                    if (objOutput != null && objOutput.Any())
+                                    bool result = CheckIfAllTypesAreSearchParameter(objOutput);
+
+                                    if (objOutput != null && objOutput.Any() && result==false)
                                     {
                                         var payload_count = _orchestrationHelper.CreateImportRequest(response.Content, _options.ImportMode, statusUrl);
                                         var resourceCount = _orchestrationHelper.CalculateSumOfResources(objOutput).ToString(CultureInfo.InvariantCulture);
@@ -222,6 +224,22 @@ namespace ApiForFhirMigrationTool.Function
             }
 
             return "Completed";
+        }
+
+        private bool CheckIfAllTypesAreSearchParameter(JArray? objOutput)
+        {
+            if (objOutput != null)
+            {
+                foreach (var item in objOutput)
+                {
+                    if (item?["type"]?.ToString() != "SearchParameter")
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         [Function(nameof(ProcessExportStatusCheck))]

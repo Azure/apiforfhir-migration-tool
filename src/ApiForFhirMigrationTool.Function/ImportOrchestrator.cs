@@ -200,6 +200,7 @@ namespace ApiForFhirMigrationTool.Function
                                         exportEntity["IsImportRunning"] = "failed";
                                         exportEntity["FailureReason"] = diagnosticsValue;
                                         exportEntity["ImportNo"] = blobItem.Name;
+                                        exportEntity["IsProcessed"] = true;
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                         _telemetryClient.TrackEvent(
                                         "Import",
@@ -239,8 +240,9 @@ namespace ApiForFhirMigrationTool.Function
                                     {"ExportEndTime",item.GetDateTime("ExportEndTime")  },
                                     { "ExportId",  statusId },
                                     { "ImportNo",blobItem.Name},
+                                    { "IsProcessed",true }
 
-                                };
+                                        };
                                             _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
 
                                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
