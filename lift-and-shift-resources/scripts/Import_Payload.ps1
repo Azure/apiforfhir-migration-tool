@@ -87,56 +87,56 @@ try {
         $parameter.Add(@{"name"="mode";"valueString"="IncrementalLoad"}) > $null
 
         for ($i = 0; $i -le $output.output.Count; $i++) {
-            if($output.output[$i].type -ne "SearchParameter")
-            {
-                if($counter -eq $file_count){
 
-                    $jsonBase.Add("parameter",$parameter) > $null
-                    $jsonBase.Add("resourceType","Parameters") > $null
+            if($output.output[$i].type -ne "SearchParameter"){
+            
+            if($counter -eq $file_count){
 
-                    $Folder = '.\Import_Payload'
-                    if (-not (Test-Path $Folder)) {
-                        New-Item -Path '.\Import_Payload' -ItemType Directory > $null
-                    }  
-                    $jsonBase | ConvertTo-Json -Depth 5 | Out-File ".\Import_Payload\import_payload_$import_payload_count.json"
-                    Write-Host "Creation of Import body is completed." -ForegroundColor Green
-                    
-                    $jsonBase = @{}
-                    [System.Collections.ArrayList]$parameter= @()
-                    [System.Collections.ArrayList]$input_part= @()
-                    $parameter.Add(@{"name"="inputFormat";"valueString"="application/fhir+ndjson"}) > $null
-                    $parameter.Add(@{"name"="mode";"valueString"="IncrementalLoad"}) > $null
+                $jsonBase.Add("parameter",$parameter) > $null
+                $jsonBase.Add("resourceType","Parameters") > $null
 
-                    $counter = 0
-                    $import_payload_count++
-                }
+                $Folder = '.\Import_Payload'
+                if (-not (Test-Path $Folder)) {
+                    New-Item -Path '.\Import_Payload' -ItemType Directory > $null
+                }  
+                $jsonBase | ConvertTo-Json -Depth 5 | Out-File ".\Import_Payload\import_payload_$import_payload_count.json"
+                Write-Host "Creation of Import body is completed." -ForegroundColor Green
+                
+                $jsonBase = @{}
+                [System.Collections.ArrayList]$parameter= @()
+                [System.Collections.ArrayList]$input_part= @()
+                $parameter.Add(@{"name"="inputFormat";"valueString"="application/fhir+ndjson"}) > $null
+                $parameter.Add(@{"name"="mode";"valueString"="IncrementalLoad"}) > $null
 
-                elseif ($output.output.Count -eq $i -and $parameter.Count -ge 2 ) {
-                    $jsonBase.Add("parameter",$parameter) > $null
-                    $jsonBase.Add("resourceType","Parameters") > $null
+                $counter = 0
+                $import_payload_count++
+            }
 
-                    $Folder = '.\Import_Payload'
-                    if (-not (Test-Path $Folder)) {
-                        New-Item -Path '.\Import_Payload' -ItemType Directory > $null
-                    }  
-                    $jsonBase | ConvertTo-Json -Depth 5 | Out-File ".\Import_Payload\import_payload_$import_payload_count.json"
-                    Write-Host "Creation of Import body is completed." -ForegroundColor Green
-                }
+            elseif ($output.output.Count -eq $i -and $parameter.Count -ge 2 ) {
+                $jsonBase.Add("parameter",$parameter) > $null
+                $jsonBase.Add("resourceType","Parameters") > $null
 
-                if ($output.output[$i]) {
-                    $type = $output.output[$i].type
-                    $url = $output.output[$i].url
-                    $input_part.Add(@{"name"="type";"valueString"=$type}) > $null
-                    $input_part.Add(@{"name"="url";"valueString"=$url}) > $null
+                $Folder = '.\Import_Payload'
+                if (-not (Test-Path $Folder)) {
+                    New-Item -Path '.\Import_Payload' -ItemType Directory > $null
+                }  
+                $jsonBase | ConvertTo-Json -Depth 5 | Out-File ".\Import_Payload\import_payload_$import_payload_count.json"
+                Write-Host "Creation of Import body is completed." -ForegroundColor Green
+            }
 
-                    $parameter.Add(@{"name"="input";"part"=$input_part}) > $null
+            if ($output.output[$i]) {
+                $type = $output.output[$i].type
+                $url = $output.output[$i].url
+                $input_part.Add(@{"name"="type";"valueString"=$type}) > $null
+                $input_part.Add(@{"name"="url";"valueString"=$url}) > $null
 
-                    [System.Collections.ArrayList]$input_part= @()
-                    $counter++
-                }                                                              
-            }                        
-        }
-    }
+                $parameter.Add(@{"name"="input";"part"=$input_part}) > $null
+
+                [System.Collections.ArrayList]$input_part= @()
+                $counter++
+            }                                                              
+        }   
+    }                     
 }
 catch {
     Write-Host "An error occurred:"
