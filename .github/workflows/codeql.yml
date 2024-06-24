@@ -9,7 +9,7 @@ on:
 jobs:
   CodeQL-Build:
    
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     permissions:
       actions: read
@@ -18,14 +18,14 @@ jobs:
       
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Fetch all history for all tags and branches
       run: |
         git fetch --prune --unshallow
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@v2
       with:
         languages: 'csharp'
 
@@ -33,9 +33,9 @@ jobs:
       run: dotnet restore
 
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
+      uses: github/codeql-action/autobuild@v2
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@v2
       with:
         category: "/language:csharp"
