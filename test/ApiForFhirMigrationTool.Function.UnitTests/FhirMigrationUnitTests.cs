@@ -217,7 +217,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
             var searchParameterMigrationProcessor = new Mock<ISearchParameterOperation>()
                                     .SetupSearchParameterOperationResponse();
 
-            await TestHelpers.GetTestSearchParameterActivity(searchParameterMigrationProcessor.Object)
+            await TestHelpers.GetTestSearchParameterActivity(_config, searchParameterMigrationProcessor.Object)
                                         .SearchParameterMigration(_mockFunctionContext.Object);
 
             searchParameterMigrationProcessor.Verify(x => x.GetSearchParameters(), Times.Once());

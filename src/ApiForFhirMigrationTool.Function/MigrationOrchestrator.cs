@@ -92,15 +92,8 @@ namespace ApiForFhirMigrationTool.Function
                         firstRetryInterval: TimeSpan.FromSeconds(5)));
 
 
-                Pageable<TableEntity> jobListSeacrh = chunktableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("SearchParameterMigration") == false);
-                if (jobListSeacrh.Count() > 0)
-                {
-                    // Run Activity for Search Parameter
-                    await context.CallActivityAsync("SearchParameterMigration");
-                    TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
-                    qEntitynew["SearchParameterMigration"] = true;
-                    _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
-                }
+                // Run sub orchestration for search parameter
+                var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
 
                 // Run sub orchestration for export and export status
                 var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);

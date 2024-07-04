@@ -7,6 +7,11 @@ using ApiForFhirMigrationTool.Function.SearchParameterOperation;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using Microsoft.DurableTask;
+using ApiForFhirMigrationTool.Function.Models;
+using Azure.Data.Tables;
+using Azure;
+using ApiForFhirMigrationTool.Function.Configuration;
 
 namespace ApiForFhirMigrationTool.Function.Migration
 {
@@ -14,11 +19,52 @@ namespace ApiForFhirMigrationTool.Function.Migration
     {
         private readonly ISearchParameterOperation _searchParameterOperation;
         private readonly ILogger _logger;
+        private readonly MigrationOptions _options;
+        private readonly IAzureTableClientFactory _azureTableClientFactory;
+        private readonly IMetadataStore _azureTableMetadataStore;
 
-        public SearchParameterMigrationActivity(ISearchParameterOperation searchParameterOperation, ILogger<SearchParameterMigrationActivity> logger)
+        public SearchParameterMigrationActivity(ISearchParameterOperation searchParameterOperation, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, MigrationOptions options, ILogger<SearchParameterMigrationActivity> logger)
         {
             _searchParameterOperation = searchParameterOperation;
             _logger = logger;
+            _options = options;
+            _azureTableClientFactory = azureTableClientFactory;
+            _azureTableMetadataStore = azureTableMetadataStore;
+        }
+
+
+        [Function(nameof(SearchParameterOrchestration))]
+        public async Task<string> SearchParameterOrchestration(
+            [OrchestrationTrigger] TaskOrchestrationContext context)
+        {
+            ILogger logger = context.CreateReplaySafeLogger(nameof(SearchParameterOrchestration));
+            logger.LogInformation("Starting Search Parameter activities.");
+            var statusRespose = new HttpResponseMessage();
+            var statusUrl = string.Empty;
+            var import_body = string.Empty;
+
+            try
+            {
+                TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+                TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+
+                Pageable<TableEntity> jobListSeacrh = chunktableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("SearchParameterMigration") == false);
+                if (jobListSeacrh.Count() > 0)
+                {
+                    // Run Activity for Search Parameter
+                    await context.CallActivityAsync("SearchParameterMigration");
+
+                    TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                    qEntitynew["SearchParameterMigration"] = true;
+                    _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                }
+            }
+            catch
+            {
+                throw;
+            }
+
+            return "Completed";
         }
 
         [Function(nameof(SearchParameterMigration))]
