@@ -86,7 +86,7 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         public string ChunkTableName { get; set; } = string.Empty;
 
         [JsonProperty("ExportChunkTime")]
-        public int ExportChunkTime { get; set; } = 30;
+        public int ExportChunkTime { get; set; } = 90;
 
         [JsonProperty("ExportChunkDuration")]
         public string ExportChunkDuration { get; set; } = "Days";
@@ -105,6 +105,12 @@ namespace ApiForFhirMigrationTool.Function.Configuration
 
         [JsonProperty("isParallel")]
         public bool IsParallel { get; set; } = true;
+
+        [JsonProperty("isExportDeidentified")]
+        public bool IsExportDeidentified { get; set; } = true;
+
+        [JsonProperty("configFile")]
+        public string ConfigFile { get; set; } = string.Empty;
 
         [JsonProperty("chunkLimit")]
         public int ChunkLimit = 100000000;

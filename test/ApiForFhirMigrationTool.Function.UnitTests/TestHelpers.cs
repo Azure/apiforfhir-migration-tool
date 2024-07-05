@@ -361,11 +361,11 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
             return importProcessor;
         }
 
-        internal static SearchParameterMigrationActivity GetTestSearchParameterActivity(ISearchParameterOperation searchParameterOperation)
+        internal static SearchParameterMigrationActivity GetTestSearchParameterActivity(MigrationOptions config, ISearchParameterOperation searchParameterOperation)
         {
             var loggerMock = new Mock<ILogger<SearchParameterMigrationActivity>>();
 
-            return new SearchParameterMigrationActivity(searchParameterOperation, loggerMock.Object);
+            return new SearchParameterMigrationActivity(searchParameterOperation, GetMockAzureTableClientFactory().Object, GetMockMetadataStore().Object, config, loggerMock.Object);
         }
 
         internal static Mock<ISearchParameterOperation> SetupSearchParameterOperationResponse(this Mock<ISearchParameterOperation> searchParamterOperationClient)

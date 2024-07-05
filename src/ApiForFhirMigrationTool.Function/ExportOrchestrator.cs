@@ -275,7 +275,15 @@ namespace ApiForFhirMigrationTool.Function
             {
                 var checkValidRequest = CheckResourceCount(since, till, _options.ExportChunkTime, _options.ExportChunkDuration);
                 till = checkValidRequest.Result.ToString();
-                setUrl = $"/$export?_isParallel={_options.IsParallel.ToString().ToLower()}";
+                if (_options.IsExportDeidentified == true)
+                {
+                    string configFileName = Path.GetFileNameWithoutExtension(_options.ConfigFile);
+                    setUrl = $"/$export?_isParallel={_options.IsParallel.ToString().ToLower()}&_container=anonymization&_anonymizationConfig={configFileName}.json";
+                }
+                else
+                {
+                    setUrl = $"/$export?_isParallel={_options.IsParallel.ToString().ToLower()}";
+                }
             }
             else
             {
