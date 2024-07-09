@@ -159,6 +159,42 @@
                                     "required": true
                                 },
                                 "visible": true
+                            },
+                            {
+                                "name": "exportDeidentified",
+                                "type": "Microsoft.Common.DropDown",
+                                "label": "Export deidentified data",
+                                "defaultValue":"False",
+                                "toolTip": "",
+                                "dependsOn": [
+                                    "[steps('fhirSelection').fhirSection.isParallel]"
+                                  ],
+                                "constraints": {
+                                    "allowedValues": [
+                                        {
+                                            "label": "True",
+                                            "value": true
+                                        },
+                                        {
+                                            "label": "False",
+                                            "value": false
+                                        }
+                                    ],
+                                    "required": true
+                                },
+                                "visible": "[steps('fhirSelection').fhirSection.isParallel]"
+                            },
+                            {
+                                "name": "configurationFile",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Configuration File Name",
+                                "dependsOn": [
+                                    "[steps('fhirSelection').fhirSection.exportDeidentified]",
+                                    "[steps('fhirSelection').fhirSection.isParallel]"
+                                  ],
+                                "placeholder": "Enter Configuration File Name",
+                                "visible":"[steps('fhirSelection').fhirSection.exportDeidentified]"
+                               
                             }
                         ]
                     }
@@ -174,8 +210,10 @@
 			"apiForFhirid": "[steps('fhirSelection').fhirSection.apiForFhirSelector.id]",
             "exportWithHistory": "[steps('fhirSelection').fhirSection.exportWithHistory]",
             "exportWithDelete": "[steps('fhirSelection').fhirSection.exportWithDelete]",
-            "isParallel":"[steps('fhirSelection').fhirSection.isParallel]"
-
+            "isParallel":"[steps('fhirSelection').fhirSection.isParallel]",
+            "exportDeidentified":"[steps('fhirSelection').fhirSection.exportDeidentified]",
+            "configFile":"[steps('fhirSelection').fhirSection.configurationFile]"
+            
         }
     }
 }

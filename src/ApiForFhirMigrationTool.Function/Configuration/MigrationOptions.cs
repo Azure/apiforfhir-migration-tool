@@ -86,7 +86,7 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         public string ChunkTableName { get; set; } = string.Empty;
 
         [JsonProperty("ExportChunkTime")]
-        public int ExportChunkTime { get; set; } = 90;
+        public int ExportChunkTime { get; set; } = 30;
 
         [JsonProperty("ExportChunkDuration")]
         public string ExportChunkDuration { get; set; } = "Days";

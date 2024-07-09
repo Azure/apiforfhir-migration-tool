@@ -38,6 +38,11 @@ param exportWithDelete bool
 @description('Export Using isParallel')
 param isParallel bool 
 
+@description('Export deidentified data')
+param exportDeidentified bool
+
+@description('Name of Configuration file')
+param configFile string = ''
 
 var envRandomString = toLower(uniqueString(subscription().id, name, location))
 var nameShort = length(name) > 10 ? substring(name, 0, 10) : name
@@ -96,6 +101,8 @@ module function './azureFunction.bicep'= {
         exportWithHistory : exportWithHistory
         exportWithDelete : exportWithDelete
         isParallel :isParallel
+        exportDeidentified:exportDeidentified
+        configFile:configFile
         appInsightsInstrumentationKey: monitoring.outputs.appInsightsInstrumentationKey
         functionSettings: union({
                 AZURE_DestinationUri: fhirServiceNameUrl
