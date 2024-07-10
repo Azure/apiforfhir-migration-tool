@@ -1,0 +1,19 @@
+{
+    "fhirVersion": "R4",
+    "processingError":"raise",
+    "fhirPathRules": [
+      {
+        "path": "(nodesByType('Observation').value as Quantity).value",
+        "method": "generalize",
+              "cases":{
+           "$this.length>18": "$this.toString().substring(0,18).toDecimal()"
+              }
+      }
+    ],
+    "parameters": {
+      "dateShiftKey": "",
+      "cryptoHashKey": "",
+      "encryptKey": "",
+      "enablePartialAgesForRedact": false
+    }
+}

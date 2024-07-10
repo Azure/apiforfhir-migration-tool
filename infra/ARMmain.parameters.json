@@ -31,6 +31,12 @@
         },
         "isParallel":{
             "value": true
+        },
+        "exportDeidentified":{
+            "value": false
+        },
+        "configFile":{
+            "value": ""
         }
     }
 }

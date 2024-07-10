@@ -104,12 +104,26 @@
             "metadata": {
                 "description": "Export Using isParallel"
             }
+        },
+        "exportDeidentified":{
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Export deidentified data"
+            }
+        },
+        "configFile": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name of Configuration file"
+            }
         }
     },
     "variables": {
         "functionAppName": "[format('{0}{1}',parameters('prefix'), parameters('appName'))]",
         "appTags": {
-            "AppID": "fhir-migration-tool"
+             "AppID": "fhir-migration-tool"
         },
         "logAnalyticsName": "[format('{0}{1}-la', parameters('prefix'), parameters('appName'))]",
         "hostingPlanName": "[format('{0}{1}', parameters('prefix'), parameters('appName'))]",
@@ -251,6 +265,8 @@
                 "AZURE_ExportWithHistory": "[parameters('exportWithHistory')]",
                 "AZURE_ExportWithDelete": "[parameters('exportWithDelete')]",
                 "AZURE_IsParallel": "[parameters('isParallel')]",
+                "AZURE_ExportDeidentified":"[parameters('exportDeidentified')]",
+                "AZURE_ConfigFile":"[parameters('configFile')]",
                 "AZURE_stagingStorageAccountName": "[variables('storageAccountName')]",
                 "AZURE_StagingStorageUri": "[format('https://{0}.table.core.windows.net', variables('storageAccountName'))]",
                 "AZURE_BlobStorageUri": "[format('https://{0}.blob.core.windows.net', variables('storageAccountName'))]",

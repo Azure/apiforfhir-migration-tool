@@ -72,7 +72,50 @@ During the deployment of the FHIR data migration tool, the following components 
 
 To quickly deploy the Migration tool, you can use the Azure deployment below. Please note, if you are using Azure Private Link, please follow separate instructions for [deploying the migration tool with Azure Private Link](/FHIR-data-migration-tool-docs/private-link-sample/ReadMe.md).
 
-1. Deploy the infrastructure for migration tool.
+1. If you want the de-identified data during export , please confiure [de-identified](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/de-identified-export) on Azure API for FHIR.
+	1. PowerShell script is available to create the container in the storage account which is configured with Azure API for FHIR for export and script will put the anonymizationConfig file in the container
+
+		- To run the PowerShell Script, you need to have the "Storage Blob data contributor" role on storage account, as the script require access to storage account.
+	
+			- Follow  steps to execute the anonoymization script:
+
+			1. You can run the Powershell script locally, or you can use [Open Azure Cloud Shell](https://shell.azure.com) - you can also access this from [Azure Portal](https://portal.azure.com).\
+			More details on how to setup [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview)
+
+				- If using Azure Cloud Shell, select PowerShell for the environment 
+				- Clone this repo
+					```azurecli
+					git clone https://github.com/Azure/apiforfhir-migration-tool.git
+					```
+				- Change working directory to the repo directory
+					```azurecli-interactive
+					cd $HOME/apiforfhir-migration-tool/infra
+					```
+			2. Sign into your Azure account
+				``` PowerShell
+				Connect-AzAccount -Subscription 'xxxx-xxxx-xxxx-xxxx-xxxxxx'
+				```
+				where 'xxxx-xxxx-xxxx-xxxx-xxxxxx' is your subscription ID.
+
+			3. Browse to the scripts folder under this path (..\Anonymization).
+
+			4. Run the following PowerShell script. 
+				```Powershell
+				./anonymization.ps1 -storageaccount '<Storage Account Name>' -filepath 'Anonymization configuration file' 
+				```
+				
+				|Parameter   | Description   |
+				|---|---|
+				| storageaccount | Export Storage Account Name.
+				| filepath | File Path of anonymization configuration file.
+
+				Example:
+				``` PowerShell
+				./anonymization.ps1  -storageaccount 'teststorageaccount' -filepath '/home/apiforfhir-migration-tool/infra/Anonymization/DemoConfig.json'
+				```
+
+
+2. Deploy the infrastructure for migration tool.
 	1. **OPTION A**: Deploy the migration tool through Azure Portal using the Deploy to Azure button
 
 		[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2Fmain.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2FuiDefForm.json)
@@ -181,7 +224,7 @@ During the deployment of the migration tool, users have the option to enable or 
 
 Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with history and deletion is set to true. If you prefer to export without history and deletion, you can change the value to false.
 
-![Export](images/Export-with-history-delete.png)
+![Export](images/Export-with-history-and-delete.png)
 
 Upon the completion of deployment, users can still make adjustments to the export settings for history and deletion by modifying the values within the Azure function's environment variable. 
 
@@ -225,7 +268,16 @@ Example:
 Name: AZURE_ResourceTypes
 Value: {"Patient", "Observation", "Encounter"}
 ```
+### Export with de-identified data
 
+Export can be done with de-identified data. <br>
+__Note__: The de-identification of data during export is support when isparallel is set to true as Azure API for FHIR only supports de-identified export at the system level ($export).
+
+During the deployment of the migration tool, users have the option to enable or disable exporting with de-identification by specifying their values as true or false. <br>If you select true, you need to enter the configuration file name.
+
+Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with de-identification is set to false.
+
+![De-Identified](images/Export-with-history-and-delete-deidentified.png)
 
 Once the $export operation is completed, the export operation content location is stored in Azure storage table and the next export status orchestrator in the durable function picks the details from the storage table and checks the status of the export.
 

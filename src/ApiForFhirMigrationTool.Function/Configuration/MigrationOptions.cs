@@ -106,6 +106,12 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         [JsonProperty("isParallel")]
         public bool IsParallel { get; set; } = true;
 
+        [JsonProperty("isExportDeidentified")]
+        public bool IsExportDeidentified { get; set; } = false;
+
+        [JsonProperty("configFile")]
+        public string ConfigFile { get; set; } = string.Empty;
+
         [JsonProperty("chunkLimit")]
         public int ChunkLimit = 100000000;
 
