@@ -224,7 +224,7 @@ During the deployment of the migration tool, users have the option to enable or 
 
 Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with history and deletion is set to true. If you prefer to export without history and deletion, you can change the value to false.
 
-![Export](images/Export-with-history-delete.png)
+![Export](images/Export-with-history-and-delete.png)
 
 Upon the completion of deployment, users can still make adjustments to the export settings for history and deletion by modifying the values within the Azure function's environment variable. 
 
@@ -273,11 +273,11 @@ Value: {"Patient", "Observation", "Encounter"}
 Export can be done with de-identified data. <br>
 __Note__: The de-identification of data during export is support when isparallel is set to true as Azure API for FHIR only supports de-identified export at the system level ($export).
 
-During the deployment of the migration tool, users have the option to enable or disable the exporting with de-identification by specifying their values as true or false.
+During the deployment of the migration tool, users have the option to enable or disable exporting with de-identification by specifying their values as true or false. <br>If you select true, you need to enter the configuration file name.
 
 Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with de-identification is set to false.
 
-![De-Identified]()
+![De-Identified](images/Export-with-history-and-delete-deidentified.png)
 
 Once the $export operation is completed, the export operation content location is stored in Azure storage table and the next export status orchestrator in the durable function picks the details from the storage table and checks the status of the export.
 
