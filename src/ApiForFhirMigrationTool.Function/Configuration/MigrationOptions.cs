@@ -107,7 +107,7 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         public bool IsParallel { get; set; } = true;
 
         [JsonProperty("isExportDeidentified")]
-        public bool IsExportDeidentified { get; set; } = true;
+        public bool IsExportDeidentified { get; set; } = false;
 
         [JsonProperty("configFile")]
         public string ConfigFile { get; set; } = string.Empty;
