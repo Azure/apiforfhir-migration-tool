@@ -164,11 +164,11 @@
                                 "name": "exportDeidentified",
                                 "type": "Microsoft.Common.DropDown",
                                 "label": "Export deidentified data",
-                                "defaultValue":"False",
+                                "defaultValue": "False",
                                 "toolTip": "",
                                 "dependsOn": [
                                     "[steps('fhirSelection').fhirSection.isParallel]"
-                                  ],
+                                ],
                                 "constraints": {
                                     "allowedValues": [
                                         {
@@ -183,7 +183,17 @@
                                     "required": true
                                 },
                                 "visible": "[steps('fhirSelection').fhirSection.isParallel]"
-                            },
+                               
+                            },  
+                            {
+                                "name": "roleAssignmentInfoBox",
+                                "type": "Microsoft.Common.InfoBox",
+                                "visible": "[steps('fhirSelection').fhirSection.exportDeidentified]",
+                                "options": {
+                                    "icon": "Warning",
+                                    "text": "Please make sure exporting de-identified data for Azure API for FHIR is configured."
+                                }
+                            },                          
                             {
                                 "name": "configurationFile",
                                 "type": "Microsoft.Common.TextBox",
