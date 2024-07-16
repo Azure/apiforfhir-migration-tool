@@ -10,6 +10,7 @@ using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
 using Azure;
 using Azure.Data.Tables;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -51,29 +52,45 @@ namespace ApiForFhirMigrationTool.Function
 
             try
             {
-                _options.ValidateConfig();
-                logger.LogInformation("Start MigrationOrchestration.");
-                TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-                if (_options.IsParallel == true)
+                bool shouldRun = true;
+
+                if (_options.TimeStamp)
                 {
-                    Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
-                    if (jobList.Count() <= 0)
+                    var currentTime = DateTime.UtcNow;
+                    var startHour = new TimeSpan(_options.StartTime-1, 0, 0);
+                    var endHour = new TimeSpan(_options.endTime, 0, 0);
+                    if (currentTime.TimeOfDay > startHour && currentTime.TimeOfDay < endHour)
                     {
-                        var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
+                        shouldRun = false;
+                        logger.LogInformation("Current time is outside the allowed window.");
+                    }
+                }
+                if (shouldRun)
+                {
+
+                    _options.ValidateConfig();
+                    logger.LogInformation("Start MigrationOrchestration.");
+                    TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+                    if (_options.IsParallel == true)
+                    {
+                        Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
+                        if (jobList.Count() <= 0)
                         {
-                            { "JobId", 0 },  
+                            var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
+                        {
+                            { "JobId", 0 },
                             {"ImportId",0 },
                             {"SearchParameterMigration", false }
                         };
-                        _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
+                            _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
+                        }
                     }
-                }
-                else
-                {
-                    Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
-                    if (jobList.Count() <= 0)
+                    else
                     {
-                        var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
+                        Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
+                        if (jobList.Count() <= 0)
+                        {
+                            var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
                         {
                             { "JobId", 0 },
                             { "globalSinceExportType", "" },
@@ -84,23 +101,24 @@ namespace ApiForFhirMigrationTool.Function
                              {"ImportId",0 },
                              {"SearchParameterMigration", false }
                         };
-                        _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
+                            _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
+                        }
                     }
+                    var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
+                            maxNumberOfAttempts: 3,
+                            firstRetryInterval: TimeSpan.FromSeconds(5)));
+
+                    // Run sub orchestration for search parameter
+                    var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
+
+                    // Run sub orchestration for export and export status
+                    var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
+                    var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
+
+                    // Run sub orchestration for Import and Import status
+                    var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
+                    var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
                 }
-                var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
-                        maxNumberOfAttempts: 3,
-                        firstRetryInterval: TimeSpan.FromSeconds(5)));
-
-                // Run sub orchestration for search parameter
-                var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
-               
-                // Run sub orchestration for export and export status
-                var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
-                var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
-
-                // Run sub orchestration for Import and Import status
-               var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
-               var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
             }
             catch (Exception ex)
             {
