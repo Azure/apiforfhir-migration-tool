@@ -1,5 +1,7 @@
 # FHIR Data Migration Tool
 
+# 1. Overview
+
 The FHIR data migration tool helps you continuously copy data from an Azure API for FHIR server to an Azure Health Data Services FHIR service. This migration tool is an Azure function app solution that utilizes [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) to export data from a source Azure API for FHIR server, and [$import](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) to import to a destination Azure Health Data Services FHIR service.
 
 The API for FHIR migration tool is an [Azure durable function](https://learn.microsoft.com/azure/azure-functions/durable/) application and uses [Azure storage table](https://learn.microsoft.com/azure/storage/tables/table-storage-overview) for capturing and maintaining the status of the export-import operation.
@@ -24,9 +26,23 @@ The  FHIR data migration tool executes a series of smaller export-import rounds 
   - **Chunks**: The migration tool will "chunk" the data into 30-day segments (based on the resources' lastUpdated timestamp) for each round of export-import. The default is 30 days and can be adjusted (more information below). Reducing the size of the export and imports helps with the efficiency of the migration tool and helps to minimize errors.
   - **Orchestrator**: Immediately after deploying the migration tool, the migration tool will find the earliest "chunk" of data and kick off a export, followed by an import. The orchestrator then checks every 5 minutes to see if the previous export-import round has finished. If the previous export-import round has indeed finished, it will kick off the migration of the next "chunk" of data to migrate, with the process continuing on and on until you choose to end the migration tool. The orchestrator will check every 5 minutes to see if there is new data since the last export-import in the origin Azure API for FHIR server to migrate over to the destination Azure Health Data Services FHIR server. This way, you can keep your Azure API for FHIR server up and running during the migration process, and choose exactly when to cut over to the new FHIR server.
 
+## Deployed Components
+During the deployment of the FHIR data migration tool, the following components will be deployed:
+
+1. Azure Functions app
+	- The data migration tool code is deployed in Azure Functions. The migration tool function app acts as the orchestrator.
+2. Storage account
+	- A new storage account will be linked to the migration tool function app and will be used to store and monitor the export-import data. The table storage inside this new storage account will capture and store the details for each export-import round.  This new storage account will be different from the storage account that you designated for export-import storage location.
+3. Shared Dashboard
+	- The dashboard captures and visualizes the details for each export-import of data. 
+
+4. Application Insights
+	- This will capture the logs of the migration tool function app. 
 
 
-# Prerequisites needed
+# 2. Pre-Migration
+
+## Prerequisites needed (all scenarios)
 1. Review [general migration strategies]( https://learn.microsoft.com/azure/healthcare-apis/fhir/migration-strategies) and [limitations and list of configurations to configure](/FHIR-data-migration-tool-docs/Appendix.md) first. 
 2.	Microsoft work or school account
 3.	FHIR instances.
@@ -41,8 +57,9 @@ The  FHIR data migration tool executes a series of smaller export-import rounds 
 			```PowerShell
 			https://<<WORKSPACE_NAME>>-<<FHIR_SERVICE_NAME>>.fhir.azurehealthcareapis.com/
 			```
-
-4. Storage account need to be set as both the export location for Azure API for FHIR and the import location for Azure Health Data Services FHIR service (5 and 6 below)
+    
+4. Storage account needs to be set as both the export location for Azure API for FHIR and the import location for Azure Health Data Services FHIR service (5 and 6 below). 
+  - Note: The migration tool supports migration with Azure API for FHIR and Azure Health Data Services FHIR servers that are within the same subscription or across different subscriptions, as long as they are in the same Tenant ID. In both scenarios, please make sure that the same storage account is configured as export and import configurations for Azure API for FHIR and Azure Health Data Services FHIR server. 
 5. Configure [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/configure-export-data) on the origin Azure API for FHIR server. Make sure that the intermediate Azure storage account that you plan to use for this migration is selected as the $export storage account for FHIR instance. You can do this by configuring [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/configure-export-data) on the source FHIR instance (Azure API for FHIR server). If you do not already have a storage account, create a new storage account and follow the steps for configuring [$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/configure-export-data) to select that storage account.
    
 6. Configure [$import](https://learn.microsoft.com/azure/healthcare-apis/fhir/configure-import-data) on the destination FHIR instance (Azure Health Data Service FHIR service server) with the same storage account as the import location, and set import mode to incremental mode.
@@ -52,27 +69,23 @@ The  FHIR data migration tool executes a series of smaller export-import rounds 
 > Please ensure that your $import is set to **incremental import mode** in order for the migration tool to work. If needed, you may switch back to initial import mode post-migration. Set incremental import mode following these [configuration settings](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/configure-import-data#step-3b-set-import-configuration-for-incremental-import-mode) and [parameter value](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#body). Learn more about incremental and initial import [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data).
 
 
-__Note__ : The Data Migration tool supports cross-subscription deployment, as long as they are in the same Tenant ID. <br>
-If your Azure API for FHIR server is in subscription A and Azure Health Data Services FHIR server is in subscription B, and the same storage account is configured as export and import configurations for Azure API for FHIR server and Azure Health Data Services FHIR server respectively. The Data migration tool will migrate the data from Azure API for FHIR in Subscription A to Azure Health Data Services FHIR service in subscription B.
-## Deployed Components
-During the deployment of the FHIR data migration tool, the following components will be deployed:
 
-1. Azure Functions app
-	- The data migration tool code is deployed in Azure Functions. The migration tool function app acts as the orchestrator.
-2. Storage account
-	- A new storage account will be linked to the migration tool function app and will be used to store and monitor the export-import data. The table storage inside this new storage account will capture and store the details for each export-import round.  This new storage account will be different from the storage account that you designated for export-import storage location.
-3. Shared Dashboard
-	- The dashboard captures and visualizes the details for each export-import of data. 
+## Prerequisites needed (advanced scenarios)
+You may have certain advanced scenarios surrounding your migration that may require more configuration or steps. We have listed a few of these scenarios below with instructions. If you have other scenarios that are not listed here, please submit a Github issue and we can take a look for consideration!
 
-4. Application Insights
-	- This will capture the logs of the migration tool function app. 
+- If you are using Azure Private Link, please follow separate instructions in this Github for [deploying the migration tool with Azure Private Link](/FHIR-data-migration-tool-docs/private-link-sample/ReadMe.md).
+- If you need to systemmatically edit or transform your data during the migration process (for example, round to the 18th digit for a certain resource type), we have an option to include a step in migration that calls the Tools for Health Data Anonymization, which is a tool that can help de-identify data, to do those transformations after exporting from Azure API for FHIR and before importing into Azure Health Data Services FHIR Service. The transformations will need to be configured prior to the migration, with the following steps:
+   1. 
 
+
+
+# 3. Deploy Migration Tool
 ## Deployment
 ### Portal Deployment
 
-To quickly deploy the Migration tool, you can use the Azure deployment below. Please note, if you are using Azure Private Link, please follow separate instructions for [deploying the migration tool with Azure Private Link](/FHIR-data-migration-tool-docs/private-link-sample/ReadMe.md).
+To quickly deploy the Migration tool, you can use the Azure deployment below. 
 
-1. If you want the de-identified data during export , please confiure [de-identified](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/de-identified-export) on Azure API for FHIR.
+1. Optional: If you want the de-identified data during export , please confiure [de-identified](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/de-identified-export) on Azure API for FHIR.
 	1. PowerShell script is available to create the container in the storage account which is configured with Azure API for FHIR for export and script will put the anonymizationConfig file in the container
 
 		- To run the PowerShell Script, you need to have the "Storage Blob data contributor" role on storage account, as the script require access to storage account.
@@ -356,8 +369,7 @@ There are two table storage created during deployment.
 - Learn more about custom search parameters:
 [How to do custom search in FHIR service](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/how-to-do-custom-search) 
 and $reindex:
-[How to run a reindex job in FHIR service](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/how-to-run-a-reindex)
-.
+[How to run a reindex job in FHIR service](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/how-to-run-a-reindex).
 ## Troubleshooting
 
 1. Azure API for FHIR.
