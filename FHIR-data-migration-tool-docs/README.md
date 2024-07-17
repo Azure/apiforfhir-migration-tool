@@ -70,165 +70,110 @@ During the deployment of the FHIR data migration tool, the following components 
 
 
 
-## Prerequisites needed (advanced scenarios)
+## Extra prerequisites needed (advanced scenarios)
 You may have certain advanced scenarios surrounding your migration that may require more configuration or steps. We have listed a few of these scenarios below with instructions. If you have other scenarios that are not listed here, please submit a Github issue and we can take a look for consideration!
 
 - If you are using Azure Private Link, please follow separate instructions in this Github for [deploying the migration tool with Azure Private Link](/FHIR-data-migration-tool-docs/private-link-sample/ReadMe.md).
-- If you need to systemmatically edit or transform your data during the migration process (for example, round to the 18th digit for a certain resource type), we have an option to include a step in migration that calls the Tools for Health Data Anonymization, which is a tool that can help de-identify data, to do those transformations after exporting from Azure API for FHIR and before importing into Azure Health Data Services FHIR Service. The transformations will need to be configured prior to the migration, with the following steps:
-   1. 
+- If you need to systemmatically edit or transform your data during the migration process (for example, round or truncate to the 18th digit for a certain resource type), we have an option to include a step in migration that calls the [Tools for Health Data Anonymization](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export), which is a tool that can help de-identify data, to do those transformations after exporting from Azure API for FHIR and before importing into Azure Health Data Services FHIR Service. These transformations will need to be configured by configuring [De-identified export](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export) in Azure API for FHIR prior to the migration, with the following steps:
+   1. Set up your anonymization config file, which details how you would like to transform your data. Learn more about the config file [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export).
+   2. This repo has a PowerShell script available to help create the container in the storage account which is configured with Azure API for FHIR for export, and will also put the specified file in the container. Following instructions detail how to use the PowerShell script. This must be done before starting the Migration Tool deployment. To run the PowerShell Script, you need to have the "Storage Blob data contributor" role on storage account, as the script requires access to the storage account.
+   3. You can run the Powershell script locally, or you can use [Open Azure Cloud Shell](https://shell.azure.com). You can also access this from [Azure Portal](https://portal.azure.com).\
+	More details on how to setup Azure Cloud Shell [here](https://learn.microsoft.com/azure/cloud-shell/overview).
+
+		- If using Azure Cloud Shell, select PowerShell for the environment 
+		- Clone this repo
+			```azurecli
+			git clone https://github.com/Azure/apiforfhir-migration-tool.git
+			```
+		- Change working directory to the repo directory
+			```azurecli-interactive
+			cd $HOME/apiforfhir-migration-tool/infra
+			```
+	2. Sign into your Azure account
+		``` PowerShell
+		Connect-AzAccount -Subscription 'xxxx-xxxx-xxxx-xxxx-xxxxxx'
+		```
+		where 'xxxx-xxxx-xxxx-xxxx-xxxxxx' is your subscription ID.
+
+	3. Browse to the scripts folder under this path (..\infra\Anonymization).
+
+	4. Run the following PowerShell script. 
+		```Powershell
+		./anonymization.ps1 -storageaccount '<Storage Account Name>' -filepath 'Anonymization configuration file' 
+		```
+				
+		|Parameter   | Description   |
+		|---|---|
+		| storageaccount | Export Storage Account Name.
+		| filepath | File Path of anonymization configuration file.
+
+		Example:
+		``` PowerShell
+		./anonymization.ps1  -storageaccount 'teststorageaccount' -filepath '/home/apiforfhir-migration-tool/infra/Anonymization/DemoConfig.json'
+		```
+
 
 
 
 # 3. Deploy Migration Tool
-## Deployment
-### Portal Deployment
-
-To quickly deploy the Migration tool, you can use the Azure deployment below. 
-
-1. Optional: If you want the de-identified data during export , please confiure [de-identified](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/de-identified-export) on Azure API for FHIR.
-	1. PowerShell script is available to create the container in the storage account which is configured with Azure API for FHIR for export and script will put the anonymizationConfig file in the container
-
-		- To run the PowerShell Script, you need to have the "Storage Blob data contributor" role on storage account, as the script require access to storage account.
-	
-			- Follow  steps to execute the anonoymization script:
-
-			1. You can run the Powershell script locally, or you can use [Open Azure Cloud Shell](https://shell.azure.com) - you can also access this from [Azure Portal](https://portal.azure.com).\
-			More details on how to setup [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview)
-
-				- If using Azure Cloud Shell, select PowerShell for the environment 
-				- Clone this repo
-					```azurecli
-					git clone https://github.com/Azure/apiforfhir-migration-tool.git
-					```
-				- Change working directory to the repo directory
-					```azurecli-interactive
-					cd $HOME/apiforfhir-migration-tool/infra
-					```
-			2. Sign into your Azure account
-				``` PowerShell
-				Connect-AzAccount -Subscription 'xxxx-xxxx-xxxx-xxxx-xxxxxx'
-				```
-				where 'xxxx-xxxx-xxxx-xxxx-xxxxxx' is your subscription ID.
-
-			3. Browse to the scripts folder under this path (..\Anonymization).
-
-			4. Run the following PowerShell script. 
-				```Powershell
-				./anonymization.ps1 -storageaccount '<Storage Account Name>' -filepath 'Anonymization configuration file' 
-				```
-				
-				|Parameter   | Description   |
-				|---|---|
-				| storageaccount | Export Storage Account Name.
-				| filepath | File Path of anonymization configuration file.
-
-				Example:
-				``` PowerShell
-				./anonymization.ps1  -storageaccount 'teststorageaccount' -filepath '/home/apiforfhir-migration-tool/infra/Anonymization/DemoConfig.json'
-				```
+## Deploy the migration tool
 
 
-2. Deploy the infrastructure for migration tool.
-	1. **OPTION A**: Deploy the migration tool through Azure Portal using the Deploy to Azure button
+Deploy the infrastructure for migration tool. More details on configurations that can be set during deployment are in the next section, "Configurations to set up during deployment".
+1. **OPTION A**: Deploy the migration tool through Azure Portal using the Deploy to Azure button
 
-		[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2Fmain.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2FuiDefForm.json)
+	[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2Fmain.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2FuiDefForm.json)
 
     **NOTE** : Choose your own unique "Prefix for FHIR Migration Tool resources" during deployment.
 
-    2. **OPTION B**: Or, deploy the migration tool manually:
-		<br />
-		<details>
-		<summary>Click to expand to see manual deployment instructions.</summary>
+2. **OPTION B**: Or, deploy the migration tool manually:
+	<br />
+	<details>
+	<summary>Click to expand to see manual deployment instructions.</summary>
 
-		1. Clone this repo
-			```azurecli
-			git clone https://github.com/Azure/apiforfhir-migration-tool.git --depth 1
-			```
-		2. Log in to Azure  
-			Before you begin, ensure that you are logged in to your Azure account. If you are not already logged in, follow these steps:
-			```
-			az login
-			```
-		3. Set the Azure Subscription  
-			If you have multiple Azure subscriptions and need to specify which one to use for this deployment, use the az account set command:
-			```
-			az account set --subscription [Subscription Name or Subscription ID]
-			```
-			Replace [Subscription Name or Subscription ID] with the name or ID of the subscription you want to use for this deployment. You can find your subscription information by running az account list.
+	1. Clone this repo
+		```azurecli
+		git clone https://github.com/Azure/apiforfhir-migration-tool.git --depth 1
+		```
+	2. Log in to Azure  
+		Before you begin, ensure that you are logged in to your Azure account. If you are not already logged in, follow these steps:
+		```
+		az login
+		```
+	3. Set the Azure Subscription  
+		If you have multiple Azure subscriptions and need to specify which one to use for this deployment, use the az account set command:
+		```
+		az account set --subscription [Subscription Name or Subscription ID]
+		```
+		Replace [Subscription Name or Subscription ID] with the name or ID of the subscription you want to use for this deployment. You can find your subscription information by running az account list.
 
-			**Note** : This step is particularly important if you have multiple subscriptions, as it ensures that the resources are deployed to the correct subscription.
+		**Note** : This step is particularly important if you have multiple subscriptions, as it ensures that the resources are deployed to the correct subscription.
 
-		4. If needed, create a resource group
+	4. If needed, create a resource group
 
-			If you don't already have a resource group that you want to use, use the following command to create a resource group.  
-			```
-				az group create --name <resource_group_name> --location <location>
-			```  
-			Replace <*resource_group_name*> with your desired name and <*location*> with the Azure region where you want to create the resource group
+		If you don't already have a resource group that you want to use, use the following command to create a resource group.  
+		```
+			az group create --name <resource_group_name> --location <location>
+		```  
+		Replace <*resource_group_name*> with your desired name and <*location*> with the Azure region where you want to create the resource group
 
-		5. Deploy the function  
-			Now, you can initiate the deployment using the Azure CLI
-			```
-			az deployment group create --resource-group<resource-group-name> --template-file <path-to-template> --parameters <path-to-parameter>
-			```
-			- <*resource-group-name*>: Replace this with the name of the resource group you want to use.
-			- <*path-to-template*>: Provide the path to the ARM/Bicep template file i.e. main.json under infra folder.
-			- <*path-to-parameter*>: Specify the path to the parameters file i.e. armmain.parameters.json under infra folder.
+	5. Deploy the function  
+		Now, you can initiate the deployment using the Azure CLI
+		```
+		az deployment group create --resource-group<resource-group-name> --template-file <path-to-template> --parameters <path-to-parameter>
+		```
+		- <*resource-group-name*>: Replace this with the name of the resource group you want to use.
+		- <*path-to-template*>: Provide the path to the ARM/Bicep template file i.e. main.json under infra folder.
+		- <*path-to-parameter*>: Specify the path to the parameters file i.e. armmain.parameters.json under infra folder.
 
-      	**NOTE** : Choose your own unique "Prefix for FHIR Migration Tool resources" during deployment.
+	   **NOTE** : Choose your own unique "Prefix for FHIR Migration Tool resources" during deployment.
 
-		
-		</details>
-		<br />
 	
-## Export FHIR Data from API for FHIR server
-
-The [built-in API for FHIR $export operation](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) is leveraged in this migration tool for exporting the data from API for FHIR server. The $export PaaS endpoints are asynchronous, long-running HTTP APIs. 
-The storage account is used for staging NDJSON files between the $export and $import. The storage account is also used by Azure Durable Functions to store state. 
-
-In the migration tool we are using $export [query](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters) which allows you to filter and export certain data accordingly from a source Azure API for FHIR server.
-
-The migration tool hits the HTTP APIs endpoint for the $export operation, the response contains export operation Content-Location URL. The content-location URL give the status on export operation. Each $export operation status is stored in Azure storage table.
-
-The migration tool exports 100M resources under 30 days which is configurable by using parameters: ExportChunkTime, ExportChunkDuration and ChunkLimit of data from API for FHIR in each export operation.
-
-#### How to configure Chunk Duration,Time and Size for export.
-1. Open the Data migration Azure function.
-2. Go to the environment variable setting and under it go to App Setting.
-3. Set the below configuration as per the need:
-```
-Name: AZURE_ExportChunkDuration
-Value: "Days" or "Hours" or "Minutes"
-
-Name: AZURE_ExportChunkTime
-Value: <<Int number>>
-
-Name: AZURE_ChunkLimit
-Value: <<Int number>>
-```
-AZURE_ExportChunkDuration it can take Days, Hours or Minutes as value. If the user want the data to be exported on Days basis, put "Days" as value in it. If the user want data to be exported on Hourly basis, put "Hours" as value OR if user want to export in minutes put "Minutes" as value.
-
-AZURE_ExportChunkTime it will take integer as value. 
-
-AZURE_ChunkLimit it will take interger as value which specify how many resources will be exported in a single chunk.
-
-Example:
-
-Below setting in azure function will export 100M resources under 30 days data in single chunk: 
-```
-Name: AZURE_ExportChunkDuration
-Value: "Days"
-
-Name: AZURE_ExportChunkTime
-Value: 30
-
-Name: AZURE_ChunkLimit
-Value: 100000000
-```
-
-The user can configure the start date in Azure function from where the export should start from the API for FHIR server. AZURE_StartDate will help to export the data from that specific date. <br>
-If the start date is not provided the tool will fetch the first resource date from the server and start the migration.
-
+	</details>
+	<br />
+	
+## Configurations to set up during deployment
+The following are optional configurations that you can set up during deployment.
 ### Export with History and Soft Delete
 
 Exporting with [history](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/purge-history) allows you to export current state of a resource as well as its previous versions. Exporting with [soft deletes](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/fhir-rest-api-capabilities#delete-hard--soft-delete) allows you to export soft deleted historic versions.
@@ -291,6 +236,54 @@ During the deployment of the migration tool, users have the option to enable or 
 Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with de-identification is set to false.
 
 ![De-Identified](images/Export-with-history-and-delete-deidentified.png)
+
+
+## Export FHIR Data from API for FHIR server
+
+The [built-in API for FHIR $export operation](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) is leveraged in this migration tool for exporting the data from API for FHIR server. The $export PaaS endpoints are asynchronous, long-running HTTP APIs. 
+The storage account is used for staging NDJSON files between the $export and $import. The storage account is also used by Azure Durable Functions to store state. 
+
+In the migration tool we are using $export [query](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters) which allows you to filter and export certain data accordingly from a source Azure API for FHIR server.
+
+The migration tool hits the HTTP APIs endpoint for the $export operation, and the response contains export operation Content-Location URL. The content-location URL gives the status on the export operation. Each $export operation status is stored in the Azure storage table.
+
+By default, the migration tool exports chunks of 100M resources in 30 days, which is configurable by using parameters: ExportChunkTime, ExportChunkDuration and ChunkLimit of data from API for FHIR in each export operation.
+
+#### How to configure Chunk Duration, Time and Size for export.
+1. After deploying, open the Data migration Azure function.
+2. Go to the environment variable setting and under it go to App Setting.
+3. Set the below configuration as per the need:
+```
+Name: AZURE_ExportChunkDuration
+Value: "Days" or "Hours" or "Minutes"
+
+Name: AZURE_ExportChunkTime
+Value: <<Int number>>
+
+Name: AZURE_ChunkLimit
+Value: <<Int number>>
+```
+AZURE_ExportChunkDuration can take Days, Hours or Minutes as the value.   
+AZURE_ExportChunkTime will take integer as value.   
+AZURE_ChunkLimit  will take integer as value to specify how many resources will be exported in a single chunk.
+
+Example:
+
+Below setting in Azure Function will export 100M resources under 30 days of data in a single chunk: 
+```
+Name: AZURE_ExportChunkDuration
+Value: "Days"
+
+Name: AZURE_ExportChunkTime
+Value: 30
+
+Name: AZURE_ChunkLimit
+Value: 100000000
+```
+
+You  can configure the start date in Azure function from where the export should start from the API for FHIR server. AZURE_StartDate will help to export the data from that specific date. <br>
+If the start date is not provided the tool will fetch the first resource date from the server and start the migration.
+
 
 Once the $export operation is completed, the export operation content location is stored in Azure storage table and the next export status orchestrator in the durable function picks the details from the storage table and checks the status of the export.
 
