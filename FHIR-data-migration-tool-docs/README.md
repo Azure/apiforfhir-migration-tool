@@ -74,6 +74,14 @@ During the deployment of the FHIR data migration tool, the following components 
 You may have certain advanced scenarios surrounding your migration that may require more configuration or steps. We have listed a few of these scenarios below with instructions. If you have other scenarios that are not listed here, please submit a Github issue and we can take a look for consideration!
 
 - If you are using Azure Private Link, please follow separate instructions in this Github for [deploying the migration tool with Azure Private Link](/FHIR-data-migration-tool-docs/private-link-sample/ReadMe.md).
+- If you have custom search parameters that need to be migrated over, please note the following:
+	- The FHIR Migration Tool will copy over custom search parameters from your Azure API for FHIR over to your Azure Health Data Services FHIR service at the very beginning of migration. 
+	- Once migration has started, if you wish to add any more custom search parameters after that, you must add them directly to the Azure Health Data Service FHIR service post-migration.
+	-  Once all your custom search parameters are in Azure Health Data Service FHIR service (regardless of if they were added by the migration tool or manually), you will need to run $reindex post-migration in order to index the custom search parameters and be able to use them in live production.
+	- Learn more about custom search parameters:
+	[How to do custom search in FHIR service](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/how-to-do-custom-search) 
+	and $reindex:
+	[How to run a reindex job in FHIR service](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/how-to-run-a-reindex).
 - If you need to systemmatically edit or transform your data during the migration process (for example, round or truncate to the 18th digit for a certain resource type), we have an option to include a step in migration that calls the [Tools for Health Data Anonymization](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export), which is a tool that can help de-identify data, to do those transformations after exporting from Azure API for FHIR and before importing into Azure Health Data Services FHIR Service. These transformations will need to be configured by configuring [De-identified export](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export) in Azure API for FHIR prior to the migration, with the following steps:
    1. Set up your anonymization config file, which details how you would like to transform your data. Learn more about the config file [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export).
    2. This repo has a PowerShell script available to help create the container in the storage account which is configured with Azure API for FHIR for export, and will also put the specified file in the container. Following instructions detail how to use the PowerShell script. This must be done before starting the Migration Tool deployment. To run the PowerShell Script, you need to have the "Storage Blob data contributor" role on storage account, as the script requires access to the storage account.
@@ -173,18 +181,18 @@ Deploy the infrastructure for migration tool. More details on configurations tha
 	<br />
 	
 ## Configurations to set up during deployment
-The following are optional configurations that you can set up during deployment.
+The following are optional settings that you can configure during deployment.
 ### Export with History and Soft Delete
 
 Exporting with [history](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/purge-history) allows you to export current state of a resource as well as its previous versions. Exporting with [soft deletes](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/fhir-rest-api-capabilities#delete-hard--soft-delete) allows you to export soft deleted historic versions.
 
-During the deployment of the migration tool, users have the option to enable or disable the exporting of history and soft deletes by specifying their values as true or false. This is the equivalent of setting the $export query parameter "includeAssociatedData" with _history and _deleted, as mentioned [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters).
+During the deployment of the migration tool, you will have the option to enable or disable the exporting of history and soft deletes by specifying their values as true or false. This is the equivalent of setting the $export query parameter "includeAssociatedData" with _history and _deleted, as mentioned [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters).
 
 Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with history and deletion is set to true. If you prefer to export without history and deletion, you can change the value to false.
 
 ![Export](images/Export-with-history-and-delete.png)
 
-Upon the completion of deployment, users can still make adjustments to the export settings for history and deletion by modifying the values within the Azure function's environment variable. 
+Upon the completion of deployment, you can still make adjustments to the export settings for history and deletion by modifying the values within the Azure function's environment variable. 
 
 Example:
 
@@ -199,15 +207,15 @@ Value: False
 ### Export with isParallel
 
 Exporting with isParallel allows you to export the resources in threads which make the export operation faster. <br>
-__Note__: The isparallel parameter with export consume more RU's in Azure API for FHIR compared to without isparallel parameter which may lead to high cost for Azure API for FHIR.
+__Note__: The isparallel parameter with export may consume more RU's in Azure API for FHIR compared to without isparallel, which may lead to higher costs for Azure API for FHIR.
 
-During the deployment of the migration tool, users have the option to enable or disable the exporting with isParallel by specifying their values as true or false. This is the equivalent of setting the $export query parameter "_isparallel", as mentioned [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters).
+During the deployment of the migration tool, you will have the option to enable or disable the exporting with isParallel by specifying their values as true or false. This is the equivalent of setting the $export query parameter "_isparallel", as mentioned [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/export-data#query-parameters).
 
 Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with isParallel is set to true. If you prefer to export without isParallel, you can change the value to false.
 
 ![Export](images/isParallel.png)
 
-Upon the completion of deployment, users can still make adjustments to the export settings for isParallel by modifying the values within the Azure function's environment variable. 
+Upon the completion of deployment, you can still make adjustments to the export settings for isParallel by modifying the values within the Azure function's environment variable. 
 
 Example:
 
@@ -228,17 +236,17 @@ Value: {"Patient", "Observation", "Encounter"}
 ```
 ### Export with de-identified data
 
-Export can be done with de-identified data. <br>
-__Note__: The de-identification of data during export is support when isparallel is set to true as Azure API for FHIR only supports de-identified export at the system level ($export).
+Export can be done with de-identified data. This is helpful when you may need to systematically change or transform your data during the process of migration (for example, if you need to truncate or round some data to the 18th digit). <br>
+__Note__: The de-identification of data during export is only supported when isparallel is set to true as Azure API for FHIR only supports de-identified export at the system level ($export).
 
-During the deployment of the migration tool, users have the option to enable or disable exporting with de-identification by specifying their values as true or false. <br>If you select true, you need to enter the configuration file name.
+Please note that if you need to use this option, you will need to follow the steps listed in the "Extra prerequisites needed (advanced scenarios)" section above to set up the configuration file and storage account container.  During the deployment of the migration tool, you will have the option to enable or disable exporting with de-identification by specifying their values as true or false. <br>If you select true, you will need to enter the configuration file name.
 
 Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with de-identification is set to false.
 
 ![De-Identified](images/Export-with-history-and-delete-deidentified.png)
 
 
-## Export FHIR Data from API for FHIR server
+## Export in the migration tool
 
 The [built-in API for FHIR $export operation](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) is leveraged in this migration tool for exporting the data from API for FHIR server. The $export PaaS endpoints are asynchronous, long-running HTTP APIs. 
 The storage account is used for staging NDJSON files between the $export and $import. The storage account is also used by Azure Durable Functions to store state. 
@@ -249,7 +257,7 @@ The migration tool hits the HTTP APIs endpoint for the $export operation, and th
 
 By default, the migration tool exports chunks of 100M resources in 30 days, which is configurable by using parameters: ExportChunkTime, ExportChunkDuration and ChunkLimit of data from API for FHIR in each export operation.
 
-#### How to configure Chunk Duration, Time and Size for export.
+#### How to configure Chunk Duration, Time and Size for export
 1. After deploying, open the Data migration Azure function.
 2. Go to the environment variable setting and under it go to App Setting.
 3. Set the below configuration as per the need:
@@ -289,11 +297,11 @@ Once the $export operation is completed, the export operation content location i
 
 The migration tool is also storing the _since and _till date for the export operation in Azure storage table. Once the export operation is completed, then the import operation orchestrator starts in the migration tool application.
 
-New export will not start until the previous import is completed on FHIR service.
+The next export will not start until the previous import is completed on FHIR service.
 
-## Import FHIR Data to Azure Health Data Services FHIR service
+## Import in the migration tool
 
-The [built-in Azure Health Data Service FHIR service $import operation](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) is leveraged in the  migration tool for importing the data to the destination Azure Health Data Services FHIR server.The $import PaaS endpoints are asynchronous, long-running HTTP APIs. 
+The [built-in Azure Health Data Service FHIR service $import operation](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) is leveraged in the  migration tool for importing the data to the destination Azure Health Data Services FHIR server. The $import PaaS endpoints are asynchronous, long-running HTTP APIs. 
 The storage account is used for getting the NDJSON files between the $export and $import. The storage account is also used by Azure Durable Functions to store state and the payload created for $import operation.
 
 In the migration tool we are using $import for importing the data which got exported from the $export orchestrator.
@@ -304,14 +312,15 @@ You can run multiple import jobs at the same time, but running multiple jobs mig
 
 Once the $import operation is completed, the import operation content location is stored in Azure storage table and the next import status orchestrator in the durable function picks the details from storage table and checks the status of the import.
 
-## Monitoring
+# 4. During Migration
+## Monitoring during migration
 ### Dashboard Monitoring
 
-During the deployment of data migration tool , the dashboard is also deployed for monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. It's the visualization of each export-import runs.
+During the deployment of the data migration tool , the dashboard is also deployed for monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. It's the visualization of each export-import run.
 
 ![Architecture](images/Dasboard.png)
 
-Dashboard contain below details.
+Dashboard contains the below details.
 
 1. Export Operation Status.
 	- Completed export counts - This gives the count of export executed on Azure API for FHIR.
@@ -339,30 +348,22 @@ Dashboard contain below details.
 
 ### Table Storage Monitoring
 
-During the deployment of data migration tool , the table storage [chunk and export table] linked to Function App is used to store and monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. This table gives the overview and details of each export-import runs.
+During the deployment of data migration tool , the table storage (chunk and export table) linked to the Function App is used to store and monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. This table gives the overview and details of each export-import runs.
 
-There are two table storage created during deployment.
+There are two table storages created during deployment.
 
-1. Chunk: 
-	- It stores the how many run have been done or started for the migration.
-	- It stores the datetime value in since column. It indicate from which time the data should be exported from next run. This value is since in export URL for next export-import run.
+1. Chunk table storage: 
+	- This shows how many runs have been done or started for the migration.
+	- It stores the datetime value in since column. It indicates from which time the data should be exported from next run. This value is since in export URL for next export-import run.
 
-2. Export:
-	- This contains each export-import details.
+2. Export table storage:
+	- This contains details for each export-import run.
 	- It captures the time taken for each export and import.
 	- It captures the status of export and import.
 	- The export-import content location is capture which can be used to get the extact error occured during export-import by fetching the details through URL.
 
 
-## Important reminder: Custom search parameters and $reindex
 
-- The FHIR Migration Tool will copy over custom search parameters from your Azure API for FHIR over to your Azure Health Data Services FHIR service at the very beginning of migration. 
-- Once migration has started, if you wish to add any more custom search parameters after that, you must add them directly to the Azure Health Data Service FHIR service post-migration.
--  Once all your custom search parameters are in Azure Health Data Service FHIR service (regardless of if they were added by the migration tool or manually), you will need to run $reindex post-migration in order to index the custom search parameters and be able to use them in live production.
-- Learn more about custom search parameters:
-[How to do custom search in FHIR service](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/how-to-do-custom-search) 
-and $reindex:
-[How to run a reindex job in FHIR service](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/how-to-run-a-reindex).
 ## Troubleshooting
 
 1. Azure API for FHIR.
@@ -377,9 +378,11 @@ and $reindex:
 		- Import failure details can be found in Failed Import details 
     
 
+# 5. Stopping migration
+
 ## Data Movement Verification
 
-You can verify that the data was successfully copied over using the below checks.
+You can check how much data has successfully copied over using the below checks.
 
 1. Surface Check <br>
     For a quick validation, you can use the surface check. It compares the number  of resources of a particular FHIR resource type between the API for FHIR and FHIR service. You can configure the name of the resource type in the parameter: SurfaceCheckResources. 
@@ -399,7 +402,7 @@ You can verify that the data was successfully copied over using the below checks
 	3. Save the setting and hit the E2ETest_Http function.
 
 2. Deep Check <br>
-    For a deeper look, you can use the deep check to compare the JSON data of a subset of data from API for FHIR server and Azure Health Data Services FHIR service.You can configure the number of resources that will be compared in the parameter: DeepCheckCount.
+    For a deeper look, you can use the deep check to compare the JSON data of a subset of data from API for FHIR server and Azure Health Data Services FHIR service. You can configure the number of resources that will be compared in the parameter: DeepCheckCount.
 
 	To configure DeepCheckCount parameter, follow below steps:
 
@@ -429,6 +432,7 @@ You can verify that the data was successfully copied over using the below checks
 		5. Hit the URL to check the status of surface and deep check.
 		6. Once the statusQueryGetUri response runtimeStatus is complete. There will be output for surface and deep check which will contain the resources checks for both the server.
 		
+
 ## Stopping the Migration Tool
 
 Towards the end of migration, after a majority of the data has been copied, we recommend stopping all writes to Azure API for FHIR, and then waiting for the final $export/$imports to complete and for all the data to be migrated over to the new AHDS FHIR server prior to cutting over and starting to write to the new FHIR server. However, if you wish to start writing to the new AHDS FHIR server before the migration finishes, you can search, read, and POST new resources, but you should not update any resources. 
@@ -436,7 +440,7 @@ Towards the end of migration, after a majority of the data has been copied, we r
 
 You can stop the migration tool once the data migration from Azure API for FHIR instance to Azure Health Data Service FHIR service is completed.
 
-You can verify the data migration completion from Data Movement Verification step mentioned above.
+You can verify the progress of data migration using the steps in Data Movement Verification section above.
 
 Please follow below steps to stop the migration tool.
 
@@ -463,3 +467,11 @@ Pass the function App name and resource group name as parameter to command.
 ```
 az functionapp stop --name <<MyFunctionApp>>--resource-group <<MyResourceGroup>>
 ```
+
+# 6. Post-migration
+Some notes to remember post-migration:
+1. Conduct any testing that you would like to use to check your new Azure Health Data Services FHIR service. 
+2. If you have custom search parameters that were migrated with the migration tool or that you added yourself, run a [$reindex](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/how-to-run-a-reindex). 
+3. Cut over to your new Azure Health Data Services FHIR service, and start using your new FHIR server
+	- Start pointing your pipelines to your new FHIR server's URL
+	- Turn off any remaining pipelines that are running on Azure API for FHIR, delete data from the intermediate storage account that was used in the migration tool if necessary, delete data from your Azure API for FHIR server, and decommission your Azure API for FHIR account.
