@@ -54,15 +54,15 @@ namespace ApiForFhirMigrationTool.Function
             {
                 bool shouldRun = true;
 
-                if (_options.TimeStamp)
+                if (_options.StopDm)
                 {
                     var currentTime = DateTime.UtcNow;
                     var startHour = new TimeSpan(_options.StartTime-1, 0, 0);
-                    var endHour = new TimeSpan(_options.endTime, 0, 0);
+                    var endHour = new TimeSpan(_options.EndTime, 0, 0);
                     if (currentTime.TimeOfDay > startHour && currentTime.TimeOfDay < endHour)
                     {
                         shouldRun = false;
-                        logger.LogInformation("Current time is outside the allowed window.");
+                        logger.LogInformation("Execution skipped: Current time is outside allowed hours");
                     }
                 }
                 if (shouldRun)
