@@ -182,10 +182,10 @@ Deploy the infrastructure for migration tool. More details on configurations tha
 		- <*path-to-parameter*>: Specify the path to the parameters file i.e. armmain.parameters.json under infra folder.
 		<br><br>
 
-		**NOTE**
-		> If you want to export de-identify data, set the exportDeidentified parameter to true, and ensure isParallel is also set to true.<br> If exportDeidentified is set to true, you must provide the configFile parameter with a valid configuration file name; otherwise, the export operation will fail.
-
-	   **NOTE** : Choose your own unique "Prefix for FHIR Migration Tool resources" during deployment.
+	   **NOTE** :
+        - If you want to export de-identify data, set the exportDeidentified parameter to true, and ensure isParallel is also set to true.<br>
+        - If exportDeidentified is set to true, you must provide the configFile parameter with a valid configuration file name; otherwise, the export operation will fail.
+        - Choose your own unique "Prefix for FHIR Migration Tool resources" during deployment.
 
 	
 	</details>
