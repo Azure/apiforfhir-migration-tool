@@ -181,6 +181,10 @@ Deploy the infrastructure for migration tool. More details on configurations tha
 		- <*path-to-template*>: Provide the path to the ARM/Bicep template file i.e. main.json under infra folder.
 		- <*path-to-parameter*>: Specify the path to the parameters file i.e. armmain.parameters.json under infra folder.
 
+		> [!IMPORTANT]  
+		>- If you want to export de-identify data, set the exportDeidentified parameter to true, and ensure isParallel is also set to true.<br>
+	    >- If exportDeidentified is set to true, you must provide the configFile parameter with a valid configuration file name; otherwise, the export operation will fail.
+
 	   **NOTE** : Choose your own unique "Prefix for FHIR Migration Tool resources" during deployment.
 
 	
@@ -363,11 +367,15 @@ There are two table storages created during deployment.
 	- This shows how many runs have been done or started for the migration.
 	- It stores the datetime value in since column. It indicates from which time the data should be exported from next run. This value is since in export URL for next export-import run.
 
+	![ChunkTable](images/Chunk_Table.png)
+
 2. Export table storage:
 	- This contains details for each export-import run.
 	- It captures the time taken for each export and import.
 	- It captures the status of export and import.
 	- The export-import content location is capture which can be used to get the extact error occured during export-import by fetching the details through URL.
+	
+	![ExportTable](images/Export_Table.png)
 
 
 
