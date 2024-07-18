@@ -124,7 +124,7 @@ You may have certain advanced scenarios surrounding your migration that may requ
 
 		Example:
 		``` PowerShell
-		./anonymization.ps1  -storageaccount 'teststorageaccount' -filepath '/home/apiforfhir-migration-tool/infra/Anonymization/DemoConfig.json'
+		./anonymization.ps1  -storageaccount 'teststorageaccount' -filepath '/home/apiforfhir-migration-tool/infra/Anonymization/DemoTruncate.json'
 		```
 	7. Follow the deployment instructions in the section for ["Deploy Migration Tool"](/FHIR-data-migration-tool-docs/README.md#extra-prerequisites-needed-advanced-scenarios), making sure to turn on the migration tool option for [Export with de-identified data](/FHIR-data-migration-tool-docs/README.md#export-with-de-identified-data).
 
