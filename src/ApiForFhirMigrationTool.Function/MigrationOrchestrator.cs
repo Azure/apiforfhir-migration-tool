@@ -58,7 +58,7 @@ namespace ApiForFhirMigrationTool.Function
                 {
                     var currentTime = DateTime.UtcNow;
                     var startHour = new TimeSpan(_options.StartTime-1, 0, 0);
-                    var endHour = new TimeSpan(_options.EndTime, 0, 0);
+                    var endHour = new TimeSpan(_options.EndTime, 30, 0);
                     if (currentTime.TimeOfDay > startHour && currentTime.TimeOfDay < endHour)
                     {
                         shouldRun = false;
