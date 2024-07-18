@@ -104,15 +104,15 @@ You may have certain advanced scenarios surrounding your migration that may requ
 			```azurecli-interactive
 			cd $HOME/apiforfhir-migration-tool/infra
 			```
-	2. Sign into your Azure account
+	4. Sign into your Azure account
 		``` PowerShell
 		Connect-AzAccount -Subscription 'xxxx-xxxx-xxxx-xxxx-xxxxxx'
 		```
 		where 'xxxx-xxxx-xxxx-xxxx-xxxxxx' is your subscription ID.
 
-	3. Browse to the scripts folder under this path (..\infra\Anonymization).
+	5. Browse to the scripts folder under this path (..\infra\Anonymization).
 
-	4. Run the following PowerShell script. 
+	6. Run the following PowerShell script. 
 		```Powershell
 		./anonymization.ps1 -storageaccount '<Storage Account Name>' -filepath 'Anonymization configuration file' 
 		```
@@ -126,7 +126,7 @@ You may have certain advanced scenarios surrounding your migration that may requ
 		``` PowerShell
 		./anonymization.ps1  -storageaccount 'teststorageaccount' -filepath '/home/apiforfhir-migration-tool/infra/Anonymization/DemoConfig.json'
 		```
-
+	7. Follow the deployment instructions in the section for ["Deploy Migration Tool"](/FHIR-data-migration-tool-docs/README.md#extra-prerequisites-needed-advanced-scenarios), making sure to turn on the migration tool option for [Export with de-identified data](/FHIR-data-migration-tool-docs/README.md#export-with-de-identified-data).
 
 
 
@@ -246,7 +246,7 @@ Value: {"Patient", "Observation", "Encounter"}
 Export can be done with de-identified data. This is helpful when you may need to systematically change or transform your data during the process of migration (for example, if you need to truncate or round some data to the 18th digit). <br>
 __Note__: The de-identification of data during export is only supported when isparallel is set to true as Azure API for FHIR only supports de-identified export at the system level ($export).
 
-Please note that if you need to use this option, you will need to follow the steps listed in the "Extra prerequisites needed (advanced scenarios)" section above to set up the configuration file and storage account container.  During the deployment of the migration tool, you will have the option to enable or disable exporting with de-identification by specifying their values as true or false. <br>If you select true, you will need to enter the configuration file name.
+Please note that if you need to use this option, you will need to follow the steps listed in the ["Extra prerequisites needed (advanced scenarios)"](/FHIR-data-migration-tool-docs/README.md#extra-prerequisites-needed-advanced-scenarios) section above to set up the configuration file and storage account container.  During the deployment of the migration tool, you will have the option to enable or disable exporting with de-identification by specifying their values as true or false. <br>If you select true, you will need to enter the configuration file name.
 
 Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with de-identification is set to false.
 
@@ -447,7 +447,7 @@ Towards the end of migration, after a majority of the data has been copied, we r
 
 You can stop the migration tool once the data migration from Azure API for FHIR instance to Azure Health Data Service FHIR service is completed.
 
-You can verify the progress of data migration using the steps in Data Movement Verification section above.
+You can verify the progress of data migration using the steps in [Data Movement Verification](/FHIR-data-migration-tool-docs/README.md#data-movement-verification) section above.
 
 Please follow below steps to stop the migration tool.
 
