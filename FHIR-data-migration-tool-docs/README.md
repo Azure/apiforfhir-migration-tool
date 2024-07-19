@@ -373,7 +373,8 @@ Dashboard contains the below details.
 	- Avg processor / CPU utilization
 	- Average available memory.
 5. Total Resource Count - This gives the count of total resources on FHIR service and Azure API for FHIR.
-![Total Resource Count](images/TotalResourceCount.png)
+
+	![Total Resource Count](images/TotalResourceCount.png)
 ### Table Storage Monitoring
 
 During the deployment of data migration tool , the table storage (chunk and export table) linked to the Function App is used to store and monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. This table gives the overview and details of each export-import runs.
