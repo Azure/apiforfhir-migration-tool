@@ -181,6 +181,23 @@ Deploy the infrastructure for migration tool. More details on configurations tha
 		- <*path-to-template*>: Provide the path to the ARM/Bicep template file i.e. main.json under infra folder.
 		- <*path-to-parameter*>: Specify the path to the parameters file i.e. armmain.parameters.json under infra folder.
 		<br><br>
+		**NOTE** : Please ensure to update the **ARMmain.parameters.json** file with the configurations that you need.<br>
+
+		|Parameter   | Description   | Example Value |
+		|---|---|---|
+		| prefix | Unique prefix for naming resources.| "mig"|
+		| fhirServiceName | Name of the FHIR service instance.| "[workspace]/[fhir service]"
+		|apiForFhirName| Name of the API for the FHIR service.| "[AzureApiForFhirName]" |
+		|appName|Name of the Function App.|"MyMigrationApp"|
+		|fhirid| Resource ID of the FHIR service instance.|/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HealthcareApis/workspaces/{workspaceName}/fhirservices/{FHIRserviceName}|
+		|apiForFhirid| Resource ID of the Azure API for FHIR.|/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HealthcareApis/services/{AzureApiForFHIRserviceName}|
+		|dashboardName|Name of the monitoring dashboard.|MigrationToolDashboard|
+		|exportWithHistory| A boolean value indicating whether to Include historical data in export (true/false).|true|
+		|exportWithDelete|A boolean value indicating whether to include deleted resources in export (true/false).|false|
+		|isParallel| A boolean value indicating whether the export operation should be performed in parallel. |true|
+		|exportDeidentified|A boolean value indicating whether to export deidentified data. |true|
+		|configFile|Name of Configuration File |"DemoTruncate.json"|
+
 
 	   **NOTE** :
         - If you want to export de-identify data, set the exportDeidentified parameter to true, and ensure isParallel is also set to true.<br>
@@ -356,7 +373,7 @@ Dashboard contains the below details.
 	- Avg processor / CPU utilization
 	- Average available memory.
 5. Total Resource Count - This gives the count of total resources on FHIR service and Azure API for FHIR.
-
+![Total Resource Count](images/TotalResourceCount.png)
 ### Table Storage Monitoring
 
 During the deployment of data migration tool , the table storage (chunk and export table) linked to the Function App is used to store and monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. This table gives the overview and details of each export-import runs.
