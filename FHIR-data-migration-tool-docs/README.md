@@ -101,7 +101,7 @@ You may have certain advanced scenarios surrounding your migration that may requ
 			{
 			"path": "(nodesByType('Observation').value as Quantity).value",
 			"method": "generalize",
-		    "cases":{
+               "cases":{
 				    "$this.length>18": "$this.toString().substring(0,18).toDecimal()"
 			    }
 			}
