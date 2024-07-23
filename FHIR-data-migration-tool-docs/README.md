@@ -93,7 +93,7 @@ You may have certain advanced scenarios surrounding your migration that may requ
    1. Set up your anonymization config file, which details how you would like to transform your data. Learn more about the config file [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export). This repo includes [DemoTruncate.json](/infra/Anonymization/DemoTruncate.json), which is an example anonymization config file that truncates Observation quantity values down to 18 digits. 
    
 
-   2. This repo has a PowerShell script available to help create the container in the storage account which is configured with Azure API for FHIR for export, and will also put the specified file in the container. Following instructions detail how to use the PowerShell script. This must be done before starting the Migration Tool deployment. To run the PowerShell Script, you need to have the "Storage Blob data contributor" role on storage account, as the script requires access to the storage account.
+   2. This repo has a PowerShell script available to help create the container in the storage account which is configured with Azure API for FHIR for export, and will also put the specified file in the container. Following instructions detail how to use the PowerShell script. This must be done before starting the Migration Tool deployment. To run the PowerShell Script, you need to have the "Storage Blob data contributor" role on the storage account, as the script requires access to the storage account.
    3. You can run the Powershell script locally, or you can use [Open Azure Cloud Shell](https://shell.azure.com). You can also access this from [Azure Portal](https://portal.azure.com).\
 	More details on how to setup Azure Cloud Shell [here](https://learn.microsoft.com/azure/cloud-shell/overview).
 
@@ -137,78 +137,84 @@ You may have certain advanced scenarios surrounding your migration that may requ
 
 
 Deploy the infrastructure for migration tool. More details on configurations that can be set during deployment are in the next section, "Configurations to set up during deployment".
-1. **OPTION A**: Deploy the migration tool through Azure Portal using the Deploy to Azure button
 
-	[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2Fmain.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2FuiDefForm.json)
+### Option A: Deploy the migration tool through Azure Portal
+Deploy the migration tool through Azure Portal using this Deploy to Azure button
 
-    **NOTE** : Choose your own unique "Prefix for FHIR Migration Tool resources" during deployment.
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2Fmain.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fapiforfhir-migration-tool%2Fmain%2Finfra%2FuiDefForm.json)
 
-2. **OPTION B**: Or, deploy the migration tool manually:
-	<br />
-	<details>
-	<summary>Click to expand to see manual deployment instructions.</summary>
-
-	1. Clone this repo
-		```azurecli
-		git clone https://github.com/Azure/apiforfhir-migration-tool.git --depth 1
-		```
-	2. Log in to Azure  
-		Before you begin, ensure that you are logged in to your Azure account. If you are not already logged in, follow these steps:
-		```
-		az login
-		```
-	3. Set the Azure Subscription  
-		If you have multiple Azure subscriptions and need to specify which one to use for this deployment, use the az account set command:
-		```
-		az account set --subscription [Subscription Name or Subscription ID]
-		```
-		Replace [Subscription Name or Subscription ID] with the name or ID of the subscription you want to use for this deployment. You can find your subscription information by running az account list.
-
-		**Note** : This step is particularly important if you have multiple subscriptions, as it ensures that the resources are deployed to the correct subscription.
-
-	4. If needed, create a resource group
-
-		If you don't already have a resource group that you want to use, use the following command to create a resource group.  
-		```
-			az group create --name <resource_group_name> --location <location>
-		```  
-		Replace <*resource_group_name*> with your desired name and <*location*> with the Azure region where you want to create the resource group
-
-	5. Deploy the function  
-		Now, you can initiate the deployment using the Azure CLI
-		```
-		az deployment group create --resource-group<resource-group-name> --template-file <path-to-template> --parameters <path-to-parameter>
-		```
-		- <*resource-group-name*>: Replace this with the name of the resource group you want to use.
-		- <*path-to-template*>: Provide the path to the ARM/Bicep template file i.e. main.json under infra folder.
-		- <*path-to-parameter*>: Specify the path to the parameters file i.e. armmain.parameters.json under infra folder.
-		<br><br>
-		**NOTE** : Please ensure to update the **ARMmain.parameters.json** file with the configurations that you need.<br>
-
-		|Parameter   | Description   | Example Value |
-		|---|---|---|
-		| prefix | Unique prefix for naming resources.| "mig"|
-		| fhirServiceName | Name of the FHIR service instance.| "[workspace]/[fhir service]"
-		|apiForFhirName| Name of the API for the FHIR service.| "[AzureApiForFhirName]" |
-		|appName|Name of the Function App.|"MyMigrationApp"|
-		|fhirid| Resource ID of the FHIR service instance.|/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HealthcareApis/workspaces/{workspaceName}/fhirservices/{FHIRserviceName}|
-		|apiForFhirid| Resource ID of the Azure API for FHIR.|/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HealthcareApis/services/{AzureApiForFHIRserviceName}|
-		|dashboardName|Name of the monitoring dashboard.|MigrationToolDashboard|
-		|exportWithHistory| A boolean value indicating whether to Include historical data in export (true/false).|true|
-		|exportWithDelete|A boolean value indicating whether to include deleted resources in export (true/false).|false|
-		|isParallel| A boolean value indicating whether the export operation should be performed in parallel. |true|
-		|exportDeidentified|A boolean value indicating whether to export deidentified data. |true|
-		|configFile|Name of Configuration File |"DemoTruncate.json"|
+Notes: <br>
+- Choose your own unique "Prefix for FHIR Migration Tool resources" during deployment.
+- Configurations can be set in the UI in Azure Portal after clicking the Deploy the Azure button. Learn more about the configurations in the next section, "Configurations to set up during deployment".
 
 
-	   **NOTE** :
-        - If you want to export de-identify data, set the exportDeidentified parameter to true, and ensure isParallel is also set to true.<br>
-        - If exportDeidentified is set to true, you must provide the configFile parameter with a valid configuration file name; otherwise, the export operation will fail.
-        - Choose your own unique "Prefix for FHIR Migration Tool resources" during deployment.
+### Option B: Deploy the migration tool manually through an ARM template
+Deploy the migration tool manually:
+<br />
+<details>
+<summary>Click to expand to see manual deployment instructions.</summary>
 
-	
-	</details>
-	<br />
+1. Clone this repo
+	```azurecli
+	git clone https://github.com/Azure/apiforfhir-migration-tool.git --depth 1
+	```
+2. Log in to Azure  
+	Before you begin, ensure that you are logged in to your Azure account. If you are not already logged in, follow these steps:
+	```
+	az login
+	```
+3. Set the Azure Subscription  
+	If you have multiple Azure subscriptions and need to specify which one to use for this deployment, use the az account set command:
+	```
+	az account set --subscription [Subscription Name or Subscription ID]
+	```
+	Replace [Subscription Name or Subscription ID] with the name or ID of the subscription you want to use for this deployment. You can find your subscription information by running az account list.
+
+	**Note** : This step is particularly important if you have multiple subscriptions, as it ensures that the resources are deployed to the correct subscription.
+
+4. If needed, create a resource group
+
+	If you don't already have a resource group that you want to use, use the following command to create a resource group.  
+	```
+		az group create --name <resource_group_name> --location <location>
+	```  
+	Replace <*resource_group_name*> with your desired name and <*location*> with the Azure region where you want to create the resource group
+
+5. Deploy the function  
+	Now, you can initiate the deployment using the Azure CLI
+	```
+	az deployment group create --resource-group<resource-group-name> --template-file <path-to-template> --parameters <path-to-parameter>
+	```
+	- <*resource-group-name*>: Replace this with the name of the resource group you want to use.
+	- <*path-to-template*>: Provide the path to the ARM/Bicep template file i.e. main.json under infra folder.
+	- <*path-to-parameter*>: Specify the path to the parameters file i.e. armmain.parameters.json under infra folder.
+	<br><br>
+	**NOTE** : Please update the **ARMmain.parameters.json** file with the configurations that you need. Learn more about the configurations in the next section, "Configurations to set up during deployment" <br>
+
+	|Parameter   | Description   | Example Value |
+	|---|---|---|
+	| prefix | Unique prefix for naming resources.| "mig"|
+	| fhirServiceName | Name of the FHIR service instance.| "[workspace]/[fhir service]"
+	|apiForFhirName| Name of the API for the FHIR service.| "[AzureApiForFhirName]" |
+	|appName|Name of the Function App.|"MyMigrationApp"|
+	|fhirid| Resource ID of the FHIR service instance.|/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HealthcareApis/workspaces/{workspaceName}/fhirservices/{FHIRserviceName}|
+	|apiForFhirid| Resource ID of the Azure API for FHIR.|/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HealthcareApis/services/{AzureApiForFHIRserviceName}|
+	|dashboardName|Name of the monitoring dashboard.|MigrationToolDashboard|
+	|exportWithHistory| A boolean value indicating whether to Include historical data in export (true/false).|true|
+	|exportWithDelete|A boolean value indicating whether to include deleted resources in export (true/false).|false|
+	|isParallel| A boolean value indicating whether the export operation should be performed in parallel. |true|
+	|exportDeidentified|A boolean value indicating whether to export deidentified data. |true|
+	|configFile|Name of Configuration File (only needed if you are using [Export with de-identified data](/FHIR-data-migration-tool-docs/README.md#export-with-de-identified-data)) |"DemoTruncate.json"|
+
+
+	**NOTE** :
+	- If you want to export de-identified data, set the exportDeidentified parameter to true, and ensure isParallel is also set to true.<br>
+	- If exportDeidentified is set to true, you must provide the configFile parameter with a valid configuration file name; otherwise, the export operation will fail.
+	- Choose your own unique "Prefix for FHIR Migration Tool resources" during deployment.
+
+
+</details>
+<br />
 	
 ## Configurations to set up during deployment
 The following are optional settings that you can configure during deployment.
@@ -266,10 +272,10 @@ Value: {"Patient", "Observation", "Encounter"}
 ```
 ### Export with de-identified data
 
-Export can be done with de-identified data. This is helpful when you may need to systematically change or transform your data during the process of migration (for example, if you need to truncate or round some data to the 18th digit). <br>
+Export can be done with de-identified data. This is helpful when you may need to systematically change or transform your data during the process of migration (for example, if you need to truncate some data to the 18th digit). <br>
 __Note__: The de-identification of data during export is only supported when isparallel is set to true as Azure API for FHIR only supports de-identified export at the system level ($export).
 
-Please note that if you need to use this option, you will need to follow the steps listed in the [De-identified export](/FHIR-data-migration-tool-docs/README.md#de-identified-export) section above to set up the configuration file and storage account container.  During the deployment of the migration tool, you will have the option to enable or disable exporting with de-identification by specifying their values as true or false. <br>If you select true, you will need to enter the configuration file name.
+Please note that if you need to use this option, you will need to follow the steps listed in the [De-identified export](/FHIR-data-migration-tool-docs/README.md#de-identified-export) section above to set up the configuration file and storage account container.  During the deployment of the migration tool, you will have the option to enable or disable exporting with de-identification by specifying their values as true or false. Setting this parameter as true is the equivalent of setting the $export query parameter "_anonymizationConfig_" as mentioned [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export). If you select true, you will also need to enter the configuration file name.
 
 Take a look at the screenshot below to learn how to configure the export settings. By default, exporting with de-identification is set to false.
 
