@@ -149,7 +149,8 @@ Notes: <br>
 
 
 ### Option B: Deploy the migration tool manually through an ARM template
-Deploy the migration tool manually:
+Deploy the migration tool manually <br>
+Please note that if you are using [Private Link](/FHIR-data-migration-tool-docs/private-link-sample/ReadMe.md), you will need to use this option to deploy the migration tool manually. 
 <br />
 <details>
 <summary>Click to expand to see manual deployment instructions.</summary>
