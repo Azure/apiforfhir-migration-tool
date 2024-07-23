@@ -272,6 +272,15 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         [JsonProperty("fileCount")]
         public int FileCount = 10000;
 
+        [JsonProperty("stopDm")]
+        public bool StopDm = true;
+
+        [JsonProperty("startTime")]
+        public int StartTime = 8;
+
+        [JsonProperty("endTime")]
+        public int EndTime = 17;
+
         public bool ValidateConfig()
         {
             if (SourceUri != null

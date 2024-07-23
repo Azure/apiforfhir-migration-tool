@@ -140,6 +140,59 @@
                                 "visible": true
                             },
                             {
+                                "name": "stopMigrationDuringBusinessHours",
+                                "type": "Microsoft.Common.DropDown",
+                                "label": "Stop Migration Tool During Business Hours",
+                                "defaultValue":"False",
+                                "toolTip": "",
+                                "constraints": {
+                                    "allowedValues": [
+                                        {
+                                            "label": "True",
+                                            "value": true
+                                        },
+                                        {
+                                            "label": "False",
+                                            "value": false
+                                        }
+                                    ],
+                                    "required": true
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "startTime",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Start Time",
+                                "placeholder": "Enter Start Time",
+                                "defaultValue":"08",
+                                "dependsOn": [
+                                    "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]"
+                                ],
+                                "visible": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
+                                "constraints": {
+                                    "required": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
+                                    "regex": "^(?:[01]\\d|2[0-3])$",
+                                    "validationMessage": "Hour must be in HH format (00-23)"
+                                }
+                            },
+                            {
+                                "name": "endTime",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "End Time",
+                                "placeholder": "Enter End Time",
+                                "defaultValue":"17",
+                                "dependsOn": [
+                                    "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]"
+                                ],
+                                "visible": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
+                                "constraints": {
+                                    "required": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
+                                    "regex": "^(?:[01]\\d|2[0-3])$",
+                                    "validationMessage": "Hour must be in HH format (00-23)"
+                                }
+                            },
+                            {
                                 "name": "isParallel",
                                 "type": "Microsoft.Common.DropDown",
                                 "label": "Export Using isParallel",
@@ -222,7 +275,10 @@
             "exportWithDelete": "[steps('fhirSelection').fhirSection.exportWithDelete]",
             "isParallel":"[steps('fhirSelection').fhirSection.isParallel]",
             "exportDeidentified":"[steps('fhirSelection').fhirSection.exportDeidentified]",
-            "configFile":"[steps('fhirSelection').fhirSection.configurationFile]"
+            "configFile":"[steps('fhirSelection').fhirSection.configurationFile]",
+            "stopDm":"[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
+            "startTime":"[steps('fhirSelection').fhirSection.startTime]",
+            "endTime":"[steps('fhirSelection').fhirSection.endTime]"
             
         }
     }

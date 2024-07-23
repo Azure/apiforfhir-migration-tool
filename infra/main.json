@@ -118,7 +118,28 @@
             "metadata": {
                 "description": "Name of Configuration file"
             }
-        }
+        },
+        "stopDm":{
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Export by timestamp"
+            } 
+        },
+        "startTime":{
+           "type": "int",
+            "defaultValue": 8,
+            "metadata": {
+                "description": "Indicates the start time for the hours when export and import operations are restricted"
+            }  
+        },
+        "endTime":{
+            "type": "int",
+             "defaultValue": 17,
+             "metadata": {
+                 "description": "Indicates the end time for the hours when export and import operations are restricted"
+             }  
+         }
     },
     "variables": {
         "functionAppName": "[format('{0}{1}',parameters('prefix'), parameters('appName'))]",
@@ -142,7 +163,7 @@
         "uniqueResourceIdentifier": "[substring(uniqueString(resourceGroup().id, parameters('prefix')), 0, 4)]",
         "prefixNameClean": "[format('{0}{1}', replace(parameters('prefix'), '-', ''), variables('uniqueResourceIdentifier'))]",
         "prefixNameCleanShort": "[if(greater(length(variables('prefixNameClean')), 16), substring(variables('prefixNameClean'), 0, 8), variables('prefixNameClean'))]"
-
+        
     },
     "resources": [
         {
@@ -266,6 +287,9 @@
                 "AZURE_ExportWithDelete": "[parameters('exportWithDelete')]",
                 "AZURE_IsParallel": "[parameters('isParallel')]",
                 "AZURE_ExportDeidentified":"[parameters('exportDeidentified')]",
+                "AZURE_StopDm":"[parameters('stopDm')]",
+                "AZURE_StartTime":"[parameters('startTime')]",
+                "AZURE_EndTime":"[parameters('endTime')]",
                 "AZURE_ConfigFile":"[parameters('configFile')]",
                 "AZURE_stagingStorageAccountName": "[variables('storageAccountName')]",
                 "AZURE_StagingStorageUri": "[format('https://{0}.table.core.windows.net', variables('storageAccountName'))]",
@@ -286,7 +310,7 @@
             "name": "[format('{0}/{1}', variables('functionAppName'), 'web')]",
             "properties": {
                 "repoUrl": "[variables('repoUrl')]",
-                "branch": "main",
+                "branch": "personal/v-nikitaraut-stop-dm",
                 "isManualIntegration": true
             },
             "dependsOn": [

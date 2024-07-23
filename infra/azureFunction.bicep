@@ -15,6 +15,9 @@ param exportWithDelete bool
 param isParallel bool
 param exportDeidentified bool
 param configFile string
+param stopDm bool
+param startTime int
+param endTime int
 @description('Automatically create a role assignment for the function app to access the FHIR service and API for FHIR.')
 param createRoleAssignment bool = true
 param apiForFhirsubid string
@@ -120,7 +123,10 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
               AZURE_ExportWithHistory: exportWithHistory
               AZURE_ExportWithDelete: exportWithDelete
               AZURE_IsParallel:isParallel
-              AZURE_ExportDeidentifie:exportDeidentified
+              AZURE_ExportDeidentified:exportDeidentified
+              AZURE_StopDm:stopDm
+              AZURE_StartTime:startTime
+              AZURE_EndTime:endTime
               AZURE_ConfigFile:configFile            
               AZURE_stagingStorageAccountName: storageAccountName
               AZURE_StagingStorageUri: 'https://${storageAccountName}.table.core.windows.net'
