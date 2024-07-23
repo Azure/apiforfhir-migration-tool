@@ -162,42 +162,41 @@
                             },
                             {
                                 "name": "startTime",
-                                "type": "Microsoft.Common.NumberBox",
+                                "type": "Microsoft.Common.TextBox",
                                 "label": "Start Time",
                                 "placeholder": "Enter Start Time",
-                                "defaultValue": 8,
+                                "defaultValue": "8",
                                 "dependsOn": [
                                     "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]"
                                 ],
                                 "visible": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
                                 "constraints": {
                                     "required": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
-                                    "range": {
-                                        "min": 0,
-                                        "max": 23
-                                    },
-                                    "validationMessage": "Hour must be an integer between 0 and 23"
+                                    "regex": "^[0-9]{1,2}$",
+                                    "validationMessage": "Hour must be an integer between 0 and 23",
+                                    "minValue": 0,
+                                    "maxValue": 23
                                 }
                             },
                             {
                                 "name": "endTime",
-                                "type": "Microsoft.Common.NumberBox",
+                                "type": "Microsoft.Common.TextBox",
                                 "label": "End Time",
                                 "placeholder": "Enter End Time",
-                                "defaultValue": 17,
+                                "defaultValue": "17",
                                 "dependsOn": [
                                     "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]"
                                 ],
                                 "visible": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
                                 "constraints": {
                                     "required": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
-                                    "range": {
-                                        "min": 0,
-                                        "max": 23
-                                    },
-                                    "validationMessage": "Hour must be an integer between 0 and 23"
+                                    "regex": "^[0-9]{1,2}$",
+                                    "validationMessage": "Hour must be an integer between 0 and 23",
+                                    "minValue": 0,
+                                    "maxValue": 23
                                 }
                             },
+                            
                             
                             {
                                 "name": "isParallel",
@@ -284,8 +283,9 @@
             "exportDeidentified":"[steps('fhirSelection').fhirSection.exportDeidentified]",
             "configFile":"[steps('fhirSelection').fhirSection.configurationFile]",
             "stopDm":"[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
-            "startTime":"[steps('fhirSelection').fhirSection.startTime]",
-            "endTime":"[steps('fhirSelection').fhirSection.endTime]"
+            "startTime": "[int(steps('fhirSelection').fhirSection.startTime)]",
+            "endTime": "[int(steps('fhirSelection').fhirSection.endTime)]"
+
             
         }
     }
