@@ -1,6 +1,6 @@
 # Deploy the FHIR migration tool manually (needed if you are using Azure Private Link)
 
-If you are using Azure Private Link, the Deploy to Azure deployment of the migration tool will not work. Follow this tutorial to learn how to deploy the migration tool manually with Azure Private Link.
+If you are using Azure Private Link, the Deploy to Azure deployment of the migration tool will not work, and you will need to deploy the migration tool manually. Follow this tutorial to learn how to deploy the migration tool manually with Azure Private Link.
 
 # Prerequisites needed
 1. An Azure account
@@ -104,7 +104,8 @@ If you are using Azure Private Link, the Deploy to Azure deployment of the migra
  For detailed instructions on securing the FHIR service's  import operation.
 
  ## 5. Deploy migration tool using ARM
- - To deploy the migration tool using Azure Resource Manager (ARM), please refer to the section "Deploy the migration tool manually" in this [documentation](/FHIR-data-migration-tool-docs/README.md).
+ - To deploy the migration tool using Azure Resource Manager (ARM), please refer to the section ["Option B: Deploy the migration tool manually through an ARM template"](/FHIR-data-migration-tool-docs#deploy-the-migration-tool) from the deployment document. Configurations for the migration tool can be done at this step using the **ARMmain.parameters.json** file.
+ 
 
 ## 6. Configuring secure storage of data migration tool.
 This step provides detailed instructions for configuring secure storage of data migration tool. The process involves setting up networking configurations and creating a private endpoint to ensure secure access to your storage account.
@@ -121,8 +122,8 @@ This step provides detailed instructions for configuring secure storage of data 
     - Follow the steps outlined in Section 3 for creating private endpoint connections
     - By following these steps, you will have successfully configured secure storage in Azure with the necessary networking configurations and private endpoint connections.
 
-## 7. Secure an Azure Function App
-This step offers detailed instructions on how to secure an Azure Function App
+## 7. Secure the migration tool Azure Functions App
+This step offers detailed instructions on how to secure the migration tool Azure Functions App
 - **Steps :**
     - Navigate to your Azure Function App in the Azure portal.On the left-hand side, find and click on the "Networking" tab.
     - Inside the "Networking" tab, click on "Access Restrictions" from the options provided.
