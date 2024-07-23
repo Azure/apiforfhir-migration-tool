@@ -165,7 +165,6 @@
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "Start Time",
                                 "placeholder": "Enter Start Time",
-                                "defaultValue":"08",
                                 "dependsOn": [
                                     "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]"
                                 ],
@@ -181,7 +180,6 @@
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "End Time",
                                 "placeholder": "Enter End Time",
-                                "defaultValue":"17",
                                 "dependsOn": [
                                     "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]"
                                 ],
