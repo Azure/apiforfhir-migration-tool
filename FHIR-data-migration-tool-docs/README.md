@@ -90,7 +90,36 @@ You may have certain advanced scenarios surrounding your migration that may requ
 - If you need to systemmatically edit or transform your data during the migration process, we have an option to include a step in migration that calls the [Tools for Health Data Anonymization](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export), which is a tool that can help de-identify data, to do those transformations after exporting from Azure API for FHIR and before importing into Azure Health Data Services FHIR Service.
 - An example of when this might be needed is if you have resources with decimal values that are more than 18 digits. The [FHIR spec](https://www.hl7.org/fhir/datatypes.html#decimal) is headed in the direction to limit the length of decimal values to 18 digits, and Azure Health Data Services only supports up to 18 digits of precision for decimal data type. Azure API for FHIR did not have this restriction on precision. If you have data of decimal data type that has more than 18 digits that you are trying to migrate, $import may reject those values, and you may say a 500 Internal Server Error. To avoid this, you may use the De-id option in the migration tool to edit the data by truncating down to 18 digits to meet the restriction.
 - To use this optional step, you will need to configure [de-identified export](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export) in Azure API for FHIR prior to the migration, with the following steps:
-   1. Set up your anonymization config file, which details how you would like to transform your data. Learn more about the config file [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export).
+   1. Set up your anonymization config file, which details how you would like to transform your data. Learn more about the config file [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export).<br>
+   Here is an example of an anonymization configuration file.
+
+   ```json
+	{
+		"fhirVersion": "R4",
+		"processingError":"raise",
+		"fhirPathRules": [
+			{
+			"path": "(nodesByType('Observation').value as Quantity).value",
+			"method": "generalize",
+                   "cases":{
+				    "$this.length>18": "$this.toString().substring(0,18).toDecimal()"
+			    }
+			}
+		],
+		"parameters": {
+			"dateShiftKey": "",
+			"cryptoHashKey": "",
+			"encryptKey": "",
+			"enablePartialAgesForRedact": false
+		}
+	}
+	
+	```
+	- This JSON configuration is for processing FHIR data and contains a rule for handling observation values, particularly for quantities longer than 18 characters.
+
+	- *$this.length>18*: This is a condition that checks if the length of the quantity value exceeds 18 characters.
+	If the condition is true, this transformation is applied. It takes the first 18 characters of the quantity value, converts it to a string, and then converts that substring back to a decimal.
+
    2. This repo has a PowerShell script available to help create the container in the storage account which is configured with Azure API for FHIR for export, and will also put the specified file in the container. Following instructions detail how to use the PowerShell script. This must be done before starting the Migration Tool deployment. To run the PowerShell Script, you need to have the "Storage Blob data contributor" role on storage account, as the script requires access to the storage account.
    3. You can run the Powershell script locally, or you can use [Open Azure Cloud Shell](https://shell.azure.com). You can also access this from [Azure Portal](https://portal.azure.com).\
 	More details on how to setup Azure Cloud Shell [here](https://learn.microsoft.com/azure/cloud-shell/overview).
@@ -181,6 +210,23 @@ Deploy the infrastructure for migration tool. More details on configurations tha
 		- <*path-to-template*>: Provide the path to the ARM/Bicep template file i.e. main.json under infra folder.
 		- <*path-to-parameter*>: Specify the path to the parameters file i.e. armmain.parameters.json under infra folder.
 		<br><br>
+		**NOTE** : Please ensure to update the **ARMmain.parameters.json** file with the configurations that you need.<br>
+
+		|Parameter   | Description   | Example Value |
+		|---|---|---|
+		| prefix | Unique prefix for naming resources.| "mig"|
+		| fhirServiceName | Name of the FHIR service instance.| "[workspace]/[fhir service]"
+		|apiForFhirName| Name of the API for the FHIR service.| "[AzureApiForFhirName]" |
+		|appName|Name of the Function App.|"MyMigrationApp"|
+		|fhirid| Resource ID of the FHIR service instance.|/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HealthcareApis/workspaces/{workspaceName}/fhirservices/{FHIRserviceName}|
+		|apiForFhirid| Resource ID of the Azure API for FHIR.|/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HealthcareApis/services/{AzureApiForFHIRserviceName}|
+		|dashboardName|Name of the monitoring dashboard.|MigrationToolDashboard|
+		|exportWithHistory| A boolean value indicating whether to Include historical data in export (true/false).|true|
+		|exportWithDelete|A boolean value indicating whether to include deleted resources in export (true/false).|false|
+		|isParallel| A boolean value indicating whether the export operation should be performed in parallel. |true|
+		|exportDeidentified|A boolean value indicating whether to export deidentified data. |true|
+		|configFile|Name of Configuration File |"DemoTruncate.json"|
+
 
 	   **NOTE** :
         - If you want to export de-identify data, set the exportDeidentified parameter to true, and ensure isParallel is also set to true.<br>
@@ -357,6 +403,7 @@ Dashboard contains the below details.
 	- Average available memory.
 5. Total Resource Count - This gives the count of total resources on FHIR service and Azure API for FHIR.
 
+	![Total Resource Count](images/TotalResourceCount.png)
 ### Table Storage Monitoring
 
 During the deployment of data migration tool , the table storage (chunk and export table) linked to the Function App is used to store and monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. This table gives the overview and details of each export-import runs.
