@@ -90,35 +90,8 @@ You may have certain advanced scenarios surrounding your migration that may requ
 - If you need to systemmatically edit or transform your data during the migration process, we have an option to include a step in migration that calls the [Tools for Health Data Anonymization](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export), which is a tool that can help de-identify data, to do those transformations after exporting from Azure API for FHIR and before importing into Azure Health Data Services FHIR Service.
 - An example of when this might be needed is if you have resources with decimal values that are more than 18 digits. The [FHIR spec](https://www.hl7.org/fhir/datatypes.html#decimal) is headed in the direction to limit the length of decimal values to 18 digits, and Azure Health Data Services only supports up to 18 digits of precision for decimal data type. Azure API for FHIR did not have this restriction on precision. If you have data of decimal data type that has more than 18 digits that you are trying to migrate, $import may reject those values, and you may say a 500 Internal Server Error. To avoid this, you may use the De-id option in the migration tool to edit the data by truncating down to 18 digits to meet the restriction.
 - To use this optional step, you will need to configure [de-identified export](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export) in Azure API for FHIR prior to the migration, with the following steps:
-   1. Set up your anonymization config file, which details how you would like to transform your data. Learn more about the config file [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export).<br>
-   Here is an example of an anonymization configuration file.
-
-   ```json
-	{
-		"fhirVersion": "R4",
-		"processingError":"raise",
-		"fhirPathRules": [
-			{
-			"path": "(nodesByType('Observation').value as Quantity).value",
-			"method": "generalize",
-                   "cases":{
-				    "$this.length>18": "$this.toString().substring(0,18).toDecimal()"
-			    }
-			}
-		],
-		"parameters": {
-			"dateShiftKey": "",
-			"cryptoHashKey": "",
-			"encryptKey": "",
-			"enablePartialAgesForRedact": false
-		}
-	}
-	
-	```
-	- This JSON configuration is for processing FHIR data and contains a rule for handling observation values, particularly for quantities longer than 18 characters.
-
-	- *$this.length>18*: This is a condition that checks if the length of the quantity value exceeds 18 characters.
-	If the condition is true, this transformation is applied. It takes the first 18 characters of the quantity value, converts it to a string, and then converts that substring back to a decimal.
+   1. Set up your anonymization config file, which details how you would like to transform your data. Learn more about the config file [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/de-identified-export). This repo includes [DemoTruncate.json](/infra/Anonymization/DemoTruncate.json), which is an example anonymization config file that truncates Observation quantity values down to 18 digits. 
+   
 
    2. This repo has a PowerShell script available to help create the container in the storage account which is configured with Azure API for FHIR for export, and will also put the specified file in the container. Following instructions detail how to use the PowerShell script. This must be done before starting the Migration Tool deployment. To run the PowerShell Script, you need to have the "Storage Blob data contributor" role on storage account, as the script requires access to the storage account.
    3. You can run the Powershell script locally, or you can use [Open Azure Cloud Shell](https://shell.azure.com). You can also access this from [Azure Portal](https://portal.azure.com).\
