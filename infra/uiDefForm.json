@@ -165,7 +165,6 @@
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "Start Time",
                                 "placeholder": "Enter Start Time",
-                                "defaultValue": "8",
                                 "dependsOn": [
                                     "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]"
                                 ],
@@ -183,7 +182,6 @@
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "End Time",
                                 "placeholder": "Enter End Time",
-                                "defaultValue": "17",
                                 "dependsOn": [
                                     "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]"
                                 ],
@@ -196,8 +194,6 @@
                                     "maxValue": 23
                                 }
                             },
-                            
-                            
                             {
                                 "name": "isParallel",
                                 "type": "Microsoft.Common.DropDown",
@@ -285,8 +281,6 @@
             "stopDm":"[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
             "startTime": "[int(steps('fhirSelection').fhirSection.startTime)]",
             "endTime": "[int(steps('fhirSelection').fhirSection.endTime)]"
-
-            
         }
     }
 }

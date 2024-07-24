@@ -8,9 +8,6 @@
     <UserSecretsId>b82638cf-1d8f-41cd-aef4-58211c66d353</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="local.settings.json" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.16.0" />
     <PackageReference Include="Ensure.That" Version="10.1.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.2.0" />
