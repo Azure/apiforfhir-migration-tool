@@ -48,10 +48,10 @@ param configFile string = ''
 param stopDm bool
 
 @description('Indicates the start time for the hours when export and import operations are restricted')
-param startTime int
+param startTime int = 8
 
 @description('Indicates the end time for the hours when export and import operations are restricted ')
-param endTIme int
+param endTIme int = 17
 
 var envRandomString = toLower(uniqueString(subscription().id, name, location))
 var nameShort = length(name) > 10 ? substring(name, 0, 10) : name

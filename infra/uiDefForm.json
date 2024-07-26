@@ -211,7 +211,7 @@
                                 "type": "Microsoft.Common.DropDown",
                                 "label": "Stop Data Migration Tool During Business Hours",
                                 "defaultValue":"False",
-                                "toolTip": "",
+                                "toolTip": "The migration tool lets you set a time frame to prevent new export operations during business hours, while ongoing exports will continue and new ones will start after the restricted period. ",
                                 "constraints": {
                                     "allowedValues": [
                                         {
@@ -227,6 +227,15 @@
                                 },
                                 "visible": true
                             },
+                            {
+                                "name": "stopDmInfoBox",
+                                "type": "Microsoft.Common.InfoBox",
+                                "visible": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
+                                "options": {
+                                    "icon": "Info",
+                                    "text": "You need to enter the start and end times in a 24-hour format in UTC for the restricted period. \nBy default, the start time is set to 8 and the end time is set to 17 UTC.\nFor example, if you do not want new exports to start between 09:00 AM and 06:00 PM UTC, enter 9 as the start time and 18 as the end time."
+                                }
+                            },        
                             {
                                 "name": "startTime",
                                 "type": "Microsoft.Common.TextBox",

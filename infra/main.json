@@ -310,7 +310,7 @@
             "name": "[format('{0}/{1}', variables('functionAppName'), 'web')]",
             "properties": {
                 "repoUrl": "[variables('repoUrl')]",
-                "branch": "personal/v-nikitaraut-stop-dm",
+                "branch": "main",
                 "isManualIntegration": true
             },
             "dependsOn": [
