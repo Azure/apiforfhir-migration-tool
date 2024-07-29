@@ -267,10 +267,19 @@ namespace ApiForFhirMigrationTool.Function.Configuration
             };
 
         [JsonProperty("payloadcount")]
-        public int PayloadCount = 5;
+        public int PayloadCount { get; set; } = 5;
 
         [JsonProperty("fileCount")]
-        public int FileCount = 10000;
+        public int FileCount { get; set; } = 10000;
+
+        [JsonProperty("stopDm")]
+        public bool StopDm { get; set; } = false;
+
+        [JsonProperty("startTime")]
+        public int StartTime { get; set; } = 8;
+
+        [JsonProperty("endTime")]
+        public int EndTime { get; set; } = 17;
 
         public bool ValidateConfig()
         {

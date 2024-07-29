@@ -37,6 +37,9 @@
         },
         "configFile":{
             "value": ""
+        },
+        "stopDm":{
+            "value": false
         }
     }
 }

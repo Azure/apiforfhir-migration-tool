@@ -44,6 +44,15 @@ param exportDeidentified bool
 @description('Name of Configuration file')
 param configFile string = ''
 
+@description('Export by timestamp')
+param stopDm bool
+
+@description('Indicates the start time for the hours when export and import operations are restricted')
+param startTime int = 8
+
+@description('Indicates the end time for the hours when export and import operations are restricted ')
+param endTIme int = 17
+
 var envRandomString = toLower(uniqueString(subscription().id, name, location))
 var nameShort = length(name) > 10 ? substring(name, 0, 10) : name
 var resourceName = '${nameShort}${substring(envRandomString, 0, 6)}'
@@ -102,6 +111,9 @@ module function './azureFunction.bicep'= {
         exportWithDelete : exportWithDelete
         isParallel :isParallel
         exportDeidentified:exportDeidentified
+        stopDm:stopDm
+        startTime:startTime
+        endTime:endTIme
         configFile:configFile
         appInsightsInstrumentationKey: monitoring.outputs.appInsightsInstrumentationKey
         functionSettings: union({
