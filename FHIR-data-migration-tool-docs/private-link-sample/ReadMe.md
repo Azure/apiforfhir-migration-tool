@@ -127,6 +127,8 @@ This step provides detailed instructions for configuring secure storage of data 
 
       ![Configure secure storage of data migration tool](./Media/DmToolStorageAcc.png)
 
+      ![ Azure FunctionApp access on storage account](./Media/AzureFunctionapp-access%20on%20storageaccount.png)
+
 - **Step 2: Create a Private Endpoint**
     - Once you've configured the Networking for the Storage Account, navigate to the "Private endpoint connections" section.
     - Click on "+ Private Endpoint" to create a new private endpoint connection.
@@ -143,7 +145,7 @@ This step offers detailed instructions on how to secure the migration tool Azure
     - Find the rule that allow public access and uncheck them. This will prevent anyone from accessing your Function App over the public internet.
     - Still inside the "Networking" tab, find and click on "Virtual Network Integration.
     - Choose the Virtual Network which you have created in section 1.
-    - Select the specific Subnet within that Virtual Network that you want to use.
+    - Select the specific Subnet within that Virtual Network that you want to use.If a subnet is not available, create a new one.
     - After configuring the Virtual Network and Subnet, save the changes.
     - Now, Function App will only be accessible via the specified Virtual Network and Subnet, and public access will be restricted.
 
