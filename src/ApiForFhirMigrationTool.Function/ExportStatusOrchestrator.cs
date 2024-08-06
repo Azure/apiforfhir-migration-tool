@@ -12,6 +12,7 @@ using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
 using Azure;
 using Azure.Data.Tables;
+using Grpc.Core;
 using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
@@ -122,7 +123,9 @@ namespace ApiForFhirMigrationTool.Function
 
                                     if (objOutput != null && objOutput.Any() && result==false)
                                     {
+                                        logger?.LogInformation($"Creation of import payload started.");
                                         var payload_count = _orchestrationHelper.CreateImportRequest(response.Content, _options.ImportMode, statusUrl);
+                                        logger?.LogInformation($"Creation of import payload finished");
                                         var resourceCount = _orchestrationHelper.CalculateSumOfResources(objOutput).ToString(CultureInfo.InvariantCulture);
                                         TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                         exportEntity["IsExportComplete"] = true;
@@ -222,7 +225,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 throw;
             }
-
+            logger?.LogInformation("Completed export status check activities.");
             return "Completed";
         }
 

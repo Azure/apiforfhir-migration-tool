@@ -70,6 +70,7 @@ namespace ApiForFhirMigrationTool.Function
 
                     _options.ValidateConfig();
                     logger.LogInformation("Start MigrationOrchestration.");
+                    logger.LogInformation("Checking whether the chunk table exists or not");
                     TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                     if (_options.IsParallel == true)
                     {
@@ -108,21 +109,34 @@ namespace ApiForFhirMigrationTool.Function
                             maxNumberOfAttempts: 3,
                             firstRetryInterval: TimeSpan.FromSeconds(5)));
 
+                    logger.LogInformation("Starting SearchParameter migration.");
                     // Run sub orchestration for search parameter
                     var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
+                    logger.LogInformation("SearchParameter migration ended");
 
                     // Run sub orchestration for export and export status
+                    logger.LogInformation("Starting ExportOrchestration.");
                     var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
+                    logger.LogInformation("ExportOrchestration ended.");
+
+                    logger.LogInformation("Starting ExportStatusOrchestration.");
                     var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
+                    logger.LogInformation("ExportStatusOrchestration ended.");
 
                     // Run sub orchestration for Import and Import status
+                    logger.LogInformation("Starting ImportOrchestration.");
                     var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
+                    logger.LogInformation("ImportOrchestration ended.");
+
+                    logger.LogInformation("Starting ImportStatusOrchestration.");
                     var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
+                    logger.LogInformation("ImportStatusOrchestration ended.");
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError($"Error occurred during migration process: {ex.Message}");
+                logger.LogError($"Error occurred during migration process: {ex.StackTrace}");
+                logger.LogError($"Error message: {ex.Message}");
             }
 
             return outputs;
@@ -134,7 +148,7 @@ namespace ApiForFhirMigrationTool.Function
         [DurableClient] DurableTaskClient client,
         FunctionContext executionContext)
         {
-            string instanceId_new = "FhirMigrationTool";
+            string instanceId_new = "FhirMigrationTool4";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
             try
             {
@@ -143,7 +157,7 @@ namespace ApiForFhirMigrationTool.Function
             }
             catch (Exception ex)
             {
-                _logger.LogInformation($"Error in starting instance due to {ex.Message}");
+                _logger.LogInformation($"Error in starting instance due to {ex.StackTrace}");
             }
         }
     }

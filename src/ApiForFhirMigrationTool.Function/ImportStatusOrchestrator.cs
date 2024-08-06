@@ -341,7 +341,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 throw;
             }
-
+            logger?.LogInformation("Completed import status check activities.");
             return "completed";
         }
         [Function(nameof(GetTotalFromFhirAsync))]

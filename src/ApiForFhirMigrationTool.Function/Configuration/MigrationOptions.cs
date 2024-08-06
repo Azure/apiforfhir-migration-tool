@@ -117,8 +117,7 @@ namespace ApiForFhirMigrationTool.Function.Configuration
 
         [JsonProperty("resourceExportChunkTime")]
         public int ResourceExportChunkTime { get; set; } = 30;
-
-        [JsonProperty("resourceTypes")]
+       
         public List<string> ResourceTypes { get; set; } = new List<string>{
                 "Account",
                 "ActivityDefinition",

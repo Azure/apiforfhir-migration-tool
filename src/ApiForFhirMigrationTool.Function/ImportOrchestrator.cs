@@ -58,6 +58,7 @@ namespace ApiForFhirMigrationTool.Function
 
             try
             {
+                logger.LogInformation("Checking whether the chunk and export table exists or not");
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                
