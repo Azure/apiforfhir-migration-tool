@@ -91,16 +91,28 @@ namespace ApiForFhirMigrationTool.Function
                         Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
                         if (jobList.Count() <= 0)
                         {
-                            var mySetting = Environment.GetEnvironmentVariable("ResourceTypes");
+                           /* var mySetting = Environment.GetEnvironmentVariable("ResourceTypes");
                             logger.LogInformation($"env variable {mySetting?.ToString()}");
+*/
 
-
-                            var mySetting1 = Environment.GetEnvironmentVariable("AZURE_ResourceTypes");
-                            logger.LogInformation($"env variable with AZURE_ {mySetting1?.ToString()}");
-
+                            var envResource = Environment.GetEnvironmentVariable("AZURE_ResourceTypes");
+                            logger.LogInformation($"env variable with AZURE_ {envResource?.ToString()}");
+                            logger.LogInformation($"env variable type {envResource?.GetType()}");
 
                             logger.LogInformation($" initial resource count is:{_options.ResourceTypes.Count.ToString()}");
-                            if (_options.ResourceTypes?.Count == 0)
+
+                            // var Resource = new List<string>();
+                            if (!string.IsNullOrEmpty(envResource))
+                            {
+                                // Split the environment variable by commas and replace the list
+                                _options.ResourceTypes = envResource
+                                   .Split(',')
+                                   .Select(type => type.Trim())
+                                   .ToList();
+                            }
+
+
+                           if (_options.ResourceTypes?.Count == 0)
                             {
                                 _options.ResourceTypes = _options.DefaultResourceTypes;
                                 logger.LogInformation($" if env variable is empty resource count is:{_options.ResourceTypes.Count.ToString()}");
