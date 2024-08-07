@@ -34,7 +34,7 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IMetadataStore _azureTableMetadataStore;
         private readonly IOrchestrationHelper _orchestrationHelper;
         private readonly TelemetryClient _telemetryClient;
-
+        
         public ExportOrchestrator(IFhirProcessor exportProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IFhirClient fhirClient, IOrchestrationHelper orchestrationHelper, TelemetryClient telemetryClient)
         {
             _exportProcessor = exportProcessor;
@@ -305,7 +305,11 @@ namespace ApiForFhirMigrationTool.Function
                 }
                 do
                 {
-                    resourceType = _options.ResourceTypes?[index];
+                    if(_options.ResourceTypes?.Count==0)
+                    {
+                        _options.ResourceTypes = _options.DefaultResourceTypes;
+                    }
+                     resourceType = _options.ResourceTypes?[index];
                     if (qEntityGetResourceIndex?["multiExport"].ToString() == "Running")
                     {
                         since = qEntityGetResourceIndex["subSinceExportType"].ToString();

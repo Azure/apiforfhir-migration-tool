@@ -87,16 +87,20 @@ namespace ApiForFhirMigrationTool.Function
                         }
                     }
                     else
-                    {
+                    { 
                         Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
                         if (jobList.Count() <= 0)
                         {
+                            if (_options.ResourceTypes?.Count == 0)
+                            {
+                                _options.ResourceTypes = _options.DefaultResourceTypes;
+                            }
                             var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
                         {
                             { "JobId", 0 },
                             { "globalSinceExportType", "" },
                             { "globalTillExportType", "" },
-                            { "noOfResources", _options.ResourceTypes?.Count() },
+                            { "noOfResources",_options.ResourceTypes?.Count() },
                             { "resourceTypeIndex", 0 },
                             { "multiExport", "" },
                              {"ImportId",0 },
@@ -111,7 +115,7 @@ namespace ApiForFhirMigrationTool.Function
 
                     logger.LogInformation("Starting SearchParameter migration.");
                     // Run sub orchestration for search parameter
-                    var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
+                    //var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
                     logger.LogInformation("SearchParameter migration ended");
 
                     // Run sub orchestration for export and export status
@@ -119,7 +123,7 @@ namespace ApiForFhirMigrationTool.Function
                     var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
                     logger.LogInformation("ExportOrchestration ended.");
 
-                    logger.LogInformation("Starting ExportStatusOrchestration.");
+                    /*logger.LogInformation("Starting ExportStatusOrchestration.");
                     var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
                     logger.LogInformation("ExportStatusOrchestration ended.");
 
@@ -130,7 +134,7 @@ namespace ApiForFhirMigrationTool.Function
 
                     logger.LogInformation("Starting ImportStatusOrchestration.");
                     var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
-                    logger.LogInformation("ImportStatusOrchestration ended.");
+                    logger.LogInformation("ImportStatusOrchestration ended.");*/
                 }
             }
             catch (Exception ex)
@@ -148,7 +152,7 @@ namespace ApiForFhirMigrationTool.Function
         [DurableClient] DurableTaskClient client,
         FunctionContext executionContext)
         {
-            string instanceId_new = "FhirMigrationTool4";
+            string instanceId_new = "FhirMigrationTool";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
             try
             {
