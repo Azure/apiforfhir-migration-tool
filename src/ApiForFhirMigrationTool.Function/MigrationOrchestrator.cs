@@ -91,9 +91,9 @@ namespace ApiForFhirMigrationTool.Function
                         Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
                         if (jobList.Count() <= 0)
                         {
-                           /* var mySetting = Environment.GetEnvironmentVariable("ResourceTypes");
-                            logger.LogInformation($"env variable {mySetting?.ToString()}");
-*/
+                            /* var mySetting = Environment.GetEnvironmentVariable("ResourceTypes");
+                             logger.LogInformation($"env variable {mySetting?.ToString()}");
+ */
 
                             var envResource = Environment.GetEnvironmentVariable("AZURE_ResourceTypes");
                             logger.LogInformation($"env variable with AZURE_ {envResource?.ToString()}");
@@ -106,8 +106,9 @@ namespace ApiForFhirMigrationTool.Function
                             {
                                 // Split the environment variable by commas and replace the list
                                 _options.ResourceTypes = envResource
+                                   .Trim(new char[] { '{', '}' }) // Remove any curly braces
                                    .Split(',')
-                                   .Select(type => type.Trim())
+                                   .Select(type => type.Trim(new char[] { '"', ' ' })) // Remove quotes and spaces
                                    .ToList();
                             }
 
