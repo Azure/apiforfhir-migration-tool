@@ -7,6 +7,7 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using ApiForFhirMigrationTool.Function.Configuration;
 using ApiForFhirMigrationTool.Function.ExceptionHelper;
 using ApiForFhirMigrationTool.Function.FhirOperation;
@@ -304,7 +305,7 @@ namespace ApiForFhirMigrationTool.Function
                     _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityGetResourceIndex);
                 }
                 do
-                {
+                { 
                     if(_options.ResourceTypes?.Count==0)
                     {
                         _options.ResourceTypes = _options.DefaultResourceTypes;

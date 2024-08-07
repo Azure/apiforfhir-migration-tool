@@ -91,10 +91,23 @@ namespace ApiForFhirMigrationTool.Function
                         Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
                         if (jobList.Count() <= 0)
                         {
+                            var mySetting = Environment.GetEnvironmentVariable("ResourceTypes");
+                            logger.LogInformation($"env variable {mySetting?.ToString()}");
+
+
+                            var mySetting1 = Environment.GetEnvironmentVariable("AZURE_ResourceTypes");
+                            logger.LogInformation($"env variable with AZURE_ {mySetting1?.ToString()}");
+
+
+                            logger.LogInformation($" initial resource count is:{_options.ResourceTypes.Count.ToString()}");
                             if (_options.ResourceTypes?.Count == 0)
                             {
                                 _options.ResourceTypes = _options.DefaultResourceTypes;
+                                logger.LogInformation($" if env variable is empty resource count is:{_options.ResourceTypes.Count.ToString()}");
+
                             }
+                            logger.LogInformation($" final resource count is:{_options.ResourceTypes?.Count.ToString()}");
+
                             var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
                         {
                             { "JobId", 0 },
@@ -114,8 +127,8 @@ namespace ApiForFhirMigrationTool.Function
                             firstRetryInterval: TimeSpan.FromSeconds(5)));
 
                     logger.LogInformation("Starting SearchParameter migration.");
-                    // Run sub orchestration for search parameter
-                    //var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
+                     //Run sub orchestration for search parameter
+                    var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
                     logger.LogInformation("SearchParameter migration ended");
 
                     // Run sub orchestration for export and export status
@@ -123,7 +136,7 @@ namespace ApiForFhirMigrationTool.Function
                     var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
                     logger.LogInformation("ExportOrchestration ended.");
 
-                    /*logger.LogInformation("Starting ExportStatusOrchestration.");
+                    logger.LogInformation("Starting ExportStatusOrchestration.");
                     var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
                     logger.LogInformation("ExportStatusOrchestration ended.");
 
@@ -134,7 +147,7 @@ namespace ApiForFhirMigrationTool.Function
 
                     logger.LogInformation("Starting ImportStatusOrchestration.");
                     var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
-                    logger.LogInformation("ImportStatusOrchestration ended.");*/
+                    logger.LogInformation("ImportStatusOrchestration ended.");
                 }
             }
             catch (Exception ex)
@@ -152,7 +165,7 @@ namespace ApiForFhirMigrationTool.Function
         [DurableClient] DurableTaskClient client,
         FunctionContext executionContext)
         {
-            string instanceId_new = "FhirMigrationTool";
+            string instanceId_new = "FhirMigrationTool9";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
             try
             {
