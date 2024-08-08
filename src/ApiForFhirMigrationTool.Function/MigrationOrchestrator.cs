@@ -55,6 +55,7 @@ namespace ApiForFhirMigrationTool.Function
 
                 if (_options.StopDm)
                 {
+                    logger.LogInformation("Data Migration Tool will pause during business hours.");
                     var currentTime = DateTime.UtcNow;
                     var startHour = new TimeSpan(_options.StartTime - 1, 0, 0);
                     var endHour = new TimeSpan(_options.EndTime, 30, 0);
@@ -82,7 +83,9 @@ namespace ApiForFhirMigrationTool.Function
                             {"ImportId",0 },
                             {"SearchParameterMigration", false }
                         };
+                            logger.LogInformation("Starting update of the chunk table.");
                             _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
+                            logger.LogInformation("Completed update of the chunk table.");
                         }
                     }
                     else
@@ -101,23 +104,37 @@ namespace ApiForFhirMigrationTool.Function
                              {"ImportId",0 },
                              {"SearchParameterMigration", false }
                         };
+                            logger.LogInformation("Starting update of the chunk table.");
                             _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
+                            logger.LogInformation("Completed update of the chunk table.");
                         }
                     }
                     var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
                             maxNumberOfAttempts: 3,
                             firstRetryInterval: TimeSpan.FromSeconds(5)));
 
-                    // Run sub orchestration for search parameter
+                    logger.LogInformation("Starting SearchParameter migration.");
+                    //Run sub orchestration for search parameter
                     var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
+                    logger.LogInformation("SearchParameter migration ended");
 
                     // Run sub orchestration for export and export status
+                    logger.LogInformation("Starting ExportOrchestration.");
                     var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
+                    logger.LogInformation("ExportOrchestration ended.");
+
+                    logger.LogInformation("Starting ExportStatusOrchestration.");
                     var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
+                    logger.LogInformation("ExportStatusOrchestration ended.");
 
                     // Run sub orchestration for Import and Import status
+                    logger.LogInformation("Starting ImportOrchestration.");
                     var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
+                    logger.LogInformation("ImportOrchestration ended.");
+
+                    logger.LogInformation("Starting ImportStatusOrchestration.");
                     var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
+                    logger.LogInformation("ImportStatusOrchestration ended.");
                 }
             }
             catch (Exception ex)

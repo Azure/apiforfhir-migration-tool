@@ -54,8 +54,11 @@ namespace ApiForFhirMigrationTool.Function
 
             try
             {
+                logger.LogInformation("Checking whether the chunk and export table exists or not");
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+
+                logger.LogInformation(" Query the export table to check for running or started export jobs.");
                 Pageable<TableEntity> exportRunningjobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsExportRunning") == "Running");
                 if (exportRunningjobList.Count() > 0)
                 {
@@ -63,7 +66,10 @@ namespace ApiForFhirMigrationTool.Function
                     {
                         while (isComplete == false)
                         {
+                            logger?.LogInformation("Retrieving export content location.");
                             statusUrl = item.GetString("exportContentLocation");
+                            logger?.LogInformation("Export content location retrieved successfully.");
+
                             ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExportStatusCheck), statusUrl);
 
                             if (response.Status == ResponseStatus.Completed)
@@ -96,7 +102,12 @@ namespace ApiForFhirMigrationTool.Function
                                 TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                 exportEntity["IsExportComplete"] = false;
                                 exportEntity["IsExportRunning"] = "Running";
+
+                                logger?.LogInformation("Starting update of the export table.");
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                logger?.LogInformation("Completed update of the export table.");
+
+                                logger?.LogInformation("Updating logs in Application Insights.");
                                 _telemetryClient.TrackEvent(
                                     "Export",
                                     new Dictionary<string, string>()
@@ -107,6 +118,7 @@ namespace ApiForFhirMigrationTool.Function
                                         { "Since", string.Empty },
                                         { "Till", string.Empty },
                                     });
+                                logger?.LogInformation("Logs updated successfully in Application Insights.");
                                 await context.CreateTimer(waitTime, CancellationToken.None);
                             }
                             else if (response.Status == ResponseStatus.Completed)
@@ -122,8 +134,13 @@ namespace ApiForFhirMigrationTool.Function
 
                                     if (objOutput != null && objOutput.Any() && result==false)
                                     {
+                                        logger?.LogInformation($"Creation of import payload started.");
                                         var payload_count = _orchestrationHelper.CreateImportRequest(response.Content, _options.ImportMode, statusUrl);
+                                        logger?.LogInformation($"Creation of import payload finished");
+
                                         var resourceCount = _orchestrationHelper.CalculateSumOfResources(objOutput).ToString(CultureInfo.InvariantCulture);
+                                        logger?.LogInformation("Retrieved the total exported resource count.");
+                                       
                                         TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                         exportEntity["IsExportComplete"] = true;
                                         exportEntity["IsExportRunning"] = "Completed";
@@ -135,7 +152,12 @@ namespace ApiForFhirMigrationTool.Function
                                         exportEntity["PayloadCount"] = payload_count;
                                         exportEntity["CompletedCount"] = 0;
                                         exportEntity["ExportId"] = _orchestrationHelper.GetProcessId(statusUrl);
+                                        
+                                        logger?.LogInformation("Starting update of the export table.");
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                        logger?.LogInformation("Completed update of the export table.");
+                                        
+                                        logger?.LogInformation("Updating logs in Application Insights.");
                                         _telemetryClient.TrackEvent(
                                             "Export",
                                             new Dictionary<string, string>()
@@ -147,6 +169,7 @@ namespace ApiForFhirMigrationTool.Function
                                                 { "Till", string.Empty },
                                                 { "TotalResources", resourceCount },
                                             });
+                                        logger?.LogInformation("Logs updated successfully in Application Insights.");
                                     }
                                     else
                                     {
@@ -160,7 +183,12 @@ namespace ApiForFhirMigrationTool.Function
                                         exportEntity["ImportRequest"] = "No";
                                         exportEntity["EndTime"] = DateTime.UtcNow;
                                         exportEntity["IsProcessed"] = true;
+                                        
+                                        logger?.LogInformation("Starting update of the export table.");
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                        logger?.LogInformation("Completed update of the export table.");
+                                        
+                                        logger?.LogInformation("Updating logs in Application Insights.");
                                         _telemetryClient.TrackEvent(
                                         "Export",
                                         new Dictionary<string, string>()
@@ -172,12 +200,17 @@ namespace ApiForFhirMigrationTool.Function
                                             { "Till", string.Empty },
                                             { "TotalResources", string.Empty },
                                         });
+                                        logger?.LogInformation("Logs updated successfully in Application Insights.");
+                                       
                                         if (_options.IsParallel == true)
                                         {
                                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
 
                                             qEntitynew["since"] = exportEntity["Till"];
+                                            
+                                            logger?.LogInformation("Starting update of the chunk table.");
                                             _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                                            logger?.LogInformation("Completed update of the chunk table.");
                                         }
                                     }
                                 }
@@ -197,7 +230,12 @@ namespace ApiForFhirMigrationTool.Function
                                 exportEntity["ImportRequest"] = import_body;
                                 exportEntity["FailureReason"] = diagnosticsValue;
                                 isComplete = true;
+                                
+                                logger?.LogInformation("Starting update of the export table.");
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                logger?.LogInformation("Completed update of the export table.");
+                                
+                                logger?.LogInformation("Updating logs in Application Insights.");
                                 _telemetryClient.TrackEvent(
                                         "Export",
                                         new Dictionary<string, string>()
@@ -210,6 +248,7 @@ namespace ApiForFhirMigrationTool.Function
                                             { "TotalResources", string.Empty },
                                             { "FailureReason",diagnosticsValue }
                                 });
+                                logger?.LogInformation("Logs updated successfully in Application Insights.");
                                 throw new HttpFailureException($"StatusCode: {statusRespose.StatusCode}, Response: {statusRespose.Content.ReadAsStringAsync()} ");
                             }
                         }
@@ -222,7 +261,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 throw;
             }
-
+            logger?.LogInformation("Completed checking export status.");
             return "Completed";
         }
 

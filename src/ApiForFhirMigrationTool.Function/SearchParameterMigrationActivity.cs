@@ -63,7 +63,7 @@ namespace ApiForFhirMigrationTool.Function.Migration
             {
                 throw;
             }
-
+            logger.LogInformation("Finished Search Parameter activities.");
             return "Completed";
         }
 
