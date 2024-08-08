@@ -58,19 +58,24 @@ namespace ApiForFhirMigrationTool.Function
 
             try
             {
-                logger.LogInformation("Checking whether the chunk and export table exists or not");
+                logger.LogInformation("Creating table clients");
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-               
-                Pageable<TableEntity> jobListimportRunning = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running");
-                Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true && jobListimportRunning.Count() == 0);
+                logger.LogInformation("Table clients created successfully.");
 
+                logger.LogInformation(" Query the export table to check for running or started import jobs.");
+                Pageable<TableEntity> jobListimportRunning = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running");
+                logger?.LogInformation("Query completed");
+
+                Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true && jobListimportRunning.Count() == 0);
 
                 if (jobListimport.Count() > 0)
                 {
                     foreach (TableEntity item in jobListimport)
                     {
+                        logger?.LogInformation("Calling ProcessImport function");
                         var importResponse = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImport));
+                        logger?.LogInformation("ProcessImport function has completed.");
 
                     }
                 }
@@ -79,7 +84,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 throw;
             }
-            logger.LogInformation("Completed import activities.");
+            logger?.LogInformation("Completed import activities.");
             return "completed";
         }
 
@@ -91,12 +96,14 @@ namespace ApiForFhirMigrationTool.Function
             HttpMethod method = HttpMethod.Post;
             try
             {
-                logger.LogInformation("Checking whether the chunk and export table exists or not");
+                logger.LogInformation("Creating table clients");
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+                logger.LogInformation("Table clients created successfully.");
 
                 logger?.LogInformation("Querying the export table to check for completed export jobs.");
                 Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true);
+                logger?.LogInformation("Query completed");
 
                 if (jobListimport != null && jobListimport.Count() == 1)
                 { 
@@ -247,6 +254,7 @@ namespace ApiForFhirMigrationTool.Function
                                     }
                                     else
                                     {
+                                        logger?.LogInformation($"Import  returned: Failure");
                                         TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                                         if (qEntity["ImportId"] != null)
                                         {

@@ -71,11 +71,11 @@ namespace ApiForFhirMigrationTool.Function.OrchestrationHelper
                             JArray partArray = new JArray();
                             JObject type = new JObject();
                             type.Add("name", "type");
-                            type.Add("valueString", item["type"]);
+                            type.Add("valueString", item?["type"]);
                             partArray.Add(type);
                             JObject url = new JObject();
                             url.Add("name", "url");
-                            url.Add("valueString", item["url"]);
+                            url.Add("valueString", item?["url"]);
                             partArray.Add(url);
 
                             input.Add("part", partArray);

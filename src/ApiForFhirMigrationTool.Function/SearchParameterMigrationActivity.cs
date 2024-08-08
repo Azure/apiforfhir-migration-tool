@@ -45,25 +45,38 @@ namespace ApiForFhirMigrationTool.Function.Migration
 
             try
             {
+                logger.LogInformation("Creating table client");
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+                logger.LogInformation("Table client created successfully.");
 
+                logger?.LogInformation("Querying the chunk table to check if SearchParameter migration is completed.");
                 Pageable<TableEntity> jobListSeacrh = chunktableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("SearchParameterMigration") == false);
+                logger?.LogInformation("SearchParameter migration status retrieved from the chunk table.");
                 if (jobListSeacrh.Count() > 0)
                 {
                     // Run Activity for Search Parameter
+                    logger?.LogInformation("Calling SearchParameterMigration function");
                     await context.CallActivityAsync("SearchParameterMigration");
+                    logger?.LogInformation("SearchParameterMigration function has completed.");
 
                     TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                     qEntitynew["SearchParameterMigration"] = true;
+                    logger?.LogInformation("Starting update of the chunk table.");
                     _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                    logger?.LogInformation("Completed update of the chunk table.");
+                }
+                else
+                {
+                    logger?.LogInformation("Search parameter migration is a one-time activity and has already been completed.");
+
                 }
             }
             catch
             {
                 throw;
             }
-            logger.LogInformation("Finished Search Parameter activities.");
+            logger?.LogInformation("Finished Search Parameter activities.");
             return "Completed";
         }
 
@@ -74,17 +87,23 @@ namespace ApiForFhirMigrationTool.Function.Migration
 
             try
             {
+                _logger.LogInformation($"GetSearchParameters Started");
                 // Get search parameters from Gen1
                 JObject jObjectResponse = await _searchParameterOperation.GetSearchParameters();
+                _logger.LogInformation($"GetSearchParameters Finished");
 
                 // If resource present in bundle then transform it into batch and Post to Gen2
                 if (jObjectResponse.ContainsKey("entry"))
                 {
+                    _logger.LogInformation($"TransformObject Started");
                     // Transform to batch and add request object
                     string transformedObject = _searchParameterOperation.TransformObject(jObjectResponse);
+                    _logger.LogInformation($"TransformObject Finished");
 
+                    _logger.LogInformation($"PostSearchParameters Started");
                     // Post serach parametes to Gen2
                     await _searchParameterOperation.PostSearchParameters(transformedObject);
+                    _logger.LogInformation($"PostSearchParameters Finished");
                 }
             }
             catch (Exception ex)

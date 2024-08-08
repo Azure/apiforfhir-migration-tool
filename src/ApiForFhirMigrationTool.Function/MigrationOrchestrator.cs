@@ -59,7 +59,7 @@ namespace ApiForFhirMigrationTool.Function
                     var currentTime = DateTime.UtcNow;
                     var startHour = new TimeSpan(_options.StartTime - 1, 0, 0);
                     var endHour = new TimeSpan(_options.EndTime, 30, 0);
-                    logger.LogInformation($" Current time ({currentTime}) startHour ({startHour}) endHour ({endHour})");
+                    logger.LogInformation($" Current time : ({currentTime}), startHour :({startHour}), endHour :({endHour})");
                     if (currentTime.TimeOfDay > startHour && currentTime.TimeOfDay < endHour)
                     {
                         shouldRun = false;
@@ -71,7 +71,10 @@ namespace ApiForFhirMigrationTool.Function
 
                     _options.ValidateConfig();
                     logger.LogInformation("Start MigrationOrchestration.");
+                    logger.LogInformation("Creating table client");
                     TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+                    logger.LogInformation("Table client created successfully.");
+
                     if (_options.IsParallel == true)
                     {
                         Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
@@ -113,28 +116,28 @@ namespace ApiForFhirMigrationTool.Function
                             maxNumberOfAttempts: 3,
                             firstRetryInterval: TimeSpan.FromSeconds(5)));
 
-                    logger.LogInformation("Starting SearchParameter migration.");
+                    logger.LogInformation("Starting SearchParameter migration activities.");
                     //Run sub orchestration for search parameter
                     var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
-                    logger.LogInformation("SearchParameter migration ended");
+                    logger.LogInformation("SearchParameter migration activities ended");
 
                     // Run sub orchestration for export and export status
-                    logger.LogInformation("Starting ExportOrchestration.");
+                    logger.LogInformation("Starting Export migration activities.");
                     var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
-                    logger.LogInformation("ExportOrchestration ended.");
+                    logger.LogInformation("Export migration activities ended.");
 
-                    logger.LogInformation("Starting ExportStatusOrchestration.");
+                    logger.LogInformation("Starting Export Status activities");
                     var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
-                    logger.LogInformation("ExportStatusOrchestration ended.");
+                    logger.LogInformation("Export Status activities ended.");
 
                     // Run sub orchestration for Import and Import status
-                    logger.LogInformation("Starting ImportOrchestration.");
+                    logger.LogInformation("Starting Import  migration  activities.");
                     var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
-                    logger.LogInformation("ImportOrchestration ended.");
+                    logger.LogInformation("Import migration activities ended.");
 
-                    logger.LogInformation("Starting ImportStatusOrchestration.");
+                    logger.LogInformation("Starting Import Status activities.");
                     var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
-                    logger.LogInformation("ImportStatusOrchestration ended.");
+                    logger.LogInformation("Import Status activities ended.");
                 }
             }
             catch (Exception ex)

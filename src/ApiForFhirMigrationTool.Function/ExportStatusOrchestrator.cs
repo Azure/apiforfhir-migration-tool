@@ -54,9 +54,10 @@ namespace ApiForFhirMigrationTool.Function
 
             try
             {
-                logger.LogInformation("Checking whether the chunk and export table exists or not");
+                logger.LogInformation("Creating table clients");
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+                logger.LogInformation("Table clients created successfully.");
 
                 logger.LogInformation(" Query the export table to check for running or started export jobs.");
                 Pageable<TableEntity> exportRunningjobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsExportRunning") == "Running");
@@ -70,10 +71,13 @@ namespace ApiForFhirMigrationTool.Function
                             statusUrl = item.GetString("exportContentLocation");
                             logger?.LogInformation("Export content location retrieved successfully.");
 
+                            logger?.LogInformation("Calling ProcessExportStatusCheck function");
                             ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExportStatusCheck), statusUrl);
+                            logger?.LogInformation("ProcessExportStatusCheck function has completed.");
 
                             if (response.Status == ResponseStatus.Completed)
                             {
+                                logger?.LogInformation($"Export Status check returned: Completed.");
                                 logger?.LogInformation($"200 response no:- 1 for completed export- {statusUrl} ");
                                 bool conditionMet = false;
                                 for (int i = 2; i <= 3 && !conditionMet; i++)
@@ -81,7 +85,11 @@ namespace ApiForFhirMigrationTool.Function
                                     logger?.LogInformation($"200 response- Waiting for next complete status check for 1 minutes.");
                                     DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(1));
                                     await context.CreateTimer(waitTime, CancellationToken.None);
+
+                                    logger?.LogInformation("Calling ProcessExportStatusCheck function");
                                     response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExportStatusCheck), statusUrl);
+                                    logger?.LogInformation("ProcessExportStatusCheck function has completed.");
+
                                     if (response.Status == ResponseStatus.Completed)
                                     {
                                         logger?.LogInformation($"200 response no:- {i} for completed export- {statusUrl}");

@@ -56,12 +56,15 @@ namespace ApiForFhirMigrationTool.Function
 
             try
             {
-                logger.LogInformation("Checking whether the chunk and export table exists or not");
+                logger.LogInformation("Creating table clients");
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+                logger.LogInformation("Table clients created successfully.");
 
                 logger.LogInformation(" Query the export table to check for running or started import jobs.");
                 Pageable<TableEntity> jobListimportRunning = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running");
+                logger?.LogInformation("Query completed");
+
                 if (jobListimportRunning.Count() > 0)
                 {
                     var item = jobListimportRunning.First();
@@ -71,7 +74,10 @@ namespace ApiForFhirMigrationTool.Function
                         statusUrl = item.GetString("importContentLocation");
                         logger?.LogInformation("Import content location retrieved successfully.");
 
+                        logger?.LogInformation("Calling ProcessImportStatusCheck function");
                         ResponseModel response = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImportStatusCheck), statusUrl);
+                        logger?.LogInformation("ProcessImportStatusCheck function has completed.");
+
 
                         if (response.Status == ResponseStatus.Accepted)
                         {
@@ -79,7 +85,7 @@ namespace ApiForFhirMigrationTool.Function
                             logger?.LogInformation($"Waiting for next status check for {_options.ScheduleInterval} minutes.");
                             DateTime waitTime = context.CurrentUtcDateTime.Add(TimeSpan.FromMinutes(
                             Convert.ToDouble(_options.ScheduleInterval)));
-                            logger?.LogInformation($"Retrieving entity from the export table.");
+                            logger?.LogInformation("Successfully retrieved entities from the export table.");
                             TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                             exportEntity["IsImportRunning"] = "Running";
                             logger?.LogInformation("Updated 'IsImportRunning' status of the entity to 'Running'.");
