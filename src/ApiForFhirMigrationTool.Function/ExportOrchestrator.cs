@@ -92,7 +92,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 HttpMethod method = HttpMethod.Get;
                 logger?.LogInformation($"Getting Query for export operation");
-                string query = GetQueryStringForExport();
+                string query = GetQueryStringForExport(logger);
                 logger?.LogInformation("Query for export operation retrieved successfully.");
 
                 if (!string.IsNullOrEmpty(query))
@@ -242,14 +242,19 @@ namespace ApiForFhirMigrationTool.Function
             return exportResponse;
         }
 
-        private string GetQueryStringForExport()
+        private string GetQueryStringForExport(ILogger logger)
         {
+            logger?.LogInformation("Started retrieving query for the export operation.");
+
             var since = string.Empty;
             var till = string.Empty;
             var since_new = default(DateTimeOffset);
             var updateSinceDate = default(DateTimeOffset);
+            logger?.LogInformation("Creating table clients");
             TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
             TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+            logger?.LogInformation("Table clients created successfully.");
+
             TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
             since = _options.IsParallel == true ? (string)qEntity["since"] : (string)qEntity["globalSinceExportType"];
             var duration = _options.ExportChunkDuration;
@@ -301,6 +306,7 @@ namespace ApiForFhirMigrationTool.Function
             since = since_new.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
 
+            logger?.LogInformation("Creating export URL and query.");
             //need to check count whether getting data from gen1
             string? resourceType = string.Empty;
             string setUrl = string.Empty;
@@ -308,6 +314,7 @@ namespace ApiForFhirMigrationTool.Function
 
             if (_options.IsParallel == true)
             {
+                logger?.LogInformation("Processing parallel export.");
                 var checkValidRequest = CheckResourceCount(since, till, _options.ExportChunkTime, _options.ExportChunkDuration);
                 till = checkValidRequest.Result.ToString();
                 if (_options.IsExportDeidentified == true)
@@ -322,6 +329,7 @@ namespace ApiForFhirMigrationTool.Function
             }
             else
             {
+                logger?.LogInformation("Processing non-parallel export.");
                 bool IsLastRun = false;
                 int tot = 0;
                 TableEntity qEntityGetResourceIndex = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
@@ -342,6 +350,7 @@ namespace ApiForFhirMigrationTool.Function
                         since = qEntityGetResourceIndex["subSinceExportType"].ToString();
                         till = qEntityGetResourceIndex["subTillExportType"].ToString();
                     }
+                    logger?.LogInformation($"Checking resource count for type '{resourceType}'.");
                     var response = CheckResourceTypeCount(since!, till!, resourceType!, _options.ResourceExportChunkTime, _options.ExportChunkDuration);
                     tot = response.Result;
                     qEntityGetResourceIndex = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
@@ -373,6 +382,7 @@ namespace ApiForFhirMigrationTool.Function
                 }
                 if (tot == 0 && IsLastRun == true)
                 {
+                    logger?.LogInformation(" Resetting table entity.");
                     TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                     qEntitynew["globalSinceExportType"] = qEntitynew["globalTillExportType"];
                     qEntitynew["globalTillExportType"] = "";
@@ -399,6 +409,9 @@ namespace ApiForFhirMigrationTool.Function
                 query = string.Format("includeAssociatedData=_deleted&_since={0}&_till={1}", since, till);
             else
                 query = string.Format("_since={0}&_till={1}", since, till);
+
+            logger?.LogInformation("Query for the export operation retrieved successfully.");
+
 
             return $"{setUrl}&{query}";
         }
