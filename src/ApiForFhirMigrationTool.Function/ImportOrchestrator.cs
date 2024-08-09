@@ -65,9 +65,9 @@ namespace ApiForFhirMigrationTool.Function
 
                 logger.LogInformation(" Query the export table to check for running or started import jobs.");
                 Pageable<TableEntity> jobListimportRunning = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running");
-                logger?.LogInformation("Query completed");
-
+                
                 Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true && jobListimportRunning.Count() == 0);
+                logger?.LogInformation("Query completed");
 
                 if (jobListimport.Count() > 0)
                 {
@@ -78,6 +78,10 @@ namespace ApiForFhirMigrationTool.Function
                         logger?.LogInformation("ProcessImport function has completed.");
 
                     }
+                }
+                else
+                {
+                    logger?.LogInformation("Currently, an import or export job is already running, so a new import cannot be started.");
                 }
             }
             catch
@@ -92,14 +96,15 @@ namespace ApiForFhirMigrationTool.Function
         public async Task<ResponseModel> ProcessImport([ActivityTrigger] string requestContent, FunctionContext executionContext)
         {
             ILogger logger = executionContext.GetLogger(nameof(ProcessImport));
+            logger?.LogInformation("Import process Started");
             ResponseModel importResponse = new ResponseModel();
             HttpMethod method = HttpMethod.Post;
             try
             {
-                logger.LogInformation("Creating table clients");
+                logger?.LogInformation("Creating table clients");
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-                logger.LogInformation("Table clients created successfully.");
+                logger?.LogInformation("Table clients created successfully.");
 
                 logger?.LogInformation("Querying the export table to check for completed export jobs.");
                 Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true);
@@ -344,7 +349,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 throw;
             }
-            logger?.LogInformation("Completed import activities.");
+            logger?.LogInformation($"Import process Finished");
             return importResponse;
         }
         public string GetProcessId(string statusUrl)

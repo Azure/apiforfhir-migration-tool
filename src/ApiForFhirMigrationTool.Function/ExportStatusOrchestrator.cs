@@ -147,7 +147,7 @@ namespace ApiForFhirMigrationTool.Function
                                         logger?.LogInformation($"Creation of import payload finished");
 
                                         var resourceCount = _orchestrationHelper.CalculateSumOfResources(objOutput).ToString(CultureInfo.InvariantCulture);
-                                        logger?.LogInformation("Retrieved the total exported resource count.");
+                                        logger?.LogInformation("Successfully retrieved the total exported resource count.");
                                        
                                         TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                         exportEntity["IsExportComplete"] = true;

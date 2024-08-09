@@ -182,9 +182,10 @@ namespace ApiForFhirMigrationTool.Function
                             {
                                 exportEntity["DestinationResourceCount"] = fhirServiceTotal.Item1.ToString();
                             }
-                            logger?.LogInformation("Starting update of the export table.");
+                            logger?.LogInformation("Starting to update the total resource count in the export table.");
                             _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
-                            logger?.LogInformation("Completed update of the export table.");
+                            logger?.LogInformation("Successfully updated the total resource count in the export table.");
+
                             Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true);
                             if (jobListimport.Count() == 1)
                             {
@@ -337,9 +338,9 @@ namespace ApiForFhirMigrationTool.Function
                             }
 
                             exportEntity["FailureReason"] = diagnosticsValue;
-                            logger?.LogInformation("Starting update of the export table.");
+                            logger?.LogInformation("Starting to update the total resource count in the export table.");
                             _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
-                            logger?.LogInformation("Completed update of the export table.");
+                            logger?.LogInformation("Successfully updated the total resource count in the export table.");
 
                             Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true);
                             if (jobListimport.Count() == 1)

@@ -69,9 +69,13 @@ namespace ApiForFhirMigrationTool.Function
 
                 if (jobList.Count() <= 0)
                 {
-                    logger.LogInformation("Calling ProcessExport function");
+                    logger?.LogInformation("Calling ProcessExport function");
                     ResponseModel exportResponse = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExport));
                     logger?.LogInformation("ProcessExport function has completed.");
+                }
+                else
+                {
+                    logger?.LogInformation("Currently, an import or export job is already running, so a new export cannot be started.");
                 }
             }
             catch
