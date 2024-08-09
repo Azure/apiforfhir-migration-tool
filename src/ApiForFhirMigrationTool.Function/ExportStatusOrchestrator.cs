@@ -292,11 +292,14 @@ namespace ApiForFhirMigrationTool.Function
         [Function(nameof(ProcessExportStatusCheck))]
         public async Task<ResponseModel> ProcessExportStatusCheck([ActivityTrigger] string exportStatusUrl, FunctionContext executionContext)
         {
+            ILogger logger = executionContext.GetLogger(nameof(ProcessExportStatusCheck));
+            logger?.LogInformation("ProcessExportStatusCheck Started");
             try
             {
                 if (!string.IsNullOrEmpty(exportStatusUrl))
                 {
                     ResponseModel exportStatusResponse = await _exportProcessor.CheckProcessStatus(exportStatusUrl, _options.SourceUri, _options.SourceHttpClient);
+                    logger?.LogInformation("ProcessExportStatusCheck Finished");
                     return exportStatusResponse;
                 }
                 else
