@@ -87,23 +87,17 @@ namespace ApiForFhirMigrationTool.Function.Migration
 
             try
             {
-                _logger.LogInformation($"GetSearchParameters Started");
                 // Get search parameters from Gen1
                 JObject jObjectResponse = await _searchParameterOperation.GetSearchParameters();
-                _logger.LogInformation($"GetSearchParameters Finished");
 
                 // If resource present in bundle then transform it into batch and Post to Gen2
                 if (jObjectResponse.ContainsKey("entry"))
                 {
-                    _logger.LogInformation($"TransformObject Started");
                     // Transform to batch and add request object
                     string transformedObject = _searchParameterOperation.TransformObject(jObjectResponse);
-                    _logger.LogInformation($"TransformObject Finished");
 
-                    _logger.LogInformation($"PostSearchParameters Started");
                     // Post serach parametes to Gen2
                     await _searchParameterOperation.PostSearchParameters(transformedObject);
-                    _logger.LogInformation($"PostSearchParameters Finished");
                 }
             }
             catch (Exception ex)
