@@ -4,16 +4,11 @@
 // -------------------------------------------------------------------------------------------------
 
 using ApiForFhirMigrationTool.Function.Configuration;
-using ApiForFhirMigrationTool.Function.FhirOperation;
-using ApiForFhirMigrationTool.Function.Models;
-using ApiForFhirMigrationTool.Function.OrchestrationHelper;
-using ApiForFhirMigrationTool.Function.Processors;
 using ApiForFhirMigrationTool.Function.Security;
 using Azure.Core;
 using Azure.Data.Tables;
 using Azure.Data.Tables.Models;
 using Azure.Identity;
-using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.DurableTask;
@@ -26,22 +21,9 @@ namespace ApiForFhirMigrationTool.Function
     public class TableStorage
     {
         private readonly MigrationOptions _options;
-        private readonly ILogger _logger;
-        private readonly IOrchestrationHelper _orchestrationHelper;
-        private readonly IAzureTableClientFactory _azureTableClientFactory;
-        private readonly IFhirProcessor _exportProcessor;
-        private readonly IFhirClient _fhirClient;
-        private readonly TelemetryClient _telemetryClient;
-
-        public TableStorage(MigrationOptions options, ILoggerFactory loggerFactory, IOrchestrationHelper orchestrationHelper, IAzureTableClientFactory azureTableClientFactory, IFhirProcessor exportProcessor, IFhirClient fhirClient, TelemetryClient telemetryClient)
+        public TableStorage(MigrationOptions options)
         {
             _options = options;
-            _logger = loggerFactory.CreateLogger<FhirMigrationToolE2E>();
-            _orchestrationHelper = orchestrationHelper;
-            _azureTableClientFactory = azureTableClientFactory;
-            _exportProcessor = exportProcessor;
-            _fhirClient = fhirClient;
-            _telemetryClient = telemetryClient;
         }
 
         [Function("CheckAccessTrigger")]
@@ -115,12 +97,11 @@ namespace ApiForFhirMigrationTool.Function
             return checkResult.ToString();
         }
 
-
         [Function(nameof(CheckAzureApiForFhirServerAccessActivity))]
         public async Task<string> CheckAzureApiForFhirServerAccessActivity([ActivityTrigger] object input, FunctionContext executionContext)
         {
             ILogger logger = executionContext.GetLogger(nameof(CheckAzureApiForFhirServerAccessActivity));
-            logger.LogInformation("Performing FHIR server access check.");
+            logger.LogInformation("Performing Azure API for FHIR server access check.");
 
             string azureApiForFhirServerUrl = $"{_options.SourceUri}";
             JObject checkResult = new JObject();
@@ -147,23 +128,21 @@ namespace ApiForFhirMigrationTool.Function
                 if (response.IsSuccessStatusCode)
                 {
                     checkResult["Status"] = "Success";
-                    checkResult["Message"] = $"Successfully accessed FHIR server at '{azureApiForFhirServerUrl}'.";
+                    checkResult["Message"] = $"Successfully accessed Azure API for FHIR server at '{azureApiForFhirServerUrl}'.";
                 }
                 else
                 {
                     checkResult["Status"] = "Failed";
-                    checkResult["Message"] = $"Failed to access FHIR server at '{azureApiForFhirServerUrl}'. Status code: {response.StatusCode}";
+                    checkResult["Message"] = $"Failed to access Azure API for FHIR server at '{azureApiForFhirServerUrl}'. Status code: {response.StatusCode}";
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError($"Failed to access the FHIR server: {ex.Message}");
+                logger.LogError($"Failed to access the Azure API for FHIR server: {ex.Message}");
                 checkResult["Status"] = "Failed";
-                checkResult["Message"] = $"Failed to access the FHIR server: {ex.Message}";
+                checkResult["Message"] = $"Failed to access the Azure API for FHIR server: {ex.Message}";
             }
-
             return checkResult.ToString();
-
         }
 
         [Function(nameof(CheckFhirServerAccessActivity))]
@@ -183,7 +162,7 @@ namespace ApiForFhirMigrationTool.Function
 
                 BearerTokenHandler bearerTokenHandler = new BearerTokenHandler(tokenCredential, baseAddress, scopes)
                 {
-                    InnerHandler = new HttpClientHandler() 
+                    InnerHandler = new HttpClientHandler()
                 };
 
                 HttpClient httpClient = new HttpClient(bearerTokenHandler)
@@ -214,7 +193,6 @@ namespace ApiForFhirMigrationTool.Function
 
             return checkResult.ToString();
         }
-
     }
 }
 
