@@ -8,7 +8,8 @@ using ApiForFhirMigrationTool.Function.FhirOperation;
 using ApiForFhirMigrationTool.Function.Models;
 using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
-using Azure;
+using ApiForFhirMigrationTool.Function.Security;
+using Azure.Core;
 using Azure.Data.Tables;
 using Azure.Data.Tables.Models;
 using Azure.Identity;
@@ -19,8 +20,6 @@ using Microsoft.DurableTask;
 using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace ApiForFhirMigrationTool.Function
 {
@@ -68,9 +67,9 @@ namespace ApiForFhirMigrationTool.Function
             ILogger logger = context.CreateReplaySafeLogger(nameof(CheckAccessOrchestrator));
             logger.LogInformation("Start CheckAccess.");
 
-            string tableCheckResult = await context.CallActivityAsync<string>(nameof(CheckTableAccessActivity1), null);
-            string azureApiForFhirCheckResult = await context.CallActivityAsync<string>(nameof(CheckAzureApiForFhirServerAccessActivity), null);
-            string fhirCheckResult = await context.CallActivityAsync<string>(nameof(CheckFhirServerAccessActivity), null);
+            string tableCheckResult = await context.CallActivityAsync<string>(nameof(CheckTableAccessActivity), new object());
+            string azureApiForFhirCheckResult = await context.CallActivityAsync<string>(nameof(CheckAzureApiForFhirServerAccessActivity), new object());
+            string fhirCheckResult = await context.CallActivityAsync<string>(nameof(CheckFhirServerAccessActivity), new object());
 
             JObject result = new JObject
             {
@@ -82,14 +81,13 @@ namespace ApiForFhirMigrationTool.Function
             return result.ToString();
         }
 
-        [Function(nameof(CheckTableAccessActivity1))]
-        public async Task<string> CheckTableAccessActivity1([ActivityTrigger] object input, FunctionContext executionContext)
+        [Function(nameof(CheckTableAccessActivity))]
+        public async Task<string> CheckTableAccessActivity([ActivityTrigger] object input, FunctionContext executionContext)
         {
-            ILogger logger = executionContext.GetLogger(nameof(CheckTableAccessActivity1));
-            logger.LogInformation("Performing table access check.");
+            ILogger logger = executionContext.GetLogger(nameof(CheckTableAccessActivity));
+            logger.LogInformation("Performing storage account access check.");
 
             string storageAccountName = _options.StagingStorageAccountName;
-            string tableName = _options.ExportTableName;
             JObject checkResult = new JObject();
 
             try
@@ -97,19 +95,15 @@ namespace ApiForFhirMigrationTool.Function
                 string tableServiceUri = _options.StagingStorageUri;
                 TableServiceClient tableServiceClient = new TableServiceClient(new Uri(tableServiceUri), new DefaultAzureCredential());
 
-                // List all tables and check if the target table exists
                 await foreach (TableItem table in tableServiceClient.QueryAsync())
                 {
-                    if (table.Name == tableName)
-                    {
-                        checkResult["Status"] = "Success";
-                        checkResult["Message"] = $"Table '{tableName}' exists in storage account '{storageAccountName}'.";
-                        return checkResult.ToString();
-                    }
+                    checkResult["Status"] = "Success";
+                    checkResult["Message"] = $"Successfully accessed storage account '{storageAccountName}'.";
+                    return checkResult.ToString();
                 }
 
-                checkResult["Status"] = "Failed";
-                checkResult["Message"] = $"Table '{tableName}' does not exist in storage account '{storageAccountName}'.";
+                checkResult["Status"] = "Success";
+                checkResult["Message"] = $"Successfully accessed storage account '{storageAccountName}'";
             }
             catch (Exception ex)
             {
@@ -121,31 +115,44 @@ namespace ApiForFhirMigrationTool.Function
             return checkResult.ToString();
         }
 
+
         [Function(nameof(CheckAzureApiForFhirServerAccessActivity))]
         public async Task<string> CheckAzureApiForFhirServerAccessActivity([ActivityTrigger] object input, FunctionContext executionContext)
         {
             ILogger logger = executionContext.GetLogger(nameof(CheckAzureApiForFhirServerAccessActivity));
             logger.LogInformation("Performing FHIR server access check.");
 
-            string fhirServerUrl = $"{_options.SourceUri}/metadata";
+            string azureApiForFhirServerUrl = $"{_options.SourceUri}";
             JObject checkResult = new JObject();
 
             try
             {
-                ResponseModel response = new ResponseModel();
-                HttpMethod method = HttpMethod.Get;
-                response =await _exportProcessor.CheckProcessStatus(fhirServerUrl, _options.SourceUri, _options.SourceHttpClient);
-  
-                logger.LogInformation($"status code is  {response.Status}");
-                if (response.Status == ResponseStatus.Completed)
+                Uri baseAddress = _options.SourceUri;
+                TokenCredential tokenCredential = new DefaultAzureCredential();
+                string[] scopes = new string[] { $"{baseAddress}/.default" };
+
+                BearerTokenHandler bearerTokenHandler = new BearerTokenHandler(tokenCredential, baseAddress, scopes)
+                {
+                    InnerHandler = new HttpClientHandler()
+                };
+
+                HttpClient httpClient = new HttpClient(bearerTokenHandler)
+                {
+                    BaseAddress = baseAddress
+                };
+
+                HttpResponseMessage response = await httpClient.GetAsync(baseAddress);
+
+                logger.LogInformation($"Status code is : {response.StatusCode}");
+                if (response.IsSuccessStatusCode)
                 {
                     checkResult["Status"] = "Success";
-                    checkResult["Message"] = $"Successfully accessed FHIR server at '{fhirServerUrl}'.";
+                    checkResult["Message"] = $"Successfully accessed FHIR server at '{azureApiForFhirServerUrl}'.";
                 }
                 else
                 {
                     checkResult["Status"] = "Failed";
-                    checkResult["Message"] = $"Failed to access FHIR server at '{fhirServerUrl}'. Status code: {response.Status}";
+                    checkResult["Message"] = $"Failed to access FHIR server at '{azureApiForFhirServerUrl}'. Status code: {response.StatusCode}";
                 }
             }
             catch (Exception ex)
@@ -156,6 +163,7 @@ namespace ApiForFhirMigrationTool.Function
             }
 
             return checkResult.ToString();
+
         }
 
         [Function(nameof(CheckFhirServerAccessActivity))]
@@ -164,17 +172,29 @@ namespace ApiForFhirMigrationTool.Function
             ILogger logger = executionContext.GetLogger(nameof(CheckFhirServerAccessActivity));
             logger.LogInformation("Performing FHIR server access check.");
 
-            string fhirServerUrl = $"{_options.DestinationUri}/metadata";
+            string fhirServerUrl = $"{_options.DestinationUri}";
             JObject checkResult = new JObject();
 
             try
             {
-                ResponseModel response = new ResponseModel();
-                HttpMethod method = HttpMethod.Get;
-                response = await _exportProcessor.CheckProcessStatus(fhirServerUrl, _options.SourceUri, _options.SourceHttpClient);
+                Uri baseAddress = _options.DestinationUri;
+                TokenCredential tokenCredential = new DefaultAzureCredential();
+                string[] scopes = new string[] { $"{baseAddress}/.default" };
 
-                logger.LogInformation($"status code is  {response.Status}");
-                if (response.Status == ResponseStatus.Completed)
+                BearerTokenHandler bearerTokenHandler = new BearerTokenHandler(tokenCredential, baseAddress, scopes)
+                {
+                    InnerHandler = new HttpClientHandler() 
+                };
+
+                HttpClient httpClient = new HttpClient(bearerTokenHandler)
+                {
+                    BaseAddress = baseAddress
+                };
+
+                HttpResponseMessage response = await httpClient.GetAsync(baseAddress);
+
+                logger.LogInformation($"Status code is : {response.StatusCode}");
+                if (response.IsSuccessStatusCode)
                 {
                     checkResult["Status"] = "Success";
                     checkResult["Message"] = $"Successfully accessed FHIR server at '{fhirServerUrl}'.";
@@ -182,7 +202,7 @@ namespace ApiForFhirMigrationTool.Function
                 else
                 {
                     checkResult["Status"] = "Failed";
-                    checkResult["Message"] = $"Failed to access FHIR server at '{fhirServerUrl}'. Status code: {response.Status}";
+                    checkResult["Message"] = $"Failed to access FHIR server at '{fhirServerUrl}'. Status code: {response.StatusCode}";
                 }
             }
             catch (Exception ex)
@@ -194,5 +214,7 @@ namespace ApiForFhirMigrationTool.Function
 
             return checkResult.ToString();
         }
+
     }
 }
+
