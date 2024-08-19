@@ -58,40 +58,61 @@ namespace ApiForFhirMigrationTool.Function
 
             try
             {
+                logger.LogInformation("Creating table clients");
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+                logger.LogInformation("Table clients created successfully.");
 
+                logger.LogInformation(" Query the export table to check for running or incomplete jobs.");
                 Pageable<TableEntity> jobList = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsExportRunning") == "Running" || ent.GetString("IsExportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running" || ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Not Started" || ent.GetBoolean("IsProcessed") == false);
+                logger?.LogInformation("Query completed");
+
                 if (jobList.Count() <= 0)
                 {
+                    logger?.LogInformation("Calling ProcessExport function");
                     ResponseModel exportResponse = await context.CallActivityAsync<ResponseModel>(nameof(ProcessExport));
+                    logger?.LogInformation("ProcessExport function has completed.");
+                }
+                else
+                {
+                    logger?.LogInformation("Currently, an import or export job is already running, so a new export cannot be started.");
                 }
             }
             catch
             {
                 throw;
             }
-
+            logger?.LogInformation("Completed export activities.");
             return "Completed";
         }
 
         [Function(nameof(ProcessExport))]
         public async Task<ResponseModel> ProcessExport([ActivityTrigger] string name, FunctionContext executionContext)
         {
+            ILogger logger = executionContext.GetLogger("ProcessExport");
+            logger?.LogInformation($"Export process Started");
             ResponseModel exportResponse = new ResponseModel();
             try
             {
                 HttpMethod method = HttpMethod.Get;
-                string query = GetQueryStringForExport();
+                logger?.LogInformation($"Getting Query for export operation");
+                string query = GetQueryStringForExport(logger);
+                logger?.LogInformation("Query for export operation retrieved successfully.");
+
                 if (!string.IsNullOrEmpty(query))
                 {
                     string sinceValue = string.Empty;
                     string tillValue = string.Empty;
                     string resourceTypeValue = string.Empty;
-                     exportResponse = await _exportProcessor.CallProcess(method, string.Empty, _options.SourceUri, query, _options.SourceHttpClient);
+                    logger?.LogInformation("Initiating the export process.");
+                    exportResponse = await _exportProcessor.CallProcess(method, string.Empty, _options.SourceUri, query, _options.SourceHttpClient);
+                    logger?.LogInformation("Export process completed successfully.");
 
+                    logger?.LogInformation("Creating table clients");
                     TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                     TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+                    logger?.LogInformation("Table clients created successfully.");
+
                     var statusUrl = string.Empty;
 
                     string pattern = @"_since=(.*?)&_till=(.*?)($|&)";
@@ -115,6 +136,7 @@ namespace ApiForFhirMigrationTool.Function
                     }
                     if (exportResponse.Status == ResponseStatus.Accepted)
                     {
+                        logger?.LogInformation("Export operation status: Accepted.");
 
                         statusUrl = exportResponse.Content;
 
@@ -138,11 +160,19 @@ namespace ApiForFhirMigrationTool.Function
                                     { "StartTime", DateTime.UtcNow },
                                     {"resourceTypeValue",resourceTypeValue }
                                 };
+                            logger?.LogInformation("Starting update of the export table.");
                             _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
+                            logger?.LogInformation("Completed update of the export table.");
+                            
                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
 
                             qEntitynew["JobId"] = jobId++;
+                            
+                            logger?.LogInformation("Starting update of the chunk table.");
                             _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                            logger?.LogInformation("Completed update of the chunk table.");
+
+                            logger?.LogInformation("Updating logs in Application Insights.");
                             _telemetryClient.TrackEvent(
                             "Export",
                             new Dictionary<string, string>()
@@ -153,17 +183,19 @@ namespace ApiForFhirMigrationTool.Function
                                 { "Since", sinceValue },
                                 { "Till", tillValue },
                             });
+                            logger?.LogInformation("Logs updated successfully in Application Insights.");
                         }
                     }
                     else
                     {
+                        logger?.LogInformation("Export operation status: Failed.");
                         TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                         if (qEntity["JobId"] != null)
                         {
                             int jobId = (int)qEntity["JobId"];
                             string rowKey = _options.RowKey + jobId++;
                             string diagnosticsValue = JObject.Parse(exportResponse.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "For more information check Content location.";
-                            ILogger logger = executionContext.GetLogger("ProcessExport");
+                            logger = executionContext.GetLogger("ProcessExport");
                             logger?.LogInformation($"Export check returned: Unsuccessful. Reason : {diagnosticsValue}");
                             var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
                                 {
@@ -176,12 +208,18 @@ namespace ApiForFhirMigrationTool.Function
                                     { "ImportRequest", string.Empty },
                                     { "FailureReason",diagnosticsValue }
                                 };
+                            logger?.LogInformation("Starting update of the export table.");
                             _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
+                            logger?.LogInformation("Completed update of the export table.");
+                            
                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                             qEntitynew["JobId"] = jobId++;
 
+                            logger?.LogInformation("Starting update of the chunk table.");
                             _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                            logger?.LogInformation("Completed update of the chunk table.");
 
+                            logger?.LogInformation("Updating logs in Application Insights.");
                             _telemetryClient.TrackEvent(
                            "Export",
                            new Dictionary<string, string>()
@@ -193,6 +231,7 @@ namespace ApiForFhirMigrationTool.Function
                                 { "Till", tillValue },
                                { "FailureReason", diagnosticsValue }
                            });
+                            logger?.LogInformation("Logs updated successfully in Application Insights.");
 
                             throw new HttpFailureException($"Status: {exportResponse.Status} Response: {exportResponse.Content} ");
                         }
@@ -203,18 +242,23 @@ namespace ApiForFhirMigrationTool.Function
             {
                 throw;
             }
-
+            logger?.LogInformation($"Export process Finished");
             return exportResponse;
         }
 
-        private string GetQueryStringForExport()
+        private string GetQueryStringForExport(ILogger logger)
         {
+            logger?.LogInformation("Started retrieving query for the export operation.");
+
             var since = string.Empty;
             var till = string.Empty;
             var since_new = default(DateTimeOffset);
             var updateSinceDate = default(DateTimeOffset);
+            logger?.LogInformation("Creating table clients");
             TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
             TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+            logger?.LogInformation("Table clients created successfully.");
+
             TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
             since = _options.IsParallel == true ? (string)qEntity["since"] : (string)qEntity["globalSinceExportType"];
             var duration = _options.ExportChunkDuration;
@@ -266,6 +310,7 @@ namespace ApiForFhirMigrationTool.Function
             since = since_new.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
 
+            logger?.LogInformation("Creating export URL and query.");
             //need to check count whether getting data from gen1
             string? resourceType = string.Empty;
             string setUrl = string.Empty;
@@ -273,6 +318,7 @@ namespace ApiForFhirMigrationTool.Function
 
             if (_options.IsParallel == true)
             {
+                logger?.LogInformation("Processing parallel export.");
                 var checkValidRequest = CheckResourceCount(since, till, _options.ExportChunkTime, _options.ExportChunkDuration);
                 till = checkValidRequest.Result.ToString();
                 if (_options.IsExportDeidentified == true)
@@ -287,6 +333,7 @@ namespace ApiForFhirMigrationTool.Function
             }
             else
             {
+                logger?.LogInformation("Processing non-parallel export.");
                 bool IsLastRun = false;
                 int tot = 0;
                 TableEntity qEntityGetResourceIndex = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
@@ -307,6 +354,7 @@ namespace ApiForFhirMigrationTool.Function
                         since = qEntityGetResourceIndex["subSinceExportType"].ToString();
                         till = qEntityGetResourceIndex["subTillExportType"].ToString();
                     }
+                    logger?.LogInformation($"Checking resource count for type '{resourceType}'.");
                     var response = CheckResourceTypeCount(since!, till!, resourceType!, _options.ResourceExportChunkTime, _options.ExportChunkDuration);
                     tot = response.Result;
                     qEntityGetResourceIndex = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
@@ -338,6 +386,7 @@ namespace ApiForFhirMigrationTool.Function
                 }
                 if (tot == 0 && IsLastRun == true)
                 {
+                    logger?.LogInformation(" Resetting table entity.");
                     TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                     qEntitynew["globalSinceExportType"] = qEntitynew["globalTillExportType"];
                     qEntitynew["globalTillExportType"] = "";
@@ -364,6 +413,9 @@ namespace ApiForFhirMigrationTool.Function
                 query = string.Format("includeAssociatedData=_deleted&_since={0}&_till={1}", since, till);
             else
                 query = string.Format("_since={0}&_till={1}", since, till);
+
+            logger?.LogInformation("Query for the export operation retrieved successfully.");
+
 
             return $"{setUrl}&{query}";
         }
