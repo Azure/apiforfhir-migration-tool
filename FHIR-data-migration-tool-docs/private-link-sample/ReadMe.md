@@ -54,6 +54,7 @@ If you are using Azure Private Link, the Deploy to Azure deployment of the migra
         - Name: [Azure API for FHIR Subnet Name]
         - Address range: [Azure API for FHIR Subnet Address Range]
     - Click "Save".
+
 - **Step 3: Create a Subnet for Azure Health Data Services FHIR service**
     - Click on "+ Subnet" again.
     - Fill out the following information :
@@ -61,6 +62,7 @@ If you are using Azure Private Link, the Deploy to Azure deployment of the migra
         - Address range: [Azure Health Data Services FHIR service Subnet Address Range]
     - Click "Save".
 
+    ![Vnet and Subnet](./Media/VNet%20and%20Subnet.png)
 ## 3. Create private endpoint for Azure API for FHIR And Azure Health Data Services FHIR service
 - **Step 1: Locate and select the service**
     - In the Azure Portal, locate the service for which you want to create a private endpoint.
@@ -98,10 +100,16 @@ If you are using Azure Private Link, the Deploy to Azure deployment of the migra
 - **Step 8: Repeat Steps for Azure Health Data Services FHIR service**
     - To create a private endpoint for a Azure Health Data Services FHIR service, follow the same steps outlined above, starting from Step 1.
 
+     ![Private Endpoint for Azure API for FHIR](./Media/AzureApiForFhir-PrivateEndpoint.png)
+
+     ![Private Endpoint for FHIR Service](./Media/FhirService-PrivateEndpoint.png)
+
 ## 4. Secure export and import on storage account
 - Refer to the official Microsoft [documentation](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/export-data#secure-export-to-azure-storage) for detailed instructions on performing a Secure Export to Azure Storage through Azure API for FHIR.
 - Refer to the official Microsoft [documentation](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/configure-import-data#securing-the-fhir-service-import-operation) 
  For detailed instructions on securing the FHIR service's  import operation.
+
+    ![Secure export and import on storage account](./Media/ImportExport-StorageAcc.png)
 
  ## 5. Deploy migration tool using ARM
  - To deploy the migration tool using Azure Resource Manager (ARM), please refer to the section ["Option B: Deploy the migration tool manually through an ARM template"](/FHIR-data-migration-tool-docs#deploy-the-migration-tool) from the deployment document. Configurations for the migration tool can be done at this step using the **ARMmain.parameters.json** file.
@@ -116,11 +124,18 @@ This step provides detailed instructions for configuring secure storage of data 
     - Within the 'Virtual network' section, select and add the previously created existing virtual network
     - Allow Azure services on the trusted services list to access this storage account.
     - Scroll down to the "Exception" section and confirm that the option "Allow Azure services on the trusted services list to access this storage account" is selected.
+
+      ![Configure secure storage of data migration tool](./Media/DmToolStorageAcc.png)
+
+      ![ Azure FunctionApp access on storage account](./Media/AzureFunctionapp-access%20on%20storageaccount.png)
+
 - **Step 2: Create a Private Endpoint**
     - Once you've configured the Networking for the Storage Account, navigate to the "Private endpoint connections" section.
     - Click on "+ Private Endpoint" to create a new private endpoint connection.
     - Follow the steps outlined in Section 3 for creating private endpoint connections
     - By following these steps, you will have successfully configured secure storage in Azure with the necessary networking configurations and private endpoint connections.
+
+      ![Configure secure storage of data migration tool](./Media/DmToolStorageAcc-PrivateEndpoint.png)
 
 ## 7. Secure the migration tool Azure Functions App
 This step offers detailed instructions on how to secure the migration tool Azure Functions App
@@ -130,6 +145,8 @@ This step offers detailed instructions on how to secure the migration tool Azure
     - Find the rule that allow public access and uncheck them. This will prevent anyone from accessing your Function App over the public internet.
     - Still inside the "Networking" tab, find and click on "Virtual Network Integration.
     - Choose the Virtual Network which you have created in section 1.
-    - Select the specific Subnet within that Virtual Network that you want to use.
+    - Select the specific Subnet within that Virtual Network that you want to use.If a subnet is not available, create a new one.
     - After configuring the Virtual Network and Subnet, save the changes.
     - Now, Function App will only be accessible via the specified Virtual Network and Subnet, and public access will be restricted.
+
+    ![Secure the migration tool Azure Functions App](./Media/AzureFunctionApp.png)
