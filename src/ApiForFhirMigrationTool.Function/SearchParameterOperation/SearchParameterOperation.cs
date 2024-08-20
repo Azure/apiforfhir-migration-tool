@@ -47,6 +47,7 @@ namespace ApiForFhirMigrationTool.Function.SearchParameterOperation
 
                 if (response.IsSuccessStatusCode)
                 {
+                    _logger.LogInformation($"GetSearchParameters Finished");
                     return JObject.Parse(response.Content.ReadAsStringAsync().Result);
                 }
                 else

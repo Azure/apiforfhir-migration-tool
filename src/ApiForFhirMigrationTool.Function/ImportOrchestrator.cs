@@ -58,49 +58,71 @@ namespace ApiForFhirMigrationTool.Function
 
             try
             {
+                logger.LogInformation("Creating table clients");
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-               
-                Pageable<TableEntity> jobListimportRunning = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running");
-                Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true && jobListimportRunning.Count() == 0);
+                logger.LogInformation("Table clients created successfully.");
 
+                logger.LogInformation(" Query the export table to check for running or started import jobs.");
+                Pageable<TableEntity> jobListimportRunning = exportTableClient.Query<TableEntity>(filter: ent => ent.GetString("IsImportRunning") == "Started" || ent.GetString("IsImportRunning") == "Running");
+                
+                Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true && jobListimportRunning.Count() == 0);
+                logger?.LogInformation("Query completed");
 
                 if (jobListimport.Count() > 0)
                 {
                     foreach (TableEntity item in jobListimport)
                     {
+                        logger?.LogInformation("Calling ProcessImport function");
                         var importResponse = await context.CallActivityAsync<ResponseModel>(nameof(ProcessImport));
+                        logger?.LogInformation("ProcessImport function has completed.");
 
                     }
+                }
+                else
+                {
+                    logger?.LogInformation("Currently, an import or export job is already running, so a new import cannot be started.");
                 }
             }
             catch
             {
                 throw;
             }
+            logger?.LogInformation("Completed import activities.");
             return "completed";
         }
 
         [Function(nameof(ProcessImport))]
         public async Task<ResponseModel> ProcessImport([ActivityTrigger] string requestContent, FunctionContext executionContext)
         {
+            ILogger logger = executionContext.GetLogger(nameof(ProcessImport));
+            logger?.LogInformation("Import process Started");
             ResponseModel importResponse = new ResponseModel();
             HttpMethod method = HttpMethod.Post;
             try
             {
+                logger?.LogInformation("Creating table clients");
                 TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-               
+                logger?.LogInformation("Table clients created successfully.");
+
+                logger?.LogInformation("Querying the export table to check for completed export jobs.");
                 Pageable<TableEntity> jobListimport = exportTableClient.Query<TableEntity>(filter: ent => ent.GetBoolean("IsExportComplete") == true && ent.GetString("ImportRequest") == "Yes" && ent.GetBoolean("IsProcessed") == false && ent.GetBoolean("IsFirst") == true);
+                logger?.LogInformation("Query completed");
 
                 if (jobListimport != null && jobListimport.Count() == 1)
-                {
-                    ILogger logger = executionContext.GetLogger(nameof(ProcessImport));
-                    logger.LogInformation("Starting import activities.");
+                { 
+                    logger?.LogInformation("Starting import activities.");
                     var item = jobListimport.First();
 
+                    logger?.LogInformation("Retrieving export content location.");
                     string? statusUrl_new = item.GetString("exportContentLocation");
+                    logger?.LogInformation("Export content location retrieved successfully.");
+
+                    logger?.LogInformation("Retrieving export process Id from export content location.");
                     string statusId = GetProcessId(statusUrl_new);
+                    logger?.LogInformation("Export process Id retrieved successfully.");
+
                     string containerName = $"import-{statusId}";
                     BlobContainerClient containerClient = _azureBlobClientFactory.GetBlobContainerClient(containerName);
                     int blobCount = containerClient.GetBlobs().Count();
@@ -118,7 +140,10 @@ namespace ApiForFhirMigrationTool.Function
                                 string statusUrl = String.Empty;
 
                                 method = HttpMethod.Post;
+                                logger?.LogInformation($"Retrieving the import payload from '{containerName}' and posting it to the FHIR service.");
                                 importResponse = await _importProcessor.CallProcess(method, content, _options.DestinationUri, "/$import", _options.DestinationHttpClient);
+                                logger?.LogInformation("Successfully posted the import payload to the FHIR service.");
+
                                 if (importResponse.Status == ResponseStatus.Accepted)
                                 {
                                     logger?.LogInformation($"Import  returned: Success.");
@@ -133,15 +158,21 @@ namespace ApiForFhirMigrationTool.Function
                                         exportEntity["importContentLocation"] = importResponse.Content;
                                         exportEntity["ImportStartTime"] = DateTime.UtcNow;
                                         exportEntity["ImportNo"] = blobItem.Name;
+
+                                        logger?.LogInformation("Starting update of the export table.");
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                        logger?.LogInformation("Completed update of the export table.");
+
+                                        logger?.LogInformation("Updating logs in Application Insights.");
                                         _telemetryClient.TrackEvent(
                                         "Import",
                                         new Dictionary<string, string>()
                                         {
-                                    { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
-                                    { "StatusUrl", statusUrl },
-                                    { "ImportStatus", "Started" },
+                                            { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                            { "StatusUrl", statusUrl },
+                                            { "ImportStatus", "Started" },
                                         });
+                                        logger?.LogInformation("Logs updated successfully in Application Insights.");
                                     }
                                     else
                                     {
@@ -152,39 +183,46 @@ namespace ApiForFhirMigrationTool.Function
                                             string rowKey = _options.RowKey + statusId + importId++;
 
                                             var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
-                                {
-                                    { "exportContentLocation", item.GetString("exportContentLocation") },
-                                    { "importContentLocation", importResponse.Content },
-                                    { "IsExportComplete", true },
-                                    { "IsExportRunning", "Completed" },
-                                    { "IsImportComplete", false },
-                                    { "IsImportRunning", "Started" },
-                                    { "ImportRequest", "Yes" },
-                                    { "Since",item.GetString("Since") },
-                                    { "Till", item.GetString("Till") },
-                                    { "StartTime", item.GetDateTime("StartTime") },
-                                    {"TotalExportResourceCount",item.GetString("TotalExportResourceCount") },
-                                    { "ImportStartTime", DateTime.UtcNow },
-                                    {"ExportEndTime",item.GetDateTime("ExportEndTime")  },
-                                    { "ExportId",  statusId },
-                                    { "ImportNo",blobItem.Name},
-                                };
+                                            {
+                                                { "exportContentLocation", item.GetString("exportContentLocation") },
+                                                { "importContentLocation", importResponse.Content },
+                                                { "IsExportComplete", true },
+                                                { "IsExportRunning", "Completed" },
+                                                { "IsImportComplete", false },
+                                                { "IsImportRunning", "Started" },
+                                                { "ImportRequest", "Yes" },
+                                                { "Since",item.GetString("Since") },
+                                                { "Till", item.GetString("Till") },
+                                                { "StartTime", item.GetDateTime("StartTime") },
+                                                {"TotalExportResourceCount",item.GetString("TotalExportResourceCount") },
+                                                { "ImportStartTime", DateTime.UtcNow },
+                                                {"ExportEndTime",item.GetDateTime("ExportEndTime")  },
+                                                { "ExportId",  statusId },
+                                                { "ImportNo",blobItem.Name},
+                                            };
+                                            logger?.LogInformation("Starting update of the export table.");
                                             _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
+                                            logger?.LogInformation("Completed update of the export table.");
 
                                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                                             qEntitynew["ImportId"] = importId++;
-                                            _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
 
+                                            logger?.LogInformation("Starting update of the chunk table.");
+                                            _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                                            logger?.LogInformation("Completed update of the chunk table.");
+
+                                            logger?.LogInformation("Updating logs in Application Insights.");
                                             _telemetryClient.TrackEvent(
                                         "Import",
-                                        new Dictionary<string, string>()
-                                        {
-                                    { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
-                                    { "StatusUrl", statusUrl },
-                                    { "ImportStatus", "Started" },
-                                        });
-
+                                            new Dictionary<string, string>()
+                                            {
+                                                { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                                { "StatusUrl", statusUrl },
+                                                { "ImportStatus", "Started" },
+                                                });
+                                            logger?.LogInformation("Logs updated successfully in Application Insights.");
                                         }
+                                        
                                     }
                                 }
                                 else
@@ -201,21 +239,27 @@ namespace ApiForFhirMigrationTool.Function
                                         exportEntity["FailureReason"] = diagnosticsValue;
                                         exportEntity["ImportNo"] = blobItem.Name;
                                         exportEntity["IsProcessed"] = true;
+
+                                        logger?.LogInformation("Starting update of the export table.");
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
+                                        logger?.LogInformation("Completed update of the export table.");
+
+                                        logger?.LogInformation("Updating logs in Application Insights.");
                                         _telemetryClient.TrackEvent(
                                         "Import",
                                         new Dictionary<string, string>()
                                         {
-                                    { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
-                                    { "StatusUrl", statusUrl },
-                                    { "ImportStatus", "Failed" },
-                                    { "FailureReason", diagnosticsValue }
+                                            { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                            { "StatusUrl", statusUrl },
+                                            { "ImportStatus", "Failed" },
+                                            { "FailureReason", diagnosticsValue }
                                         });
-                                        
+                                        logger?.LogInformation("Logs updated successfully in Application Insights.");
 
                                     }
                                     else
                                     {
+                                        logger?.LogInformation($"Import  returned: Failure");
                                         TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                                         if (qEntity["ImportId"] != null)
                                         {
@@ -225,40 +269,47 @@ namespace ApiForFhirMigrationTool.Function
                                             logger?.LogInformation($"Import Status check returned: Unsuccessful. Reason : {diagnosticsValue}");
 
                                             var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
-                                {
-                                    { "exportContentLocation", item.GetString("exportContentLocation") },
-                                    { "IsExportComplete", true },
-                                    { "IsExportRunning", "Completed" },
-                                    { "IsImportComplete", false },
-                                    { "IsImportRunning", "failed" },
-                                    { "FailureReason",diagnosticsValue},
-                                    { "ImportRequest", "Yes" },
-                                    { "Since",item.GetString("Since") },
-                                    { "Till", item.GetString("Till") },
-                                    { "StartTime", item.GetDateTime("StartTime") },
-                                    {"TotalExportResourceCount",item.GetString("TotalExportResourceCount") },
-                                    {"ExportEndTime",item.GetDateTime("ExportEndTime")  },
-                                    { "ExportId",  statusId },
-                                    { "ImportNo",blobItem.Name},
-                                    { "IsProcessed",true }
+                                            {
+                                                { "exportContentLocation", item.GetString("exportContentLocation") },
+                                                { "IsExportComplete", true },
+                                                { "IsExportRunning", "Completed" },
+                                                { "IsImportComplete", false },
+                                                { "IsImportRunning", "failed" },
+                                                { "FailureReason",diagnosticsValue},
+                                                { "ImportRequest", "Yes" },
+                                                { "Since",item.GetString("Since") },
+                                                { "Till", item.GetString("Till") },
+                                                { "StartTime", item.GetDateTime("StartTime") },
+                                                {"TotalExportResourceCount",item.GetString("TotalExportResourceCount") },
+                                                {"ExportEndTime",item.GetDateTime("ExportEndTime")  },
+                                                { "ExportId",  statusId },
+                                                { "ImportNo",blobItem.Name},
+                                                { "IsProcessed",true }
 
-                                        };
+                                            };
+                                            logger?.LogInformation("Starting update of the export table.");
                                             _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
+                                            logger?.LogInformation("Completed update of the export table.");
 
                                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                                             qEntitynew["ImportId"] = importId++;
-                                            _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
 
+                                            logger?.LogInformation("Starting update of the chunk table.");
+                                            _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                                            logger?.LogInformation("Completed update of the chunk table.");
+
+                                            logger?.LogInformation("Updating logs in Application Insights.");
                                             _telemetryClient.TrackEvent(
                                         "Import",
-                                        new Dictionary<string, string>()
-                                        {
-                                    { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
-                                    { "StatusUrl", statusUrl },
-                                    { "ImportStatus", "Failed" },
-                                    { "FailureReason", diagnosticsValue }
-                                        });
-                                            
+                                            new Dictionary<string, string>()
+                                            {
+                                                { "ImportId", _orchestrationHelper.GetProcessId(statusUrl) },
+                                                { "StatusUrl", statusUrl },
+                                                { "ImportStatus", "Failed" },
+                                                { "FailureReason", diagnosticsValue }
+                                            });
+                                            logger?.LogInformation("Logs updated successfully in Application Insights.");
+
                                         }
                                     }
                                 }
@@ -266,6 +317,7 @@ namespace ApiForFhirMigrationTool.Function
                             }
                             payloadCounter++;
                             string newContainerName = $"importprocessed-{statusId}";
+                            logger?.LogInformation($"Created container '{newContainerName}' for storing processed import payloads.");
                             BlobContainerClient newContainerClient = _azureBlobClientFactory.GetBlobContainerClient(newContainerName);
                             await newContainerClient.CreateIfNotExistsAsync();
 
@@ -281,6 +333,7 @@ namespace ApiForFhirMigrationTool.Function
                                     await newBlobClient.UploadAsync(stream);
                                 }
                             }
+                            logger?.LogInformation($"Successfully stored processed import payloads in container '{newContainerName}'.");
                             await blobClient.DeleteIfExistsAsync();
                         }
 
@@ -296,6 +349,7 @@ namespace ApiForFhirMigrationTool.Function
             {
                 throw;
             }
+            logger?.LogInformation($"Import process Finished");
             return importResponse;
         }
         public string GetProcessId(string statusUrl)
