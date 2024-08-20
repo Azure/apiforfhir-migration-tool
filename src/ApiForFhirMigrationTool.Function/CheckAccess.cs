@@ -18,21 +18,21 @@ using Newtonsoft.Json.Linq;
 
 namespace ApiForFhirMigrationTool.Function
 {
-    public class TableStorage
+    public class CheckAccess
     {
         private readonly MigrationOptions _options;
-        public TableStorage(MigrationOptions options)
+        public CheckAccess(MigrationOptions options)
         {
             _options = options;
         }
 
-        [Function("CheckAccessTrigger")]
+        [Function("CheckAccessConnection")]
         public static async Task<HttpResponseData> CheckAccessTrigger(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
             [DurableClient] DurableTaskClient client,
             FunctionContext executionContext)
         {
-            ILogger logger = executionContext.GetLogger("CheckAccessTrigger");
+            ILogger logger = executionContext.GetLogger("CheckAccessConnection");
 
             string body = await new StreamReader(req.Body).ReadToEndAsync();
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
@@ -49,9 +49,15 @@ namespace ApiForFhirMigrationTool.Function
             ILogger logger = context.CreateReplaySafeLogger(nameof(CheckAccessOrchestrator));
             logger.LogInformation("Start CheckAccess.");
 
+            logger.LogInformation("Start Storage Access.");
             string tableCheckResult = await context.CallActivityAsync<string>(nameof(CheckTableAccessActivity), new object());
+            logger.LogInformation("Storage access check completed.");
+            logger.LogInformation("Start Azure API for FHIR Access.");
             string azureApiForFhirCheckResult = await context.CallActivityAsync<string>(nameof(CheckAzureApiForFhirServerAccessActivity), new object());
+            logger.LogInformation("Azure API for FHIR access check completed.");
+            logger.LogInformation("Start FHIR server Access.");
             string fhirCheckResult = await context.CallActivityAsync<string>(nameof(CheckFhirServerAccessActivity), new object());
+            logger.LogInformation("FHIR server access completed.");
 
             JObject result = new JObject
             {
@@ -59,7 +65,7 @@ namespace ApiForFhirMigrationTool.Function
                 ["AzureApiForFhir"] = JObject.Parse(azureApiForFhirCheckResult),
                 ["FhirCheck"] = JObject.Parse(fhirCheckResult)
             };
-
+            logger.LogInformation("All Check completed.");
             return result.ToString();
         }
 
@@ -81,6 +87,7 @@ namespace ApiForFhirMigrationTool.Function
                 {
                     checkResult["Status"] = "Success";
                     checkResult["Message"] = $"Successfully accessed storage account '{storageAccountName}'.";
+                    logger.LogInformation($"Status for accessing storage account: {checkResult["Status"]}");
                     return checkResult.ToString();
                 }
 
@@ -93,7 +100,7 @@ namespace ApiForFhirMigrationTool.Function
                 checkResult["Status"] = "Failed";
                 checkResult["Message"] = $"Failed to access the storage account: {ex.Message}";
             }
-
+            logger.LogInformation($"Status for accessing storage account: {checkResult["Status"]}");
             return checkResult.ToString();
         }
 
@@ -142,6 +149,8 @@ namespace ApiForFhirMigrationTool.Function
                 checkResult["Status"] = "Failed";
                 checkResult["Message"] = $"Failed to access the Azure API for FHIR server: {ex.Message}";
             }
+
+            logger.LogInformation($"Status for accessing Azure API for FHIR server: {checkResult["Status"]}");
             return checkResult.ToString();
         }
 
@@ -190,7 +199,7 @@ namespace ApiForFhirMigrationTool.Function
                 checkResult["Status"] = "Failed";
                 checkResult["Message"] = $"Failed to access the FHIR server: {ex.Message}";
             }
-
+            logger.LogInformation($"Status for accessing FHIR service server: {checkResult["Status"]}");
             return checkResult.ToString();
         }
     }
