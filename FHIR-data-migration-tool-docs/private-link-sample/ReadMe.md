@@ -139,7 +139,7 @@ This step provides detailed instructions for configuring secure storage of data 
 
 ## 7. Secure the migration tool Azure Functions App
 This step offers detailed instructions on how to secure the migration tool Azure Functions App
-- **Steps :**
+- **Step 1:**
     - Navigate to your Azure Function App in the Azure portal.On the left-hand side, find and click on the "Networking" tab.
     - Inside the "Networking" tab, click on "Access Restrictions" from the options provided.
     - Find the rule that allow public access and uncheck them. This will prevent anyone from accessing your Function App over the public internet.
@@ -147,6 +147,23 @@ This step offers detailed instructions on how to secure the migration tool Azure
     - Choose the Virtual Network which you have created in section 1.
     - Select the specific Subnet within that Virtual Network that you want to use.If a subnet is not available, create a new one.
     - After configuring the Virtual Network and Subnet, save the changes.
+    - Still inside the "Networking" tab, find and click on "Private endpoints".
+    - Click on Add, then Express option to create the private endpoint.
+    - Select the specific Subnet within that Virtual Network that you want to use.If a subnet is not available, create a new one.
     - Now, Function App will only be accessible via the specified Virtual Network and Subnet, and public access will be restricted.
 
     ![Secure the migration tool Azure Functions App](./Media/AzureFunctionApp.png)
+
+
+## 8. To check connection between azure function and other azure resources
+
+Once the Data Migration tool is deployed under the VNet, you can check whether the Azure Function is able to connect with other Azure resources, such as the Storage Account, Azure API for FHIR, and the FHIR server
+
+### How to run the check access connection
+
+1. Go to your Data migration Azure function and open CheckAccessConnection.	
+2. Get the CheckAccessConnection URL.
+3. Hit the CheckAccessConnection URL directly on browser or from Postman.
+4. There will be response containing statusQueryGetUri. Copy the uri. This URI shows the status of the function which has been hit.
+5. Hit the URL to check the status of connection between the azure function and storage, Azure API for FHIR and FHIR service.
+6. Once the statusQueryGetUri response runtimeStatus is complete. There will be output for the access connection.
