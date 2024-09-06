@@ -31,7 +31,9 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IOrchestrationHelper _orchestrationHelper;
         private readonly TelemetryClient _telemetryClient;
         private readonly IFhirClient _fhirClient;
-        public ImportStatusOrchestrator(IFhirProcessor importProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IOrchestrationHelper orchestrationHelper, TelemetryClient telemetryClient, IFhirClient fhirClient)
+        private readonly ILogger _logger;
+
+        public ImportStatusOrchestrator(IFhirProcessor importProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IOrchestrationHelper orchestrationHelper, TelemetryClient telemetryClient, IFhirClient fhirClient, ILogger<ImportStatusOrchestrator> logger)
         {
             _importProcessor = importProcessor;
             _options = options;
@@ -40,6 +42,7 @@ namespace ApiForFhirMigrationTool.Function
             _orchestrationHelper = orchestrationHelper;
             _telemetryClient = telemetryClient;
             _fhirClient = fhirClient;
+            _logger = logger;
         }
 
         [Function(nameof(ImportStatusOrchestration))]
@@ -437,14 +440,14 @@ namespace ApiForFhirMigrationTool.Function
         [Function(nameof(ProcessImportStatusCheck))]
         public async Task<ResponseModel> ProcessImportStatusCheck([ActivityTrigger] string importStatusUrl, FunctionContext executionContext)
         {
-            ILogger logger = executionContext.GetLogger(nameof(ProcessImportStatusCheck));
-            logger?.LogInformation("ProcessImportStatusCheck Started");
+           // ILogger logger = executionContext.GetLogger(nameof(ProcessImportStatusCheck));
+            _logger?.LogInformation("ProcessImportStatusCheck Started");
             try
             {
                 if (!string.IsNullOrEmpty(importStatusUrl))
                 {
                     ResponseModel importStatusResponse = await _importProcessor.CheckProcessStatus(importStatusUrl, _options.DestinationUri, _options.DestinationHttpClient);
-                    logger?.LogInformation("ProcessImportStatusCheck Finished");
+                    _logger?.LogInformation("ProcessImportStatusCheck Finished");
                     return importStatusResponse;
                 }
                 else

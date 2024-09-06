@@ -83,6 +83,7 @@ namespace ApiForFhirMigrationTool.Function
                             var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
                         {
                             { "JobId", 0 },
+                            {"SurfaceJobId",0 },
                             {"ImportId",0 },
                             {"SearchParameterMigration", false }
                         };
@@ -99,6 +100,7 @@ namespace ApiForFhirMigrationTool.Function
                             var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
                         {
                             { "JobId", 0 },
+                            {"SurfaceJobId",0 },
                             { "globalSinceExportType", "" },
                             { "globalTillExportType", "" },
                             { "noOfResources", _options.ResourceTypes?.Count() },

@@ -5,6 +5,9 @@
 
 using ApiForFhirMigrationTool.Function.Configuration;
 using ApiForFhirMigrationTool.Function.FhirOperation;
+using ApiForFhirMigrationTool.Function.Models;
+using Azure.Data.Tables;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -18,13 +21,17 @@ namespace ApiForFhirMigrationTool.Function.SurfaceCheck
         private readonly MigrationOptions _options;
         private readonly IFhirClient _fhirClient;
         private readonly TelemetryClient _telemetryClient;
+        private readonly IAzureTableClientFactory _azureTableClientFactory;
+        private readonly IMetadataStore _azureTableMetadataStore;
 
-        public SurfaceCheck(IFhirClient fhirClient, MigrationOptions options, TelemetryClient telemetryClient, ILogger<SurfaceCheck> logger)
+        public SurfaceCheck(IFhirClient fhirClient, MigrationOptions options, TelemetryClient telemetryClient, ILogger<SurfaceCheck> logger, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore)
         {
             _telemetryClient = telemetryClient;
             _options = options;
             _logger = logger;
             _fhirClient = fhirClient;
+            _azureTableClientFactory = azureTableClientFactory;
+            _azureTableMetadataStore = azureTableMetadataStore;
         }
 
         public async Task<string> Execute(string query)
@@ -99,7 +106,40 @@ namespace ApiForFhirMigrationTool.Function.SurfaceCheck
                                 errorResource.Add(errorFormat);
                             }
 
-                            _telemetryClient.TrackEvent(
+                            _logger?.LogInformation("Creating table clients");
+                            TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+                            TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+                            _logger?.LogInformation("Table clients created successfully.");
+
+
+                            TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                            if (qEntity["SurfaceJobId"] != null)
+                            {
+                                int jobId = (int)qEntity["SurfaceJobId"];
+                                string rowKey = _options.SurfaceRowKey + jobId++;
+
+                                var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
+                                {
+                                     { "Resource", item },
+                                    { "SourceCount", srcTotal },
+                                    { "DestinationCount", destTotal },
+                                    { "Result", destotalCount.Equals(srctotalCount) ? "Pass" : "Fail" },
+                                };
+                                _logger?.LogInformation("Starting update of the export table.");
+                                _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
+                                _logger?.LogInformation("Completed update of the export table.");
+
+                                TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+
+                                qEntitynew["SurfaceJobId"] = jobId++;
+
+                                _logger?.LogInformation("Starting update of the chunk table.");
+                                _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                                _logger?.LogInformation("Completed update of the chunk table.");
+
+                                _logger?.LogInformation("Updating logs in Application Insights.");
+
+                                _telemetryClient.TrackEvent(
                                 "SurfaceCheck",
                                 new Dictionary<string, string>()
                                 {
@@ -108,6 +148,7 @@ namespace ApiForFhirMigrationTool.Function.SurfaceCheck
                                     { "DestinationCount", destTotal },
                                     { "Result", destotalCount.Equals(srctotalCount) ? "Pass" : "Fail" },
                                 });
+                            }
                         }
                     }
                     catch

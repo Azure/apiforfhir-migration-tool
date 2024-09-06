@@ -29,8 +29,9 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IMetadataStore _azureTableMetadataStore;
         private readonly IOrchestrationHelper _orchestrationHelper;
         private readonly TelemetryClient _telemetryClient;
+        private readonly ILogger _logger;
 
-        public ExportStatusOrchestrator(IFhirProcessor exportProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IFhirClient fhirClient, IOrchestrationHelper orchestrationHelper, TelemetryClient telemetryClient)
+        public ExportStatusOrchestrator(IFhirProcessor exportProcessor, MigrationOptions options, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore, IFhirClient fhirClient, IOrchestrationHelper orchestrationHelper, TelemetryClient telemetryClient, ILogger<ExportStatusOrchestrator> logger)
         {
             _exportProcessor = exportProcessor;
             _options = options;
@@ -39,6 +40,7 @@ namespace ApiForFhirMigrationTool.Function
             _azureTableMetadataStore = azureTableMetadataStore;
             _orchestrationHelper = orchestrationHelper;
             _telemetryClient = telemetryClient;
+            _logger = logger;
         }
 
         [Function(nameof(ExportStatusOrchestration))]
@@ -292,14 +294,14 @@ namespace ApiForFhirMigrationTool.Function
         [Function(nameof(ProcessExportStatusCheck))]
         public async Task<ResponseModel> ProcessExportStatusCheck([ActivityTrigger] string exportStatusUrl, FunctionContext executionContext)
         {
-            ILogger logger = executionContext.GetLogger(nameof(ProcessExportStatusCheck));
-            logger?.LogInformation("ProcessExportStatusCheck Started");
+            //ILogger logger = executionContext.GetLogger(nameof(ProcessExportStatusCheck));
+            _logger?.LogInformation("ProcessExportStatusCheck Started");
             try
             {
                 if (!string.IsNullOrEmpty(exportStatusUrl))
                 {
                     ResponseModel exportStatusResponse = await _exportProcessor.CheckProcessStatus(exportStatusUrl, _options.SourceUri, _options.SourceHttpClient);
-                    logger?.LogInformation("ProcessExportStatusCheck Finished");
+                    _logger?.LogInformation("ProcessExportStatusCheck Finished");
                     return exportStatusResponse;
                 }
                 else

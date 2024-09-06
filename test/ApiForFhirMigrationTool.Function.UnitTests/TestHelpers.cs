@@ -87,6 +87,7 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
         {
             var mockClient = new Mock<IFhirClient>();
             var orchestrationHelper = new Mock<IOrchestrationHelper>();
+            var logger = new Mock<ILogger<ExportOrchestrator>>();
 
             return new ExportOrchestrator(
                                exportProcessor,
@@ -95,13 +96,15 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                                GetMockMetadataStore().Object,
                                mockClient.Object,
                                orchestrationHelper.Object,
-                               GetMockTelemetryClient());
+                               GetMockTelemetryClient(),
+                               logger.Object);
         }
 
         internal static ExportStatusOrchestrator GetTestExportStatusOrchestrator(MigrationOptions config, IFhirProcessor exportProcessor)
         {
             var mockClient = new Mock<IFhirClient>();
             var orchestrationHelper = new Mock<IOrchestrationHelper>();
+            var logger = new Mock<ILogger<ExportStatusOrchestrator>>();
 
             return new ExportStatusOrchestrator(
                                         exportProcessor,
@@ -110,12 +113,14 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                                         GetMockMetadataStore().Object,
                                         mockClient.Object,
                                         orchestrationHelper.Object,
-                                        GetMockTelemetryClient());
+                                        GetMockTelemetryClient(),
+                                         logger.Object);
         }
 
         internal static ImportOrchestrator GetTestImportOrchestrator(MigrationOptions config, IFhirProcessor importProcessor, IAzureBlobClientFactory azureBlobClientFactory)
         {
             var orchestrationHelper = new Mock<IOrchestrationHelper>();
+            var logger = new Mock<ILogger<ImportOrchestrator>>();
 
             return new ImportOrchestrator(
                                         importProcessor,
@@ -124,13 +129,15 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                                         GetMockMetadataStore().Object,
                                         orchestrationHelper.Object,
                                         GetMockTelemetryClient(),
-                                        azureBlobClientFactory);
+                                        azureBlobClientFactory,
+                                        logger.Object);
         }
 
         internal static ImportStatusOrchestrator GetTestImportStatusOrchestrator(MigrationOptions config, IFhirProcessor importProcessor)
         {
             var mockClient = new Mock<IFhirClient>();
             var orchestrationHelper = new Mock<IOrchestrationHelper>();
+            var logger = new Mock<ILogger<ImportStatusOrchestrator>>();
             return new ImportStatusOrchestrator(
                                         importProcessor,
                                         config,
@@ -138,7 +145,8 @@ namespace ApiForFhirMigrationTool.Function.UnitTests
                                         GetMockMetadataStore().Object,
                                         orchestrationHelper.Object,
                                         GetMockTelemetryClient(),
-                                        mockClient.Object);
+                                        mockClient.Object,
+                                        logger.Object);
         }
 
         internal static Mock<IFhirClient> SetupSuccessfulExportOperationResponse(this Mock<IFhirClient> fhirClient)

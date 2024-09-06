@@ -97,6 +97,9 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         [JsonProperty("rowKey")]
         public string RowKey { get; set; } = "myrowkey";
 
+        [JsonProperty("surfaceRowKey")]
+        public string SurfaceRowKey { get; set; } = "surfacerowkey";
+
         [JsonProperty("exportWithHistory")]
         public bool ExportWithHistory { get; set; } = false;
 
