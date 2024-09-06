@@ -440,7 +440,6 @@ namespace ApiForFhirMigrationTool.Function
         [Function(nameof(ProcessImportStatusCheck))]
         public async Task<ResponseModel> ProcessImportStatusCheck([ActivityTrigger] string importStatusUrl, FunctionContext executionContext)
         {
-           // ILogger logger = executionContext.GetLogger(nameof(ProcessImportStatusCheck));
             _logger?.LogInformation("ProcessImportStatusCheck Started");
             try
             {

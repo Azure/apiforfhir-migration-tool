@@ -202,8 +202,7 @@ public class ExportOrchestrator
                         int jobId = (int)qEntity["JobId"];
                         string rowKey = _options.RowKey + jobId++;
                         string diagnosticsValue = JObject.Parse(exportResponse.Content)?["issue"]?[0]?["diagnostics"]?.ToString() ?? "For more information check Content location.";
-                        //_logger = executionContext.GetLogger("ProcessExport");
-                        _logger?.LogInformation($"Export check returned: Unsuccessful. Reason : {diagnosticsValue}");
+                       _logger?.LogInformation($"Export check returned: Unsuccessful. Reason : {diagnosticsValue}");
                         var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
                             {
                                 { "exportContentLocation", statusUrl },

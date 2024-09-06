@@ -97,7 +97,6 @@ namespace ApiForFhirMigrationTool.Function
         [Function(nameof(ProcessImport))]
         public async Task<ResponseModel> ProcessImport([ActivityTrigger] string requestContent, FunctionContext executionContext)
         {
-            //ILogger logger = executionContext.GetLogger(nameof(ProcessImport));
             _logger?.LogInformation("Import process Started");
             ResponseModel importResponse = new ResponseModel();
             HttpMethod method = HttpMethod.Post;
