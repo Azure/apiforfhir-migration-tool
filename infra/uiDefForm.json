@@ -311,7 +311,7 @@
         "outputs": { 
             "prefix": "[basics('basicsConfigurationSection').prefix]",
             "location": "[location()]",
-            "typeOfMigration": "[steps('fhirSelection').fhirSection.fhirType.name]",
+            "typeOfMigration": "[steps('fhirSelection').fhirSection.fhirType]",
             "fhirServiceName": "[steps('fhirSelection').fhirSection.destinationfhirServiceSelector.name]",
 			"fhirid": "[steps('fhirSelection').fhirSection.destinationfhirServiceSelector.id]",
             "sourceFhirServiceName": "[steps('fhirSelection').fhirSection.sourcefhirServiceSelector.name]",
