@@ -138,6 +138,15 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
                                 errorResource.Add(errorFormat);
                             }
 
+                            _telemetryClient.TrackEvent(
+                               "DeepCheck",
+                               new Dictionary<string, string>()
+                               {
+                                   { "Resource", gen1Response.GetValue("resourceType").ToString(Formatting.None) },
+                                   { "id", gen1Response.GetValue("id").ToString(Formatting.None) },
+                                   { "Result", JToken.DeepEquals(gen1Response, gen2Response) ? "Pass" : "Fail" },
+                               });
+
                         }
                     }
                 }
