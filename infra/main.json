@@ -341,7 +341,7 @@
             "name": "[format('{0}/{1}', variables('functionAppName'), 'web')]",
             "properties": {
                 "repoUrl": "[variables('repoUrl')]",
-                "branch": "main",
+                "branch": "personal/shnarang/gen2togen2",
                 "isManualIntegration": true
             },
             "dependsOn": [
