@@ -1,3 +1,4 @@
+param typeOfMigration string
 param storageAccountName string
 param appServiceName string
 param functionAppName string
@@ -7,8 +8,10 @@ param functionSettings object = {}
 param appTags object = {}
 param apiForFhirName string
 param fhirServiceName string
+param sourceFhirServiceName string
 param deploymentRepoUrl string
 param fhirserviceRg string
+param sourcefhirserviceRg string
 param apiforFhirRg string
 param exportWithHistory bool
 param exportWithDelete bool
@@ -22,6 +25,7 @@ param endTime int
 param createRoleAssignment bool = true
 param apiForFhirsubid string
 param fhirsubid string
+param sourcefhirsubid string
 
 @description('Azure Function required linked storage account')
 resource funcStorageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
@@ -155,7 +159,14 @@ resource fhirService 'Microsoft.HealthcareApis/workspaces/fhirservices@2022-06-0
   
 }
 
-resource apiForFhir 'Microsoft.HealthcareApis/services@2021-11-01' existing = if (createRoleAssignment == true) {
+resource sourcefhirService 'Microsoft.HealthcareApis/workspaces/fhirservices@2022-06-01' existing = if (createRoleAssignment == true && typeOfMigration == 'FhirService') {
+  //#disable-next-line prefer-interpolation
+  name: sourceFhirServiceName
+  scope: resourceGroup(sourcefhirserviceRg)
+  
+}
+
+resource apiForFhir 'Microsoft.HealthcareApis/services@2021-11-01' existing = if (createRoleAssignment == true && typeOfMigration == 'AzureAPIforFhir') {
   name: apiForFhirName
   scope: resourceGroup(apiforFhirRg)
 }
@@ -172,7 +183,18 @@ module functionFhirServiceRoleAssignment './roleAssignment.bicep' = if (createRo
 }
 
 @description('Setup access between FHIR and the deployment script managed identity')
-module functionApiForFhirRoleAssignment './roleAssignment.bicep' = if (createRoleAssignment == true) {
+module sourcefunctionFhirServiceRoleAssignment './roleAssignment.bicep' = if (createRoleAssignment == true && typeOfMigration == 'FhirService') {
+  name: 'srcfunctionFhirServiceRoleAssignment'
+  scope: resourceGroup(sourcefhirsubid,sourcefhirserviceRg)
+  params: {
+    resourceId: sourcefhirService.id
+    roleId : '5a1fc7df-4bf1-4951-a576-89034ee01acd'
+    principalId: functionApp.identity.principalId
+  }
+}
+
+@description('Setup access between FHIR and the deployment script managed identity')
+module functionApiForFhirRoleAssignment './roleAssignment.bicep' = if (createRoleAssignment == true && typeOfMigration == 'AzureAPIforFhir') {
   name: 'bulk-import-function-fhir-managed-id-role-assignment'
   scope: resourceGroup(apiForFhirsubid,apiforFhirRg)
   params: {

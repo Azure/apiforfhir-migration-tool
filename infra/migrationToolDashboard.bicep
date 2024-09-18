@@ -2229,6 +2229,101 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
           }
           {
             position: {
+              x: 4
+              y: 17
+              colSpan: 4
+              rowSpan: 2
+            }
+            metadata: {
+              inputs: [
+                {
+                  name: 'resourceTypeMode'
+                  isOptional: true
+                }
+                {
+                  name: 'ComponentId'
+                  isOptional: true
+                }
+                {
+                  name: 'Scope'
+                  value: {
+                    resourceIds: [
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
+                    ]
+                  }
+                  isOptional: true
+                }
+                {
+                  name: 'PartId'
+                  value: '54cdfb98-4fa8-4e4e-a348-a69c412b4a92'
+                  isOptional: true
+                }
+                {
+                  name: 'Version'
+                  value: '2.0'
+                  isOptional: true
+                }
+                {
+                  name: 'TimeRange'
+                  value: 'P7D'
+                  isOptional: true
+                }
+                {
+                  name: 'DashboardId'
+                  isOptional: true
+                }
+                {
+                  name: 'DraftRequestParameters'
+                  isOptional: true
+                }
+                {
+                  name: 'Query'
+                  value: 'customEvents\n| where name == "DeepCheck"\n| extend Resource = tostring(customDimensions.Resource)\n| extend ResourceId = tostring(customDimensions.id)\n| extend Result= tostring(customDimensions.Result)\n| distinct timestamp,Resource,ResourceId,Result\n| order by timestamp desc'
+                  isOptional: true
+                }
+                {
+                  name: 'ControlType'
+                  value: 'AnalyticsGrid'
+                  isOptional: true
+                }
+                {
+                  name: 'SpecificChart'
+                  isOptional: true
+                }
+                {
+                  name: 'PartTitle'
+                  value: 'Analytics'
+                  isOptional: true
+                }
+                {
+                  name: 'PartSubTitle'
+                  value: 'TestDurableFunc'
+                  isOptional: true
+                }
+                {
+                  name: 'Dimensions'
+                  isOptional: true
+                }
+                {
+                  name: 'LegendOptions'
+                  isOptional: true
+                }
+                {
+                  name: 'IsQueryContainTimeRange'
+                  value: false
+                  isOptional: true
+                }
+              ]
+              type: 'Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart'
+              settings: {}
+              partHeader: {
+                title: 'Deep Check'
+                subtitle: 'Results'
+              }
+            }
+          }
+          {
+            position: {
               x: 0
               y: 13
               colSpan: 4
