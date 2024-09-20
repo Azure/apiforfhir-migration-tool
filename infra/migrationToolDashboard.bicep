@@ -22,7 +22,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
             position: {
               x: 0
               y: 0
-              colSpan: 8
+              colSpan: 5
               rowSpan: 2
             }
             metadata: {
@@ -36,6 +36,105 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                   markdownSource: 1
                   markdownUri: ''
                 }
+              }
+            }
+          }
+          {
+            position: {
+              x: 5
+              y: 0
+              colSpan: 3
+              rowSpan: 2
+            }
+            metadata: {
+              inputs: [
+                {
+                  name: 'resourceTypeMode'
+                  isOptional: true
+                }
+                {
+                  name: 'ComponentId'
+                  isOptional: true
+                }
+                {
+                  name: 'Scope'
+                  value: {
+                    resourceIds: [
+                      resourceId('Microsoft.Insights/components', applicationInsightsName)
+                    ]
+                  }
+                  isOptional: true
+                }
+                {
+                  name: 'PartId'
+                  value: '1098cba3-13b3-47ec-8892-e1246ad15a13'
+                  isOptional: true
+                }
+                {
+                  name: 'Version'
+                  value: '2.0'
+                  isOptional: true
+                }
+                {
+                  name: 'TimeRange'
+                  value: 'P7D'
+                  isOptional: true
+                }
+                {
+                  name: 'DashboardId'
+                  isOptional: true
+                }
+                {
+                  name: 'DraftRequestParameters'
+                  isOptional: true
+                }
+                {
+                  name: 'Query'
+                  value: 'customEvents\n| where name == "ImportTill"\n| extend till = todatetime(customDimensions.Till)\n| extend Date = format_datetime(till, \'yyyy-MM-dd\'), Time = format_datetime(till, \'HH:mm:ss\')\n| order by till desc\n| take 1\n| distinct Date, Time'
+                  isOptional: true
+                }
+                {
+                  name: 'ControlType'
+                  value: 'AnalyticsGrid'
+                  isOptional: true
+                }
+                {
+                  name: 'SpecificChart'
+                  isOptional: true
+                }
+                {
+                  name: 'PartTitle'
+                  value: 'Analytics'
+                  isOptional: true
+                }
+                {
+                  name: 'PartSubTitle'
+                  value: 'TestDurableFunc'
+                  isOptional: true
+                }
+                {
+                  name: 'Dimensions'
+                  isOptional: true
+                }
+                {
+                  name: 'LegendOptions'
+                  isOptional: true
+                }
+                {
+                  name: 'IsQueryContainTimeRange'
+                  value: false
+                  isOptional: true
+                }
+              ]
+              type: 'Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart'
+              settings: {
+                content: {
+                  Query: 'customEvents\n| where name == "ImportTill"\n| extend till = todatetime(customDimensions.Till)\n| extend Date = format_datetime(till, \'yyyy-MM-dd\'), Time = format_datetime(till, \'HH:mm:ss\')\n| order by till desc\n| take 1\n| distinct Date, Time'
+                }
+              }
+              partHeader: {
+                title: 'Migration Status'
+                subtitle: 'Data Migrated Till'
               }
             }
           }
@@ -2278,7 +2377,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
                 }
                 {
                   name: 'Query'
-                  value: 'customEvents\n| where name == "DeepCheck"\n| extend Resource = tostring(customDimensions.Resource)\n| extend ResourceId = tostring(customDimensions.id)\n| extend Result= tostring(customDimensions.Result)\n| distinct timestamp,Resource,ResourceId,Result\n| order by timestamp desc'
+                  value: 'customEvents\n| where name == "DeepCheck"\n| extend Resource = tostring(customDimensions.Resource)\n| extend ResourceId = tostring(customDimensions.id)\n| extend Result= tostring(customDimensions.Result)\n| distinct timestamp,Resource,ResourceId,Result\n| order by timestamp desc\n'
                   isOptional: true
                 }
                 {
