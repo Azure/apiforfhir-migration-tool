@@ -5,6 +5,8 @@
 
 using ApiForFhirMigrationTool.Function.Configuration;
 using ApiForFhirMigrationTool.Function.FhirOperation;
+using ApiForFhirMigrationTool.Function.Models;
+using Azure.Data.Tables;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -18,13 +20,17 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
         private readonly MigrationOptions _options;
         private readonly IFhirClient _fhirClient;
         private readonly TelemetryClient _telemetryClient;
+        private readonly IAzureTableClientFactory _azureTableClientFactory;
+        private readonly IMetadataStore _azureTableMetadataStore;
 
-        public DeepCheck(IFhirClient fhirClient, MigrationOptions options, TelemetryClient telemetryClient, ILogger<DeepCheck> logger)
+        public DeepCheck(IFhirClient fhirClient, MigrationOptions options, TelemetryClient telemetryClient, ILogger<DeepCheck> logger, IAzureTableClientFactory azureTableClientFactory, IMetadataStore azureTableMetadataStore)
         {
             _telemetryClient = telemetryClient;
             _options = options;
             _logger = logger;
             _fhirClient = fhirClient;
+            _azureTableClientFactory = azureTableClientFactory;
+            _azureTableMetadataStore = azureTableMetadataStore;
         }
 
         public async Task<string> Execute(string query)
@@ -43,6 +49,7 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
             _logger?.LogInformation($"Deep Check Function start");
             try
             {
+                _logger?.LogInformation($"Getting FHIR resource from Source Server");
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
@@ -80,6 +87,7 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
                                     }
                                 }
                                 // Getting resource from Gen2 server.
+                                _logger?.LogInformation($"Getting FHIR resource from Destination Server");
                                 var desrequest = new HttpRequestMessage
                                     {
                                         Method = HttpMethod.Get,
@@ -98,6 +106,7 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
                             else
                             {
                                 // Getting resource from Gen2 server.
+                                _logger?.LogInformation($"Getting FHIR resource from Destination Server");
                                 var desrequest = new HttpRequestMessage
                                 {
                                     Method = HttpMethod.Get,
@@ -116,6 +125,7 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
                             }
 
                             // Comparing the resource from Gen1 and Gen2 server.
+                            _logger?.LogInformation($"Comparing the FHIR resources");
                             if (JToken.DeepEquals(gen1Response, gen2Response))
                             {
                                 var inputFormat = new JObject
@@ -136,6 +146,48 @@ namespace ApiForFhirMigrationTool.Function.DeepCheck
                                     { "Compared", false },
                                 };
                                 errorResource.Add(errorFormat);
+                            }
+
+                            _logger?.LogInformation("Creating table clients");
+                            TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+                            TableClient exportTableClient = _azureTableClientFactory.Create(_options.ExportTableName);
+                            _logger?.LogInformation("Table clients created successfully.");
+
+
+                            TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                            if (qEntity["DeepJobId"] != null)
+                            {
+                                int jobId = (int)qEntity["DeepJobId"];
+                                string rowKey = _options.DeepRowKey + jobId++;
+
+                                var tableEntity = new TableEntity(_options.PartitionKey, rowKey)
+                                {
+                                   { "Resource", gen1Response.GetValue("resourceType").ToString() },
+                                   { "id", gen1Response.GetValue("id").ToString() },
+                                   { "Result", JToken.DeepEquals(gen1Response, gen2Response) ? "Pass" : "Fail" },
+                                };
+                                _logger?.LogInformation("Starting update of the export table.");
+                                _azureTableMetadataStore.AddEntity(exportTableClient, tableEntity);
+                                _logger?.LogInformation("Completed update of the export table.");
+
+                                TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+
+                                qEntitynew["DeepJobId"] = jobId++;
+
+                                _logger?.LogInformation("Starting update of the chunk table.");
+                                _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+                                _logger?.LogInformation("Completed update of the chunk table.");
+
+                                _logger?.LogInformation("Updating logs in Application Insights.");
+
+                                _telemetryClient.TrackEvent(
+                               "DeepCheck",
+                               new Dictionary<string, string>()
+                               {
+                                   { "Resource", gen1Response.GetValue("resourceType").ToString() },
+                                   { "id", gen1Response.GetValue("id").ToString() },
+                                   { "Result", JToken.DeepEquals(gen1Response, gen2Response) ? "Pass" : "Fail" },
+                               });
                             }
 
                         }

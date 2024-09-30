@@ -78,20 +78,51 @@
                         "label": "FHIR Connection",
                         "elements": [
                             {
-                                "name": "fhirServiceSelector",
-                                "label": "Select a FHIR Services inside an Azure Health Data Services workspace",
+                                "name": "fhirType",
+                                "type": "Microsoft.Common.DropDown",
+                                "label": "Which type of migration do you want to do?",
+                                "multiselect": false,
+                                "selectAll": false,
+                                "constraints": {
+                                    "allowedValues": [
+                                        {
+                                            "label": "Azure API for FHIR to Azure Health Data Services",
+                                            "value": "AzureAPIforFhir"
+                                        },
+										{
+                                            "label": "Azure Health Data Services to Azure Health Data Services",
+                                            "value": "FhirService"
+                                        }                              
+                                    ],
+                                    "required": true
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "sourcefhirServiceSelector",
+                                "label": "Select a Source FHIR Services inside an Azure Health Data Services workspace",
                                 "type": "Microsoft.Solutions.ResourceSelector",
                                 "resourceType": "Microsoft.HealthcareApis/workspaces/fhirservices",
                                 "constraints": {
                                     "required": false
                                 },
-                                "visible": true
+                                "visible": "[equals('FhirService', steps('fhirSelection').fhirSection.fhirType)]"                    
                             },
                             {
                                 "name": "apiForFhirSelector",
                                 "label": "Select an API for FHIR resource",
                                 "type": "Microsoft.Solutions.ResourceSelector",
                                 "resourceType": "Microsoft.HealthcareApis/services",
+                                "constraints": {
+                                    "required": false
+                                },
+                                "visible": "[equals('AzureAPIforFhir', steps('fhirSelection').fhirSection.fhirType)]"
+                            },
+                            {
+                                "name": "destinationfhirServiceSelector",
+                                "label": "Select a Destination FHIR Services inside an Azure Health Data Services workspace",
+                                "type": "Microsoft.Solutions.ResourceSelector",
+                                "resourceType": "Microsoft.HealthcareApis/workspaces/fhirservices",
                                 "constraints": {
                                     "required": false
                                 },
@@ -280,8 +311,11 @@
         "outputs": { 
             "prefix": "[basics('basicsConfigurationSection').prefix]",
             "location": "[location()]",
-            "fhirServiceName": "[steps('fhirSelection').fhirSection.fhirServiceSelector.name]",
-			"fhirid": "[steps('fhirSelection').fhirSection.fhirServiceSelector.id]",
+            "typeOfMigration": "[steps('fhirSelection').fhirSection.fhirType]",
+            "fhirServiceName": "[steps('fhirSelection').fhirSection.destinationfhirServiceSelector.name]",
+			"fhirid": "[steps('fhirSelection').fhirSection.destinationfhirServiceSelector.id]",
+            "sourceFhirServiceName": "[steps('fhirSelection').fhirSection.sourcefhirServiceSelector.name]",
+			"sourceFhirid": "[steps('fhirSelection').fhirSection.sourcefhirServiceSelector.id]",
             "apiForFhirName": "[steps('fhirSelection').fhirSection.apiForFhirSelector.name]",
 			"apiForFhirid": "[steps('fhirSelection').fhirSection.apiForFhirSelector.id]",
             "exportWithHistory": "[steps('fhirSelection').fhirSection.exportWithHistory]",

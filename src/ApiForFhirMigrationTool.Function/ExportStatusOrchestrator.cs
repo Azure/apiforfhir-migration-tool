@@ -221,6 +221,16 @@ namespace ApiForFhirMigrationTool.Function
                                             logger?.LogInformation("Starting update of the chunk table.");
                                             _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
                                             logger?.LogInformation("Completed update of the chunk table.");
+
+                                            logger?.LogInformation("Updating logs in Application Insights.");
+                                            _telemetryClient.TrackEvent(
+                                            "ImportTill",
+                                            new Dictionary<string, string>()
+                                            {
+                                                { "Till",  exportEntity["Till"].ToString() }
+                                            });
+                                            logger?.LogInformation("Logs updated successfully in Application Insights.");
+
                                         }
                                     }
                                 }

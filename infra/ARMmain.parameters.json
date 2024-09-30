@@ -20,6 +20,12 @@
         "apiForFhirid": {
             "value": ""
         },
+        "sourceFhirServiceName":{
+            "value": ""
+        },
+        "sourcefhirid":{
+            "value": ""
+        }, 
         "dashboardName": {
             "value": ""
         },

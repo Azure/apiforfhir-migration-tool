@@ -401,6 +401,16 @@ public class ExportOrchestrator
                 qEntitynew["subSinceExportType"] = "";
                 qEntitynew["subTillExportType"] = "";
                 _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
+
+                logger?.LogInformation("Updating logs in Application Insights.");
+                _telemetryClient.TrackEvent(
+                "ImportTill",
+                new Dictionary<string, string>()
+                {
+                   { "Till", qEntitynew["globalTillExportType"].ToString() }
+                });
+                logger?.LogInformation("Logs updated successfully in Application Insights.");
+
                 return "";
             }
             else

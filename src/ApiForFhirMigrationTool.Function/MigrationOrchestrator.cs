@@ -84,6 +84,7 @@ namespace ApiForFhirMigrationTool.Function
                         {
                             { "JobId", 0 },
                             {"SurfaceJobId",0 },
+                            {"DeepJobId",0 },
                             {"ImportId",0 },
                             {"SearchParameterMigration", false }
                         };
@@ -101,6 +102,7 @@ namespace ApiForFhirMigrationTool.Function
                         {
                             { "JobId", 0 },
                             {"SurfaceJobId",0 },
+                            {"DeepJobId",0 },
                             { "globalSinceExportType", "" },
                             { "globalTillExportType", "" },
                             { "noOfResources", _options.ResourceTypes?.Count() },

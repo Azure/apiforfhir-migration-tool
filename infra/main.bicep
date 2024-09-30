@@ -7,11 +7,24 @@ param name string = 'mig'
 @description('Primary location for all resources')
 param location string = resourceGroup().location
 
+@description('Type Of Migration')
+@allowed([
+  'AzureAPIforFhir'
+  'FhirService'
+])
+param typeOfMigration string = 'AzureAPIforFhir'
+
+@description('Name of the FHIR Service from resources need to be exported. Format is "workspace/fhirService".')
+param sourceFhirServiceName string = ''
+
 @description('Name of the FHIR Service to import resources into. Format is "workspace/fhirService".')
 param fhirServiceName string = ''
 
 @description('Name of the API for FHIR to export resources from.')
 param apiForFhirName string = ''
+
+@description('Id of the FHIR Service to load resources into.')
+param sourcefhirid string = ''
 
 @description('Id of the FHIR Service to load resources into.')
 param fhirid string = ''
@@ -63,17 +76,21 @@ var appTags = {
 
 var logAnalyticsName = length(existingLogAnalyticsWorkspaceName) == 0 ? '${resourceName}-la' : existingLogAnalyticsWorkspaceName
 var appInsightsName = '${resourceName}-appins'
+var sourcefhirServiceNameUrl = 'https://${replace(sourceFhirServiceName, '/', '-')}.fhir.azurehealthcareapis.com' 
 var fhirServiceNameUrl = 'https://${replace(fhirServiceName, '/', '-')}.fhir.azurehealthcareapis.com' 
 var apiForFhirNameUrl = 'https://${apiForFhirName}.azurehealthcareapis.com'
 
 var fhirResourceIdSplit = split(fhirid,'/')
+var sourcefhirResourceIdSplit = split(sourcefhirid,'/')
 var apiforfhirResourceIdSplit = split(apiForFhirid,'/')
 
 var fhirserviceRg = fhirResourceIdSplit[4]
-var apiforFhirRg = apiforfhirResourceIdSplit[4]
+var sourcefhirserviceRg = typeOfMigration == 'FhirService' ? sourcefhirResourceIdSplit[4]: ''
+var apiforFhirRg = typeOfMigration == 'AzureAPIforFhir' ? apiforfhirResourceIdSplit[4]: ''
 
 var fhirsubid= fhirResourceIdSplit[2]
-var apiForFhirsubid= apiforfhirResourceIdSplit[2]
+var sourcefhirsubid= typeOfMigration == 'FhirService' ? sourcefhirResourceIdSplit[2]: ''
+var apiForFhirsubid= typeOfMigration == 'AzureAPIforFhir'? apiforfhirResourceIdSplit[2]: ''
 
 @description('Deploy monitoring and logging')
 module monitoring './monitoring.bicep'= {
@@ -99,11 +116,14 @@ var funcStorName = '${resourceName}funcsa'
 module function './azureFunction.bicep'= {
     name: 'functionDeploy'
     params: {
+        typeOfMigration: typeOfMigration
         appServiceName: appServiceName
         functionAppName: functionAppName
         storageAccountName: funcStorName
         fhirServiceName : fhirServiceName
+        sourceFhirServiceName: sourceFhirServiceName
         apiForFhirName : apiForFhirName
+        sourcefhirserviceRg: sourcefhirserviceRg
         fhirserviceRg : fhirserviceRg
         apiforFhirRg : apiforFhirRg
         location: location
@@ -118,12 +138,13 @@ module function './azureFunction.bicep'= {
         appInsightsInstrumentationKey: monitoring.outputs.appInsightsInstrumentationKey
         functionSettings: union({
                 AZURE_DestinationUri: fhirServiceNameUrl
-                AZURE_SourceUri: apiForFhirNameUrl
+                AZURE_SourceUri: typeOfMigration == 'AzureAPIforFhir'? apiForFhirNameUrl: sourcefhirServiceNameUrl
                 AZURE_AppInsightConnectionstring: monitoring.outputs.appInsightsInstrumentationString
             }, functionAppCustomSettings)
         appTags: appTags
         deploymentRepoUrl: deploymentRepoUrl
         fhirsubid:fhirsubid
+        sourcefhirsubid: sourcefhirsubid
         apiForFhirsubid:apiForFhirsubid
     }
 }

@@ -210,6 +210,16 @@ namespace ApiForFhirMigrationTool.Function
                                             logger?.LogInformation("Starting update of the chunk table.");
                                             _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
                                             logger?.LogInformation("Completed update of the chunk table.");
+
+                                            logger?.LogInformation("Updating logs in Application Insights.");
+                                            _telemetryClient.TrackEvent(
+                                            "ImportTill",
+                                            new Dictionary<string, string>()
+                                            {
+                                                { "Till", exportEntity["Till"].ToString() }
+                                            });
+                                            logger?.LogInformation("Logs updated successfully in Application Insights.");
+
                                         }
                                         else
                                         {
@@ -227,6 +237,16 @@ namespace ApiForFhirMigrationTool.Function
                                                     logger?.LogInformation("Starting update of the chunk table.");
                                                     _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceType);
                                                     logger?.LogInformation("Completed update of the chunk table.");
+
+                                                    logger?.LogInformation("Updating logs in Application Insights.");
+                                                    _telemetryClient.TrackEvent(
+                                                    "ImportTill",
+                                                    new Dictionary<string, string>()
+                                                    {
+                                                        {"Till", qEntityResourceType["globalTillExportType"].ToString() }
+                                                    });
+                                                    logger?.LogInformation("Logs updated successfully in Application Insights.");
+
                                                 }
                                                 else
                                                 {
@@ -254,6 +274,17 @@ namespace ApiForFhirMigrationTool.Function
                                                         logger?.LogInformation("Starting update of the chunk table.");
                                                         _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceTypenew);
                                                         logger?.LogInformation("Completed update of the chunk table.");
+
+
+                                                        logger?.LogInformation("Updating logs in Application Insights.");
+                                                        _telemetryClient.TrackEvent(
+                                                        "ImportTill",
+                                                        new Dictionary<string, string>()
+                                                        {
+                                                        {"Till", qEntityResourceTypenew["globalTillExportType"].ToString() }
+                                                        });
+                                                        logger?.LogInformation("Logs updated successfully in Application Insights.");
+
                                                     }
                                                     else
                                                     {

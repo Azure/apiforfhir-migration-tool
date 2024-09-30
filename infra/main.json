@@ -16,6 +16,24 @@
                 "description": "Prefix for all resources"
             }
         },
+        "typeOfMigration": {
+            "type": "string",
+            "defaultValue": "AzureAPIforFhir",
+            "allowedValues": [
+                "AzureAPIforFhir",
+                "FhirService"
+            ],
+            "metadata": {
+                "description": "Which type of source do you want?"
+            }
+        },
+        "sourceFhirServiceName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name of the FHIR Service, source for migration. Format is \"workspace/fhirService\"."
+            }
+        },
         "fhirServiceName": {
             "type": "string",
             "defaultValue": "",
@@ -63,11 +81,18 @@
                 "description": "Location for Application Insights"
             }
         },
+        "sourceFhirid": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Source FHIR Server ID"
+            }
+        },
         "fhirid": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "FHIR Server ID"
+                "description": "Destination FHIR Server ID"
             }
         },
         "apiForFhirid": {
@@ -146,7 +171,6 @@
         "appTags": {
              "AppID": "fhir-migration-tool"
         },
-        "logAnalyticsName": "[format('{0}{1}-la', parameters('prefix'), parameters('appName'))]",
         "hostingPlanName": "[format('{0}{1}', parameters('prefix'), parameters('appName'))]",
         "applicationInsightsName": "[format('ai{0}{1}', parameters('prefix'), parameters('appName'))]",
         "storageAccountName": "[format('{0}stor', variables('prefixNameCleanShort'))]",
@@ -154,11 +178,18 @@
         "serviceName": "[variables('array')[1]]",
         "workspaceName": "[variables('array')[0]]",
         "fhirsegments": "[split(parameters('fhirid'), '/')]",
+        "sourcearray": "[split(parameters('sourceFhirServiceName'), '/')]",
+        "sourceserviceName": "[if(greater(length(variables('sourcearray')), 1), variables('sourcearray')[1], '')]",
+       "sourceworkspaceName": "[if(greater(length(variables('sourcearray')), 1), variables('sourcearray')[0], '')]",
+        "sourcefhirsegments": "[split(parameters('sourceFhirid'), '/')]",
         "apiForfhirsegments": "[split(parameters('apiForFhirid'), '/')]",
         "fhirRg": "[variables('fhirsegments')[4]]",
-        "apiForFhirRg": "[variables('apiForfhirsegments')[4]]",
+         "sourcefhirRg": "[if(greater(length(variables('sourcefhirsegments')), 1), variables('sourcefhirsegments')[4], '')]",
+        "apiForFhirRg": "[if(greater(length(variables('apiForfhirsegments')), 1), variables('apiForfhirsegments')[4], '')]",
+        "sourcefhirsubid": "[if(greater(length(variables('sourcefhirsegments')), 1), variables('sourcefhirsegments')[2], '')]",
+
         "fhirsubid": "[variables('fhirsegments')[2]]",
-        "apiForFhirsubid": "[variables('apiForfhirsegments')[2]]",
+        "apiForFhirsubid": "[if(greater(length(variables('apiForfhirsegments')), 1), variables('apiForfhirsegments')[2], '')]",
         "repoUrl": "https://github.com/Azure/apiforfhir-migration-tool/",
         "uniqueResourceIdentifier": "[substring(uniqueString(resourceGroup().id, parameters('prefix')), 0, 4)]",
         "prefixNameClean": "[format('{0}{1}', replace(parameters('prefix'), '-', ''), variables('uniqueResourceIdentifier'))]",
@@ -272,8 +303,8 @@
                 "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').InstrumentationKey]",
                 "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]",
                 "AZURE_AppInsightConnectionstring": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]",
-                "AZURE_DestinationUri": "[format('https://{0}.fhir.azurehealthcareapis.com', replace(parameters('fhirServiceName'), '/', '-'))]",
-                "AZURE_SourceUri": "[format('https://{0}.azurehealthcareapis.com', parameters('apiForFhirName'))]",
+                "AZURE_DestinationUri": "[format('https://{0}.fhir.azurehealthcareapis.com', replace(parameters('fhirServiceName'), '/', '-'))]", 
+                "AZURE_SourceUri": "[if(equals(parameters('typeOfMigration'), 'AzureAPIforFhir'), format('https://{0}.azurehealthcareapis.com', parameters('apiForFhirName')), format('https://{0}.fhir.azurehealthcareapis.com', replace(parameters('sourcefhirServiceName'), '/', '-')))]",
                 "AZURE_ScheduleInterval": "2",
                 "AZURE_ImportMode": "IncrementalLoad",
                 "AZURE_DeepCheckCount": "1",
@@ -397,6 +428,7 @@
             }
         },
         {
+            "condition": "[equals(parameters('typeOfMigration'), 'AzureAPIforFhir')]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2022-09-01",
             "name": "migration-function-fhir-managed-id-role-assignment",
@@ -545,6 +577,81 @@
             }
         },
         {
+            "condition": "[equals(parameters('typeOfMigration'), 'FhirService')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "name": "functionSourceFhirServiceRoleAssignment",
+            "subscriptionId": "[variables('sourcefhirsubid')]",
+            "resourceGroup": "[variables('sourcefhirRg')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "roleId": {
+                        "value": "5a1fc7df-4bf1-4951-a576-89034ee01acd"
+                    },
+                    "principalId": {
+                        "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'full').identity.principalId]"
+                    },
+                    "workspaceName": {
+                        "value": "[variables('sourceworkspaceName')]"
+                    },
+                    "fhirname": {
+                        "value": "[variables('sourceserviceName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "metadata": {
+                        "_generator": {
+                            "name": "bicep",
+                            "version": "0.16.2.56959",
+                            "templateHash": "15312434787615452365"
+                        }
+                    },
+                    "parameters": {
+                        "roleId": {
+                            "type": "string"
+                        },
+                        "principalId": {
+                            "type": "string"
+                        },
+                        "principalType": {
+                            "type": "string",
+                            "defaultValue": "ServicePrincipal"
+                        },
+                        "workspaceName": {
+                            "type": "string"
+                        },
+                        "fhirname": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Authorization/roleAssignments",
+                            "apiVersion": "2022-04-01",
+                            "name": "[guid(parameters('principalId'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId')),parameters('fhirname'))]",
+                            "scope": "[concat('Microsoft.HealthcareApis/workspaces', '/', parameters('workspaceName'), '/','fhirservices','/' , parameters('fhirname'))]",
+                            "properties": {
+                                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5a1fc7df-4bf1-4951-a576-89034ee01acd')]",
+                                "principalId": "[parameters('principalId')]"
+                            }
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+            ],
+            "metadata": {
+                "description": "Setup access between FHIR and the function managed identity"
+            }
+        },
+        {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2022-09-01",
             "name": "dashboardDeploy",
@@ -602,7 +709,7 @@
                                                 "position": {
                                                 "x": 0,
                                                 "y": 0,
-                                                "colSpan": 8,
+                                                "colSpan": 5,
                                                 "rowSpan": 2
                                                 },
                                                 "metadata": {
@@ -617,6 +724,105 @@
                                                     "markdownUri": ""
                                                     }
                                                 }
+                                                }
+                                            },
+                                             {
+                                                "position": {
+                                                    "x": 5,
+                                                    "y": 0,
+                                                    "colSpan": 3,
+                                                    "rowSpan": 2
+                                                },
+                                                "metadata": {
+                                                    "inputs": [
+                                                        {
+                                                            "name": "resourceTypeMode",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "ComponentId",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "Scope",
+                                                            "value": {
+                                                                "resourceIds": [
+                                                                    "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
+                                                                ]
+                                                            },
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "PartId",
+                                                            "value": "1098cba3-13b3-47ec-8892-e1246ad15a13",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "Version",
+                                                            "value": "2.0",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "TimeRange",
+                                                            "value": "P7D",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "DashboardId",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "DraftRequestParameters",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "Query",
+                                                            "value": "customEvents\n| where name == \"ImportTill\"\n| extend till = todatetime(customDimensions.Till)\n| extend Date = format_datetime(till, 'yyyy-MM-dd'), Time = format_datetime(till, 'HH:mm:ss')\n| order by till desc\n| take 1\n| distinct Date, Time",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "ControlType",
+                                                            "value": "AnalyticsGrid",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "SpecificChart",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "PartTitle",
+                                                            "value": "Analytics",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "PartSubTitle",
+                                                            "value": "TestDurableFunc",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "Dimensions",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "LegendOptions",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "IsQueryContainTimeRange",
+                                                            "value": false,
+                                                            "isOptional": true
+                                                        }
+                                                    ],
+                                                    "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                                                    "settings": {
+                                                        "content": {
+                                                            "Query": "customEvents\n| where name == \"ImportTill\"\n| extend till = todatetime(customDimensions.Till)\n| extend Date = format_datetime(till, 'yyyy-MM-dd'), Time = format_datetime(till, 'HH:mm:ss')\n| order by till desc\n| take 1\n| distinct Date, Time"
+                                                        }
+                                                    },
+                                                    "partHeader": {
+                                                        "title": "Migration Status",
+                                                        "subtitle": "Data Migrated Till"
+                                                    }
                                                 }
                                             },
                                             {
@@ -2803,6 +3009,101 @@
                                                     "settings": {},
                                                     "partHeader": {
                                                         "title": "Surface Check",
+                                                        "subtitle": "Results"
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "position": {
+                                                    "x": 4,
+                                                    "y": 17,
+                                                    "colSpan": 4,
+                                                    "rowSpan": 2
+                                                },
+                                                "metadata": {
+                                                    "inputs": [
+                                                        {
+                                                            "name": "resourceTypeMode",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "ComponentId",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "Scope",
+                                                            "value": {
+                                                                "resourceIds": [
+                                                                    "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
+                                                                ]
+                                                            },
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "PartId",
+                                                            "value": "54cdfb98-4fa8-4e4e-a348-a69c412b4a92",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "Version",
+                                                            "value": "2.0",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "TimeRange",
+                                                            "value": "P7D",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "DashboardId",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "DraftRequestParameters",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "Query",
+                                                            "value": "customEvents\n| where name == \"DeepCheck\"\n| extend Resource = tostring(customDimensions.Resource)\n| extend ResourceId = tostring(customDimensions.id)\n| extend Result= tostring(customDimensions.Result)\n| distinct timestamp,Resource,ResourceId,Result\n| order by timestamp desc\n",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "ControlType",
+                                                            "value": "AnalyticsGrid",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "SpecificChart",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "PartTitle",
+                                                            "value": "Analytics",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "PartSubTitle",
+                                                            "value": "TestDurableFunc",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "Dimensions",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "LegendOptions",
+                                                            "isOptional": true
+                                                        },
+                                                        {
+                                                            "name": "IsQueryContainTimeRange",
+                                                            "value": false,
+                                                            "isOptional": true
+                                                        }
+                                                    ],
+                                                    "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                                                    "settings": {},
+                                                    "partHeader": {
+                                                        "title": "Deep Check",
                                                         "subtitle": "Results"
                                                     }
                                                 }
