@@ -263,14 +263,6 @@ Value: True
 
 If you set the isparallel parameter value to false for export, then the export will be based on the FHIR resource type rather than at the system level of the Azure API for FHIR.
 
-The list of resources is set under the parameter: AZURE_ResourceTypes. It is a list of FHIR resource type names as strings. By default, it contains all FHIR R4 resource types. The list can be modified as per your requirements, or you can specify the type of resources you want to export under this parameter.
-
-Example:
-
-```
-Name: AZURE_ResourceTypes
-Value: {"Patient", "Observation", "Encounter"}
-```
 ### Export with de-identified data
 
 Export can be done with de-identified data. This is helpful when you may need to systematically change or transform your data during the process of migration (for example, if you need to truncate some data to the 18th digit). <br>
@@ -454,21 +446,7 @@ There are two table storages created during deployment.
 You can check how much data has successfully copied over using the below checks.
 
 1. Surface Check <br>
-    For a quick validation, you can use the surface check. It compares the number  of resources of a particular FHIR resource type between the API for FHIR and FHIR service. You can configure the name of the resource type in the parameter: SurfaceCheckResources. 
-
-	To configure SurfaceCheckResources parameter, follow below steps:
-
-	1. Open the Data migration Azure function.
-	2. Go the the environment variable. Under App setting set the below configuration:
-
-	```
-	Name: AZURE_SurfaceCheckResources
-	Value: ["<<Resource1 Name>>", "<<Resource2 Name>>"]
-	```
-
-	Value can contain list of resources that will check the count on both the server.
-
-	3. Save the setting and hit the E2ETest_Http function.
+    For a quick validation, you can use the surface check. It compares the number  of resources of a particular FHIR resource type between the API for FHIR and FHIR service. 
 
 2. Deep Check <br>
     For a deeper look, you can use the deep check to compare the JSON data of a subset of data from API for FHIR server and Azure Health Data Services FHIR service. You can configure the number of resources that will be compared in the parameter: DeepCheckCount.
