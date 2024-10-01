@@ -40,9 +40,9 @@ namespace ApiForFhirMigrationTool.Function.SurfaceCheck
             var passResource = new JArray();
             var errorResource = new JArray();
 
-            if (_options.SurfaceCheckResources != null)
+            if (_options.ResourceTypes != null)
             {
-                var surfaceCheckResource = new List<string>(_options.SurfaceCheckResources);
+                var surfaceCheckResource = new List<string>(_options.ResourceTypes);
                 var baseUri = _options.SourceUri;
                 var desbaseUri = _options.DestinationUri;
                 string sourceFhirEndpoint = _options.SourceHttpClient;
