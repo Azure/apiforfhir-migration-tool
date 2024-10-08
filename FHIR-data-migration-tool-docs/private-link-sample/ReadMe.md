@@ -41,7 +41,19 @@ If you are using Azure Private Link, the Deploy to Azure deployment of the migra
 
 - **Step 7: Validation and Deployment**
     - Azure will validate your configuration. If everything is correct, it will start the deployment process.
-    - You can monitor the deployment progress on the Azure Portal.    
+    - You can monitor the deployment progress on the Azure Portal. 
+
+### Create Virtual network during cross region migration 
+
+During cross-region data migration, where the source FHIR server and destination FHIR server are located in different regions, separate Virtual Networks (Vnets) are required for each region. This ensures secure and efficient communication between the FHIR servers in their respective regions.<br>
+Follow the mentioned above steps 1 to 7 for both source and destination FHIR instance.
+
+#### Vnet Peering
+![Architecture](Media/cross-region.png)
+During cross-region data migration using Private Link, the Virtual Networks (Vnets) need to be peered, as both the source and destination FHIR instances are located in different Vnets. Vnet peering ensures secure and efficient communication between these Vnets, enabling the migration process.
+
+You can follow the recommended [steps](https://learn.microsoft.com/en-us/azure/virtual-network/tutorial-connect-virtual-networks-portal#create-virtual-network-peer) in the documentation for setting up Vnet peering.
+
 
 ## 2. Create Subnet for Azure API for FHIR And Azure Health Data Services FHIR service
 
