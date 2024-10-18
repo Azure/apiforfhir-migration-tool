@@ -276,6 +276,8 @@ Value: True
 
 If you set the isparallel parameter value to false for export, then the export will be based on the FHIR resource type rather than at the system level of the Azure API for FHIR.
 
+**Note** : Migration tool does not support the export of custom resources.
+
 ### Export with de-identified data
 
 Export can be done with de-identified data. This is helpful when you may need to systematically change or transform your data during the process of migration (for example, if you need to truncate some data to the 18th digit). <br>
