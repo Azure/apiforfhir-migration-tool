@@ -261,8 +261,8 @@
             "name": "[variables('hostingPlanName')]",
             "location": "[parameters('location')]",
             "sku": {
-                "name": "P1",
-                "tier": "Premium"
+                "name": "S1",
+                "tier": "Standard"
             },
             "properties": {
                 "reserved": false
