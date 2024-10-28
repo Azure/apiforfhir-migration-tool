@@ -446,7 +446,74 @@ There are two table storages created during deployment.
 	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/export-data#troubleshoot) to handle issues on exporting the data.
 2. Azure Health Data Services FHIR service.
 	-  Please see the [troubleshooting section](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data#troubleshooting) to handle issues on importing the data.
-3. To troubleshoot the error or failure of export-import. 
+3. Deployment Issue
+	- Below issue might encountered during the infrastructure deployment of the data migration tool 
+
+	1. Deployment failed due to "The resource write operation failed to complete successfully, because it reached terminal provisioning state 'Failed'".
+
+		Steps to follow:
+		1. Click on redeploy.
+
+		![Deploy-Reached-Failure](images/Deploy-Reached-Terminal-State.png)
+
+		2. The deployment details will already be filled, but ensure you select the same Resource Group that was previously deployed.
+		![Redploy-Template](images/Redeploy-Template.jpg)
+		3. Click Review + Create
+
+		4. Wait for the deployment to complete.
+
+	2. Deployment was successful but the function are not visible in the Azure Function.
+
+		Below are the steps to follow in this case:
+		1.  Run the Azure CLI command to check if any function exists:
+			```
+			az functionapp function list -g <Resource Group Name> -n <Function Name>
+			```
+
+			- If the list is available it means function are deployed but in Portal it is not visible. In that case restart the azure function :
+
+				```
+				az functionapp restart -g <ResourceGroup> -n <FunctionAppName>
+				```
+
+			- If the output is empty, like [], it means the function is not available. <br>			
+			You can redeploy the migration tool deployment in the same resource group (no need to redeploy a new data migration tool, just redeploy the existing migration tool deployment): 
+
+		2. If function still not visible, Click on Redeploy in the Azure portal.
+ 
+			![Redeploy](images/Redeploy.jpg)
+			
+		3. The deployment details will already be filled, but ensure you select the same Resource Group that was previously deployed.
+
+			![Redploy-Template](images/Redeploy-Template.jpg)
+ 
+		4. Click Review + Create.
+ 
+		5. Wait for the deployment to complete. Afterward, check if the functions are available again by running the following Azure CLI command:
+
+			```
+			az functionapp function list -g <Resource Group Name> -n <Function Name>
+			```
+
+		If still the functions are not visible ,here are the steps to redeploy the commit:
+		
+		1. Open the Azure Function, and on the left-hand side, navigate to the Deployment Center.
+		![Deployment=Center](images/Deployment-Center.png)
+
+		2. Click on Logs.
+		
+		3. Verify whether the deployment was successful, failed or stuck by reviewing the deployment logs.
+
+		![Deployment=Center](images/Deployment-Center-Logs.png)
+
+		4. If the function is not visible or if there was a failure during deployment, you can redeploy the commit by clicking on it and waiting for the deployment to complete.
+		
+		![Deployment=Center](images/Deployment-Center-Redeploy-Commit.png)
+
+		5. Go to the Overview, restart the azure function, and check if the function is now visible.
+
+
+4. To troubleshoot the error or failure of export-import. 
 	- Please check the export table storage created during deployment process linked to Azure function app.
 		- It contain the details for each export-import error status.
 	- Please check the details of export-import failure on dashboard as well
