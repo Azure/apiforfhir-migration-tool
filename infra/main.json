@@ -327,7 +327,8 @@
                 "AZURE_BlobStorageUri": "[format('https://{0}.blob.core.windows.net', variables('storageAccountName'))]",
                 "SCM_DO_BUILD_DURING_DEPLOYMENT": true,
                 "ENABLE_ORYX_BUILD": true,
-                "WEBSITE_RUN_FROM_PACKAGE": "0"
+                "WEBSITE_RUN_FROM_PACKAGE": "0",
+                "SCM_COMMAND_IDLE_TIMEOUT": 300
             },
             "dependsOn": [
                 "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
@@ -345,7 +346,9 @@
                 "isManualIntegration": true
             },
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+                "[resourceId('Microsoft.Web/sites/config', [format('{0}/{1}', variables('functionAppName'), 'appsettings')])]"
+
             ],
             "metadata": {
                 "description": "Uses source control to deploy"
