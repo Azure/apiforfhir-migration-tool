@@ -115,6 +115,12 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         [JsonProperty("isExportDeidentified")]
         public bool IsExportDeidentified { get; set; } = false;
 
+        [JsonProperty("maxCount")]
+        public bool MaxCount { get; set; } = false;
+
+        [JsonProperty("maxCountValue")]
+        public int MaxCountValue { get; set; }
+
         [JsonProperty("configFile")]
         public string ConfigFile { get; set; } = string.Empty;
 
