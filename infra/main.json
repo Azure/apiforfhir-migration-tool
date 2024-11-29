@@ -344,7 +344,7 @@
             "name": "[format('{0}/{1}', variables('functionAppName'), 'web')]",
             "properties": {
                 "repoUrl": "[variables('repoUrl')]",
-                "branch": "personal/v-shnarang/maxcount",
+                "branch": "main",
                 "isManualIntegration": true
             },
             "dependsOn": [
