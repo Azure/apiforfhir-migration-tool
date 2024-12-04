@@ -127,6 +127,8 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
               AZURE_ExportWithHistory: exportWithHistory
               AZURE_ExportWithDelete: exportWithDelete
               AZURE_IsParallel:isParallel
+              AZURE_MaxCount: 'false'
+              AZURE_MaxCountValue: 10000
               AZURE_ExportDeidentified:exportDeidentified
               AZURE_StopDm:stopDm
               AZURE_StartTime:startTime

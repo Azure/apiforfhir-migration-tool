@@ -317,6 +317,8 @@
                 "AZURE_ExportWithHistory": "[parameters('exportWithHistory')]",
                 "AZURE_ExportWithDelete": "[parameters('exportWithDelete')]",
                 "AZURE_IsParallel": "[parameters('isParallel')]",
+                "AZURE_MaxCount": false,
+                "AZURE_MaxCountValue": 10000,
                 "AZURE_ExportDeidentified":"[parameters('exportDeidentified')]",
                 "AZURE_StopDm":"[parameters('stopDm')]",
                 "AZURE_StartTime":"[parameters('startTime')]",

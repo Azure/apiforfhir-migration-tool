@@ -360,6 +360,38 @@ Name: AZURE_ChunkLimit
 Value: 100000000
 ```
 
+By default, the migration tool exports have _maxCount per job to 10000, which is configurable by using parameters: MaxCount, MaxCountValue of data from API for FHIR in each export operation.
+
+#### How to configure MaxCount and MaxCountValue for export
+1. After deploying, open the Data migration Azure function.
+2. Go to the environment variable setting and under it go to App Setting.
+3. Set the below configuration as per the need:
+```
+Name: AZURE_MaxCount
+Value: true or false
+
+Name: AZURE_MaxCountValue
+Value: <<Int number>>
+
+```
+AZURE_MaxCount can be set to true or false. This parameter allows you to modify the migration tool to use the specified _maxCount value.
+- If set to false, the export job will default to a value of 10,000 for _maxCount.
+- If set to true, it enables you to change the _maxCount value to address issues encountered during the export job.
+
+AZURE_MaxCountValue will take integer as value.   
+
+Example:
+
+Below setting in Azure Function for export allowing the _maxCount parameter in export query with value 5000 in a single chunk: 
+```
+Name: AZURE_MaxCount
+Value: true
+
+Name: AZURE_MaxCountValue
+Value: 5000
+
+```
+
 You  can configure the start date in Azure function from where the export should start from the API for FHIR server. AZURE_StartDate will help to export the data from that specific date. <br>
 If the start date is not provided the tool will fetch the first resource date from the server and start the migration.
 
@@ -516,6 +548,11 @@ There are two table storages created during deployment.
 4. To troubleshoot the error or failure of export-import. 
 	- Please check the export table storage created during deployment process linked to Azure function app.
 		- It contain the details for each export-import error status.
+		- If the export failed due to : "The FHIR Server ran out of memory while processing an export job. Please use the _maxCount parameter when requesting an export job to reduce the number of resources exported at one time. The count used in this job was 10000"<br>
+			Resolution:
+			- Reduce the _maxCount per export job by following the steps outlined in the Export section of the migration tool documentation.
+			- Refer to the "How to configure MaxCount and MaxCountValue for export" section for detailed instructions on adjusting these parameters.<br>
+	By reducing the _maxCount, you can prevent memory-related issues during the export process.
 	- Please check the details of export-import failure on dashboard as well
 		- Export failure details can be found in Failed Export details 
 		- Import failure details can be found in Failed Import details 

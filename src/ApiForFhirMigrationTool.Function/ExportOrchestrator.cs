@@ -432,8 +432,13 @@ public class ExportOrchestrator
 
         logger?.LogInformation("Query for the export operation retrieved successfully.");
 
-
-        return $"{setUrl}&{query}";
+        if (_options.MaxCount == true)
+        { 
+            var maxValue = _options.MaxCountValue == 0 ? 10000 : _options.MaxCountValue;
+            return $"{setUrl}&{query}&_maxCount={maxValue.ToString()}";
+        }
+        else
+            return $"{setUrl}&{query}";
     }
 
     private async Task<DateTimeOffset> SinceDate()
