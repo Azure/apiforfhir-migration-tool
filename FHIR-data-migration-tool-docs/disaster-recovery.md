@@ -2,7 +2,7 @@
 
 # 1. Overview
 
-Azure Health Data Services currently offers [Availability Zones](https://learn.microsoft.com/en-us/azure/healthcare-apis/availability-zones) for zone reduntant availability. However,if you wish to create your own Disaster Recovery solution, you can utilize this migration tool as a sample. The migration tool can be used for one-way data sync from the active region to the secondary region, where the secondary region will be in a read-only state.
+Azure Health Data Services currently offers [Availability Zones](https://learn.microsoft.com/en-us/azure/healthcare-apis/availability-zones) for zone redundant availability. However, if you wish to create your own Disaster Recovery solution, you can utilize this migration tool as a sample. The migration tool can be used for one-way data sync from the active region to the secondary region, where the secondary region will be in a read-only state.
 
 The FHIR data migration tool helps you continuously copy data one way from an Azure API for FHIR server or Azure Health Data Services FHIR service to an Azure Health Data Services FHIR service.<br>
 
