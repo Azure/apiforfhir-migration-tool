@@ -2,9 +2,10 @@
 
 # 1. Overview
 
-Cross-region disaster recovery (DR) is currently not available in the Azure Health Data Services FHIR service. However, using the data migration tool, DR can be achieved with a one-way data sync from the active region to the secondary region, where the secondary region will be in a read-only state.
+Azure Health Data Services currently offers [Availability Zones](https://learn.microsoft.com/en-us/azure/healthcare-apis/availability-zones) for zone reduntant availability. However,if you wish to create your own Disaster Recovery solution, you can utilize this migration tool as a sample. The migration tool can be used for one-way data sync from the active region to the secondary region, where the secondary region will be in a read-only state.
 
 The FHIR data migration tool helps you continuously copy data one way from an Azure API for FHIR server or Azure Health Data Services FHIR service to an Azure Health Data Services FHIR service.<br>
+
 This migration tool is an Azure function app solution that utilizes export to export data from a source Azure API for FHIR ([$export](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data)) or AHDS FHIR service ([$export](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/export-data)) server, and [$import](https://learn.microsoft.com/azure/healthcare-apis/fhir/import-data) to import to a destination Azure Health Data Services FHIR service.
 
 ### FHIR Data Migration Tool Overview
