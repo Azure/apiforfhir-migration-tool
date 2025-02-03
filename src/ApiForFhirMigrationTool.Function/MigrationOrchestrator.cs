@@ -52,6 +52,7 @@ namespace ApiForFhirMigrationTool.Function
             try
             {
                 bool shouldRun = true;
+                bool continueRun = true;
 
                 if (_options.StopDm)
                 {
@@ -99,49 +100,69 @@ namespace ApiForFhirMigrationTool.Function
                         if (jobList.Count() <= 0)
                         {
                             var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
-                        {
-                            { "JobId", 0 },
-                            {"SurfaceJobId",0 },
-                            {"DeepJobId",0 },
-                            { "globalSinceExportType", "" },
-                            { "globalTillExportType", "" },
-                            { "noOfResources", _options.ResourceTypes?.Count() },
-                            { "resourceTypeIndex", 0 },
-                            { "multiExport", "" },
-                             {"ImportId",0 },
-                             {"SearchParameterMigration", false }
-                        };
+                            {
+                                { "JobId", 0 },
+                                {"SurfaceJobId",0 },
+                                {"DeepJobId",0 },
+                                { "globalSinceExportType", "" },
+                                { "globalTillExportType", "" },
+                                { "noOfResources", _options.ResourceTypes?.Count() },
+                                { "resourceTypeIndex", 0 },
+                                { "multiExport", "" },
+                                {"ImportId",0 },
+                                {"SearchParameterMigration", false }
+                            };
                             logger.LogInformation("Starting update of the chunk table.");
                             _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
                             logger.LogInformation("Completed update of the chunk table.");
                         }
                     }
-                    var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
-                            maxNumberOfAttempts: 3,
-                            firstRetryInterval: TimeSpan.FromSeconds(5)));
+                    TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                    var since = _options.IsParallel == true ? (string)qEntity["since"] : (string)qEntity["globalSinceExportType"];
 
-                    logger.LogInformation("Starting SearchParameter migration activities.");
-                    //Run sub orchestration for search parameter
-                    var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
-                    logger.LogInformation("SearchParameter migration activities ended");
+                    if (_options.SpecificRun && !string.IsNullOrEmpty(since))
+                    {
+                        logger.LogInformation("Data Migration Tool checking for specific time range.");
+                        var currentTime = DateTime.UtcNow;
+                        var startDate = _options.StartDate;
+                        var endDate = _options.EndDate;
+                        logger.LogInformation($" Current time : ({currentTime}), startDate :({startDate}), endHour :({endDate})");
+                        if (DateTime.Parse(since) > endDate)
+                        {
+                            continueRun = false;
+                            logger.LogInformation("Execution skipped: Specific time range date is reached");
+                        }
+                    }
 
-                    // Run sub orchestration for export and export status
-                    logger.LogInformation("Starting Export migration activities.");
-                    var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
-                    logger.LogInformation("Export migration activities ended.");
+                    if (continueRun)
+                    {
+                        var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
+                                maxNumberOfAttempts: 3,
+                                firstRetryInterval: TimeSpan.FromSeconds(5)));
 
-                    logger.LogInformation("Starting Export Status activities");
-                    var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
-                    logger.LogInformation("Export Status activities ended.");
+                        logger.LogInformation("Starting SearchParameter migration activities.");
+                        // Run sub orchestration for search parameter
+                        var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
+                        logger.LogInformation("SearchParameter migration activities ended");
 
-                    // Run sub orchestration for Import and Import status
-                    logger.LogInformation("Starting Import  migration  activities.");
-                    var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
-                    logger.LogInformation("Import migration activities ended.");
+                        // Run sub orchestration for export and export status
+                        logger.LogInformation("Starting Export migration activities.");
+                        var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
+                        logger.LogInformation("Export migration activities ended.");
 
-                    logger.LogInformation("Starting Import Status activities.");
-                    var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
-                    logger.LogInformation("Import Status activities ended.");
+                        logger.LogInformation("Starting Export Status activities");
+                        var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
+                        logger.LogInformation("Export Status activities ended.");
+
+                        // Run sub orchestration for Import and Import status
+                        logger.LogInformation("Starting Import  migration  activities.");
+                        var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
+                        logger.LogInformation("Import migration activities ended.");
+
+                        logger.LogInformation("Starting Import Status activities.");
+                        var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
+                        logger.LogInformation("Import Status activities ended.");
+                    }
                 }
             }
             catch (Exception ex)

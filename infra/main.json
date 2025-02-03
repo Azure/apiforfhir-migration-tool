@@ -164,6 +164,27 @@
              "metadata": {
                  "description": "Indicates the end time for the hours when export and import operations are restricted"
              }  
+         },
+        "specificRun":{
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Run Migration for specific run"
+            } 
+        },
+        "startDate":{
+           "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Indicates the start date for the data migration tool"
+            }  
+        },
+        "endDate":{
+            "type": "string",
+             "defaultValue": "",
+             "metadata": {
+                 "description": "Indicates the end date for the data migration tool"
+             }  
          }
     },
     "variables": {
@@ -323,6 +344,9 @@
                 "AZURE_StopDm":"[parameters('stopDm')]",
                 "AZURE_StartTime":"[parameters('startTime')]",
                 "AZURE_EndTime":"[parameters('endTime')]",
+                "AZURE_SpecificRun":"[parameters('specificRun')]",
+                "AZURE_StartDate":"[parameters('startDate')]",
+                "AZURE_EndDate":"[parameters('endDate')]",
                 "AZURE_ConfigFile":"[parameters('configFile')]",
                 "AZURE_stagingStorageAccountName": "[variables('storageAccountName')]",
                 "AZURE_StagingStorageUri": "[format('https://{0}.table.core.windows.net', variables('storageAccountName'))]",

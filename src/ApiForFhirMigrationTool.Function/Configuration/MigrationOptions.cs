@@ -39,7 +39,7 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         public DateTime StartDate { get; set; }
 
         [JsonProperty("endDate")]
-        public string EndDate { get; set; } = string.Empty;
+        public DateTime EndDate { get; set; }
 
         [JsonProperty("AppInsightConnectionString")]
         public string AppInsightConnectionstring { get; set; } = string.Empty;
@@ -286,6 +286,9 @@ namespace ApiForFhirMigrationTool.Function.Configuration
 
         [JsonProperty("stopDm")]
         public bool StopDm { get; set; } = false;
+
+        [JsonProperty("specificRun")]
+        public bool SpecificRun { get; set; } = false;
 
         [JsonProperty("startTime")]
         public int StartTime { get; set; } = 8;
