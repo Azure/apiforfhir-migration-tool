@@ -127,7 +127,7 @@ namespace ApiForFhirMigrationTool.Function
                         var startDate = _options.StartDate;
                         var endDate = _options.EndDate;
                         logger.LogInformation($" Current time : ({currentTime}), startDate :({startDate}), endHour :({endDate})");
-                        if (DateTime.Parse(since) > endDate)
+                        if (endDate <= DateTime.Parse(since))
                         {
                             continueRun = false;
                             logger.LogInformation("Execution skipped: Specific time range date is reached");
