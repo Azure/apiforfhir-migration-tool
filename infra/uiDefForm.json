@@ -308,7 +308,7 @@
                                 "type": "Microsoft.Common.DropDown",
                                 "label": "Run Data Migration Tool During Specific Date Range",
                                 "defaultValue":"False",
-                                "toolTip": "The migration tool lets you set a specific time range for data export. ",
+                                "toolTip": "The migration tool lets you set a specific time range for data migration. ",
                                 "constraints": {
                                     "allowedValues": [
                                         {
@@ -330,7 +330,7 @@
                                 "visible": "[steps('fhirSelection').fhirSection.MigrationDuringSpecificRange]",
                                 "options": {
                                     "icon": "Info",
-                                    "text": "You need to enter the start and end date in a YYYY-MM-DDTHH:MM:SSZ format in UTC for the specific time period. For example, if you want to export data from 2020-01-01 to 2024-12-31 UTC, enter 2020-01-01T00:00:00.00Z as the start date and 2024-12-31T00:00:00.00Z as the end date."
+                                    "text": "You need to enter the start and end date in a YYYY-MM-DDTHH:MM:SSZ format in UTC for the specific time period. For example, if you want to migrate data from 2020-01-01 to 2024-12-31 UTC, enter 2020-01-01T00:00:00.00Z as the start date and 2024-12-31T00:00:00.00Z as the end date."
                                 }
                             },        
                             {

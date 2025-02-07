@@ -126,7 +126,7 @@ namespace ApiForFhirMigrationTool.Function
                         var currentTime = DateTime.UtcNow;
                         var startDate = _options.StartDate;
                         var endDate = _options.EndDate;
-                        logger.LogInformation($" Current time : ({currentTime}), startDate :({startDate}), endHour :({endDate})");
+                        logger.LogInformation($" Current time : ({currentTime}), startDate :({startDate}), endDate :({endDate})");
                         if (endDate <= DateTime.Parse(since))
                         {
                             continueRun = false;

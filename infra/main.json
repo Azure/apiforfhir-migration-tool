@@ -169,7 +169,7 @@
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "Run Migration for specific run"
+                "description": "Run Migration for specific time range"
             } 
         },
         "startDate":{
@@ -368,7 +368,7 @@
             "name": "[format('{0}/{1}', variables('functionAppName'), 'web')]",
             "properties": {
                 "repoUrl": "[variables('repoUrl')]",
-                "branch": "personal/shnarang/endfeature",
+                "branch": "main",
                 "isManualIntegration": true
             },
             "dependsOn": [
