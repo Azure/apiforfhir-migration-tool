@@ -317,6 +317,35 @@ Value: 9
 Name: AZURE_EndTime
 Value: 18
 ``` 
+### Run Data Migration Tool During Specific Date Range
+
+The migration tool allows you to specify a time range for a predefined set of data. By configuring a time frame, you can ensure that only the data within that specific period will be migrated. 
+
+During the deployment of the migration tool, you will have the option to enable or disable "Run Data Migration Tool During Specific Date Range" by specifying its value as true or false. If you select true, you will also need to enter the start date and end date for the specific period in UTC.
+
+Take a look at the screenshot below to learn how to configure these settings. By default, the value of "Run Data Migration Tool During Specific Date Range" is set to false. If you prefer to migrate date during specific time range, you can change the value to true and specify the start date and end date in UTC.<br>
+
+![DMSpecificRun](images/Specific-Data-Migration.png)
+
+Upon the completion of deployment, you can still make adjustments to the migration settings to run data migration tool during specific date range by modifying the values within the Azure function's environment variables.
+
+Example:
+```
+Name: AZURE_SpecificRun
+Value: True
+```
+You can also specify the start and end date for the specific period. For example, if you want data migration to start from 2020-01-01 and end 2024-12-31, modify the following values within the Azure function's environment variables
+
+Example:
+```
+Name: AZURE_StartDate
+Value: 2020-01-01T00:00:00.00Z
+
+Name: AZURE_EndDate
+Value: 2024-12-31T00:00:00.00Z
+```
+
+
 ## Export in the migration tool
 
 The [built-in API for FHIR $export operation](https://learn.microsoft.com/azure/healthcare-apis/azure-api-for-fhir/export-data) is leveraged in this migration tool for exporting the data from API for FHIR server. The $export PaaS endpoints are asynchronous, long-running HTTP APIs. 
@@ -339,11 +368,15 @@ Value: "Days" or "Hours" or "Minutes"
 Name: AZURE_ExportChunkTime
 Value: <<Int number>>
 
+Name: AZURE_ResourceExportChunkTime
+Value: <<Int number>>
+
 Name: AZURE_ChunkLimit
 Value: <<Int number>>
 ```
-AZURE_ExportChunkDuration can take Days, Hours or Minutes as the value.   
-AZURE_ExportChunkTime will take integer as value.   
+AZURE_ExportChunkDuration can take Days, Hours or Minutes as the value.  
+AZURE_ExportChunkTime will take integer as value.
+AZURE_ResourceExportChunkTime will take integer as value.
 AZURE_ChunkLimit  will take integer as value to specify how many resources will be exported in a single chunk.
 
 Example:
@@ -354,6 +387,9 @@ Name: AZURE_ExportChunkDuration
 Value: "Days"
 
 Name: AZURE_ExportChunkTime
+Value: 30
+
+Name: AZURE_ResourceExportChunkTime
 Value: 30
 
 Name: AZURE_ChunkLimit

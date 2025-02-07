@@ -314,6 +314,11 @@ public class ExportOrchestrator
         }
 
         since = since_new.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+        if (_options.SpecificRun)
+        {
+            if (updateSinceDate > _options.EndDate) { updateSinceDate = _options.EndDate; }
+        }
+
         till = updateSinceDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
 
        logger?.LogInformation("Creating export URL and query.");

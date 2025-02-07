@@ -66,6 +66,15 @@ param startTime int = 8
 @description('Indicates the end time for the hours when export and import operations are restricted ')
 param endTIme int = 17
 
+@description('Export by timestamp')
+param specificRun bool = false
+
+@description('Indicates the start time for the hours when export and import operations are restricted')
+param startDate string
+
+@description('Indicates the end time for the hours when export and import operations are restricted ')
+param endDate string
+
 var envRandomString = toLower(uniqueString(subscription().id, name, location))
 var nameShort = length(name) > 10 ? substring(name, 0, 10) : name
 var resourceName = '${nameShort}${substring(envRandomString, 0, 6)}'
@@ -134,6 +143,9 @@ module function './azureFunction.bicep'= {
         stopDm:stopDm
         startTime:startTime
         endTime:endTIme
+        specificRun: specificRun
+        startDate: startDate
+        endDate: endDate
         configFile:configFile
         appInsightsInstrumentationKey: monitoring.outputs.appInsightsInstrumentationKey
         functionSettings: union({

@@ -21,6 +21,9 @@ param configFile string
 param stopDm bool
 param startTime int
 param endTime int
+param specificRun bool
+param startDate string
+param endDate string
 @description('Automatically create a role assignment for the function app to access the FHIR service and API for FHIR.')
 param createRoleAssignment bool = true
 param apiForFhirsubid string
@@ -133,6 +136,9 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
               AZURE_StopDm:stopDm
               AZURE_StartTime:startTime
               AZURE_EndTime:endTime
+              AZURE_SpecificRun: specificRun
+              AZURE_StartDate: startDate
+              AZURE_EndDate: endDate
               AZURE_ConfigFile:configFile            
               AZURE_stagingStorageAccountName: storageAccountName
               AZURE_StagingStorageUri: 'https://${storageAccountName}.table.core.windows.net'
