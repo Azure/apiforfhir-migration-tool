@@ -129,6 +129,54 @@
                                 "visible": true
                             },
                             {
+                                "name": "useClientCredentials",
+                                "label": "Do you want to use client credentials for Azure API for fhir?",
+                                "type": "Microsoft.Common.DropDown",
+                                "defaultValue":"False",
+                                "toolTip": "",
+                                "constraints": {
+                                    "allowedValues": [
+                                        {
+                                            "label": "True",
+                                            "value": true
+                                        },
+                                        {
+                                            "label": "False",
+                                            "value": false
+                                        }
+                                    ],
+                                    "required": true
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "clientId",
+                                "label": "Client Id ",
+                                "type": "Microsoft.Common.TextBox",
+                                "constraints": {
+                                    "required": true
+                                },
+                                "visible": "[steps('fhirSelection').fhirSection.useClientCredentials]"
+                            },
+                            {
+                                "name": "clientSecret",
+                                "label": "Client Secret",
+                                "type": "Microsoft.Common.TextBox",
+                                "constraints": {
+                                    "required": true
+                                },
+                                "visible": "[steps('fhirSelection').fhirSection.useClientCredentials]"
+                            },
+                            {
+                                "name": "tenantId",
+                                "label": "Tenant Id",
+                                "type": "Microsoft.Common.TextBox",
+                                "constraints": {
+                                    "required": true
+                                },
+                                "visible": "[steps('fhirSelection').fhirSection.useClientCredentials]"
+                            },
+                            {
                                 "name": "exportWithHistory",
                                 "type": "Microsoft.Common.DropDown",
                                 "label": "Export With History",
@@ -387,7 +435,11 @@
             "endTime": "[int(steps('fhirSelection').fhirSection.endTime)]",
             "specificRun":"[steps('fhirSelection').fhirSection.MigrationDuringSpecificRange]",
             "startDate": "[int(steps('fhirSelection').fhirSection.startDate)]",
-            "endDate": "[int(steps('fhirSelection').fhirSection.endDate)]"
+            "endDate": "[int(steps('fhirSelection').fhirSection.endDate)]",
+            "useClientCredentials":"[steps('fhirSelection').fhirSection.useClientCredentials]",
+            "clientId":"[steps('fhirSelection').fhirSection.clientId]",
+            "clientSecret":"[steps('fhirSelection').fhirSection.clientSecret]",
+            "tenantId":"[steps('fhirSelection').fhirSection.tenantId]"
         }
     }
 }

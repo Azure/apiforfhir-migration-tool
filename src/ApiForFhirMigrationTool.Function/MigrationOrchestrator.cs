@@ -145,8 +145,9 @@ namespace ApiForFhirMigrationTool.Function
                         var searchParameter = await context.CallSubOrchestratorAsync<string>("SearchParameterOrchestration", options: options);
                         logger.LogInformation("SearchParameter migration activities ended");
 
-                        // Run sub orchestration for export and export status
-                        logger.LogInformation("Starting Export migration activities.");
+                        //Run sub orchestration for export and export status
+
+                       logger.LogInformation("Starting Export migration activities.");
                         var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
                         logger.LogInformation("Export migration activities ended.");
 

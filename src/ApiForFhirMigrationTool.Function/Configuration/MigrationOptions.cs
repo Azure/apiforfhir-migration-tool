@@ -295,6 +295,16 @@ namespace ApiForFhirMigrationTool.Function.Configuration
 
         [JsonProperty("endTime")]
         public int EndTime { get; set; } = 17;
+        [JsonProperty("clientCredential")]
+        public bool ClientCredential { get; set; } = false;
+
+        [JsonProperty("tenantId")]
+        public string TenantId { get; set; } = string.Empty;
+        [JsonProperty("clientId")]
+        public string ClientId { get; set; } = string.Empty;
+        [JsonProperty("clientSecret")]
+        public string ClientSecret { get; set; } = string.Empty;
+
 
         public bool ValidateConfig()
         {
