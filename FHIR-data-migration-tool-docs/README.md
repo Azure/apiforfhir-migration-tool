@@ -252,13 +252,13 @@ Name: AZURE_ClientCredential
 Value: True
 
 Name: AZURE_ClientId
-Value: ...
+Value: xxxx-xxxx-xxxx-xxxx-xxxxxx
 
 Name: AZURE_ClientSecret
-Value: ...
+Value: xxxx-xxxx-xxxx-xxxx-xxxxxx
 
 Name: AZURE_TenantId
-Value: ...
+Value: xxxx-xxxx-xxxx-xxxx-xxxxxx
 
 ```
 
