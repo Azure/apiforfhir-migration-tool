@@ -171,7 +171,7 @@ module function './azureFunction.bicep'= {
         fhirsubid:fhirsubid
         sourcefhirsubid: sourcefhirsubid
         apiForFhirsubid:apiForFhirsubid
-        uselientCredentials:useClientCredentials
+        useClientCredentials:useClientCredentials
         clientId:clientId
         clientSecret:clientSecret
         tenantId:tenantId
