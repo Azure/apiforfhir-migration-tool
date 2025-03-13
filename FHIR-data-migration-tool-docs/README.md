@@ -232,6 +232,36 @@ The data migration tool gives the option to choose the type of migration:
  
 ![Source Instance](images/source-instance.png)
 
+### Use client credentials for Azure API for FHIR
+
+Using client credentials for Azure API for FHIR is required if you have configured [local RBAC](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/configure-local-rbac) for Azure API for FHIR to use a secondary Microsoft Entra tenant for data access, as managed identities do not support cross-tenant scenarios.
+
+If __Client credentials for Azure API for FHIR__ is set to true, it will prompt for the __Client ID__, __Client Secret__, and __Tenant ID__ of the app registration from the secondary tenant. The tool will use __Client credentials for Azure API for FHIR__ and __DefaultAzureCredential for the FHIR service__.
+
+If both __Azure API for FHIR__ and the __FHIR service__ are in the same tenant, you can use __DefaultAzureCredential__ for both by setting __Client credentials for Azure API for FHIR__ to false.
+
+
+![Source Instance](images/Use-client-credentials-for-azure-api-for-fhir.png)
+
+Upon the completion of deployment, you can still make adjustments to the settings for __Client credentials for Azure API for FHIR__ by modifying the values within the Azure function's environment variable.
+
+Example:
+
+```
+Name: AZURE_ClientCredential
+Value: True
+
+Name: AZURE_ClientId
+Value: xxxx-xxxx-xxxx-xxxx-xxxxxx
+
+Name: AZURE_ClientSecret
+Value: xxxx-xxxx-xxxx-xxxx-xxxxxx
+
+Name: AZURE_TenantId
+Value: xxxx-xxxx-xxxx-xxxx-xxxxxx
+
+```
+
 ### Export with History and Soft Delete
 
 Exporting with [history](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/purge-history) allows you to export current state of a resource as well as its previous versions. Exporting with [soft deletes](https://learn.microsoft.com/en-us/azure/healthcare-apis/azure-api-for-fhir/fhir-rest-api-capabilities#delete-hard--soft-delete) allows you to export soft deleted historic versions.

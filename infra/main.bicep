@@ -75,6 +75,19 @@ param startDate string
 @description('Indicates the end time for the hours when export and import operations are restricted ')
 param endDate string
 
+@description('Indicates if client credentials need to be used for Azure api for fhir')
+param useClientCredentials bool
+    
+@description('Indicates client id for client credentials')
+param clientId string
+
+@secure()
+@description('Indicates client secret for client credentials')
+param clientSecret string
+
+@description('Indicates client secret for tenant id')
+param tenantId string 
+
 var envRandomString = toLower(uniqueString(subscription().id, name, location))
 var nameShort = length(name) > 10 ? substring(name, 0, 10) : name
 var resourceName = '${nameShort}${substring(envRandomString, 0, 6)}'
@@ -158,6 +171,10 @@ module function './azureFunction.bicep'= {
         fhirsubid:fhirsubid
         sourcefhirsubid: sourcefhirsubid
         apiForFhirsubid:apiForFhirsubid
+        useClientCredentials:useClientCredentials
+        clientId:clientId
+        clientSecret:clientSecret
+        tenantId:tenantId
     }
 }
 

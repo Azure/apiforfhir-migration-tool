@@ -48,6 +48,11 @@ public class Program
     .ConfigureServices(services =>
     {
         var credential = new DefaultAzureCredential();
+
+        //When client want to use client credentials for gen1
+        ClientSecretCredential? clientcred =config.ClientCredential? new ClientSecretCredential(config.TenantId, config.ClientId, config.ClientSecret):null;
+
+
         if (config.AppInsightConnectionstring != null)
         {
             services.AddLogging(builder =>
@@ -106,7 +111,7 @@ public class Program
             httpClient.BaseAddress = baseUri;
         })
         .AddPolicyHandler(GetRetryPolicy())
-       .AddHttpMessageHandler(x => new BearerTokenHandler(credential, baseUri, scopes));
+       .AddHttpMessageHandler(x => new BearerTokenHandler(config.ClientCredential? clientcred : credential, baseUri, scopes));
 
 #pragma warning restore CS8604 // Possible null reference argument.
 

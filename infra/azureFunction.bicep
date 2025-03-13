@@ -29,6 +29,11 @@ param createRoleAssignment bool = true
 param apiForFhirsubid string
 param fhirsubid string
 param sourcefhirsubid string
+param useClientCredentials bool
+param clientId string
+@secure()
+param clientSecret string
+param tenantId string
 
 @description('Azure Function required linked storage account')
 resource funcStorageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
@@ -143,6 +148,10 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
               AZURE_stagingStorageAccountName: storageAccountName
               AZURE_StagingStorageUri: 'https://${storageAccountName}.table.core.windows.net'
               AZURE_BlobStorageUri: 'https://${storageAccountName}.blob.core.windows.net'
+              AZURE_ClientCredential:useClientCredentials
+              AZURE_ClientId:clientId
+              AZURE_ClientSecret:clientSecret
+              AZURE_TenantId:tenantId
 
               // This will trigger the custom deployment script to run during deployment
               SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'

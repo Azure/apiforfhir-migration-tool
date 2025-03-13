@@ -49,6 +49,18 @@
         },
         "specificRun":{
             "value": false
+        },
+        "useClientCredentials": {
+            "value": false
+        },
+        "clientId": {
+            "value": ""
+        },
+        "clientSecret": {
+            "value": ""
+        },
+        "tenantId": {
+            "value": ""
         }
     }
 }
