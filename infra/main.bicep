@@ -160,7 +160,7 @@ module function './azureFunction.bicep'= {
         startDate: startDate
         endDate: endDate
         configFile:configFile
-        appInsightsInstrumentationKey: monitoring.outputs.appInsightsInstrumentationKey
+        appInsightsConnectionString: monitoring.outputs.appInsightsInstrumentationString
         functionSettings: union({
                 AZURE_DestinationUri: fhirServiceNameUrl
                 AZURE_SourceUri: typeOfMigration == 'AzureAPIforFhir'? apiForFhirNameUrl: sourcefhirServiceNameUrl
