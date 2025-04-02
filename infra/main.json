@@ -349,7 +349,6 @@
                 "AzureWebJobsStorage__accountname": "[variables('storageAccountName')]",
                 "FUNCTIONS_EXTENSION_VERSION": "~4",
                 "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-                "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').InstrumentationKey]",
                 "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]",
                 "AZURE_AppInsightConnectionstring": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]",
                 "AZURE_DestinationUri": "[format('https://{0}.fhir.azurehealthcareapis.com', replace(parameters('fhirServiceName'), '/', '-'))]", 

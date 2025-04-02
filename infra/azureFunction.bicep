@@ -2,7 +2,7 @@ param typeOfMigration string
 param storageAccountName string
 param appServiceName string
 param functionAppName string
-param appInsightsInstrumentationKey string
+param appInsightsConnectionString string
 param location string
 param functionSettings object = {}
 param appTags object = {}
@@ -121,8 +121,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
               AzureWebJobsStorage__accountname: storageAccountName
               FUNCTIONS_EXTENSION_VERSION: '~4'
               FUNCTIONS_WORKER_RUNTIME: 'dotnet-isolated'
-              APPINSIGHTS_INSTRUMENTATIONKEY: appInsightsInstrumentationKey
-              APPLICATIONINSIGHTS_CONNECTION_STRING: 'InstrumentationKey=${appInsightsInstrumentationKey}'
+              APPLICATIONINSIGHTS_CONNECTION_STRING: appInsightsConnectionString
               AZURE_ScheduleInterval: 2
               AZURE_ImportMode: 'IncrementalLoad'
               AZURE_DeepCheckCount: 1
