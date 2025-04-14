@@ -456,7 +456,7 @@ public class ExportOrchestrator
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri(baseUri, "/?_sort=_lastUpdated&_count=1"),
+            RequestUri = _options.ExportWithHistory || _options.ExportWithDelete ? new Uri(baseUri, "/_history?_sort=_lastUpdated&_count=1") : new Uri(baseUri, "/?_sort=_lastUpdated&_count=1"),
         };
         HttpResponseMessage srcTask = await _fhirClient.Send(request, baseUri, sourceFhirEndpoint);
 
