@@ -374,7 +374,10 @@ Value: 2020-01-01T00:00:00.00Z
 Name: AZURE_EndDate
 Value: 2024-12-31T00:00:00.00Z
 ```
+Notes: <br>
+- When history is enabled, historical data with a lastUpdated date after the specified start date will be migrated up to the end date.
 
+- This also means that any historical/non-historical data with a lastUpdated date before the start date will not be migrated.
 
 ## Export in the migration tool
 
