@@ -56,15 +56,22 @@ namespace ApiForFhirMigrationTool.Function
 
                 if (_options.StopDm)
                 {
+                    if (_options.StartTime < 0 || _options.StartTime > 23 || _options.EndTime < 0 || _options.EndTime > 23)
+                    {
+                        throw new ArgumentOutOfRangeException("StartTime and EndTime should be between 0 and 23.");
+                    }
+
                     logger.LogInformation("Data Migration Tool will pause during business hours.");
                     var currentTime = DateTime.UtcNow;
-                    var startHour = new TimeSpan(_options.StartTime - 1, 0, 0);
+                    var startHour = new TimeSpan((_options.StartTime == 0 ? 23 : _options.StartTime - 1), 0, 0);
                     var endHour = new TimeSpan(_options.EndTime, 30, 0);
-                    logger.LogInformation($" Current time : ({currentTime}), startHour :({startHour}), endHour :({endHour})");
-                    if (currentTime.TimeOfDay > startHour && currentTime.TimeOfDay < endHour)
+                    logger.LogInformation($" Current time : ({currentTime}), startHour :({startHour}), endHour :({endHour})");                   
+                    bool isWithinSkipWindow = startHour < endHour ? (currentTime.TimeOfDay > startHour && currentTime.TimeOfDay < endHour) : (currentTime.TimeOfDay > startHour || currentTime.TimeOfDay < endHour);
+
+                    if (isWithinSkipWindow)
                     {
                         shouldRun = false;
-                        logger.LogInformation("Execution skipped: Current time is outside allowed hours");
+                        logger.LogInformation("Execution skipped: Current time is within the restricted window");
                     }
                 }
                 if (shouldRun)
@@ -147,7 +154,7 @@ namespace ApiForFhirMigrationTool.Function
 
                         //Run sub orchestration for export and export status
 
-                       logger.LogInformation("Starting Export migration activities.");
+                        logger.LogInformation("Starting Export migration activities.");
                         var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
                         logger.LogInformation("Export migration activities ended.");
 
