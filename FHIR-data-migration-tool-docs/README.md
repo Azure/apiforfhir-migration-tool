@@ -407,10 +407,15 @@ Value: <<Int number>>
 Name: AZURE_ChunkLimit
 Value: <<Int number>>
 ```
-AZURE_ExportChunkDuration can take Days, Hours or Minutes as the value.  
-AZURE_ExportChunkTime will take integer as value.
-AZURE_ResourceExportChunkTime will take integer as value.
-AZURE_ChunkLimit  will take integer as value to specify how many resources will be exported in a single chunk.
+- AZURE_ExportChunkDuration can take Days, Hours or Minutes as the value.<br>  
+
+- AZURE_ExportChunkTime will take integer as value.<br>
+	- This is used when _isparallel = true is selected in the Data Migration tool. It sets the time chunk for parallel export operations. By default, the chunk duration is 30 days.<br>
+
+- AZURE_ResourceExportChunkTime will take integer as value.<br>
+	- This is used when _isparallel = false is selected in the Data Migration tool. It applies a resource-wise export chunking strategy, with a default chunk duration of 30 days.<br>
+
+- AZURE_ChunkLimit  will take integer as value to specify how many resources will be exported in a single chunk.
 
 Example:
 
