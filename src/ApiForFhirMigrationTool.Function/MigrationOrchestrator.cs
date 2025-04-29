@@ -74,78 +74,79 @@ namespace ApiForFhirMigrationTool.Function
                         logger.LogInformation("Execution skipped: Current time is within the restricted window");
                     }
                 }
-                if (shouldRun)
+                
+                _options.ValidateConfig();               
+                logger.LogInformation("Creating table client");
+                TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+                logger.LogInformation("Table client created successfully.");
+
+                if (_options.IsParallel == true)
                 {
-
-                    _options.ValidateConfig();
-                    logger.LogInformation("Start MigrationOrchestration.");
-                    logger.LogInformation("Creating table client");
-                    TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
-                    logger.LogInformation("Table client created successfully.");
-
-                    if (_options.IsParallel == true)
+                    Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
+                    if (jobList.Count() <= 0)
                     {
-                        Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
-                        if (jobList.Count() <= 0)
-                        {
-                            var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
+                        var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
+                    {
+                        { "JobId", 0 },
+                        {"SurfaceJobId",0 },
+                        {"DeepJobId",0 },
+                        {"ImportId",0 },
+                        {"SearchParameterMigration", false }
+                    };
+                        logger.LogInformation("Starting update of the chunk table.");
+                        _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
+                        logger.LogInformation("Completed update of the chunk table.");
+                    }
+                }
+                else
+                {
+                    Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
+                    if (jobList.Count() <= 0)
+                    {
+                        var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
                         {
                             { "JobId", 0 },
                             {"SurfaceJobId",0 },
                             {"DeepJobId",0 },
+                            { "globalSinceExportType", "" },
+                            { "globalTillExportType", "" },
+                            { "noOfResources", _options.ResourceTypes?.Count() },
+                            { "resourceTypeIndex", 0 },
+                            { "multiExport", "" },
                             {"ImportId",0 },
                             {"SearchParameterMigration", false }
                         };
-                            logger.LogInformation("Starting update of the chunk table.");
-                            _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
-                            logger.LogInformation("Completed update of the chunk table.");
-                        }
+                        logger.LogInformation("Starting update of the chunk table.");
+                        _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
+                        logger.LogInformation("Completed update of the chunk table.");
                     }
-                    else
-                    {
-                        Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
-                        if (jobList.Count() <= 0)
-                        {
-                            var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
-                            {
-                                { "JobId", 0 },
-                                {"SurfaceJobId",0 },
-                                {"DeepJobId",0 },
-                                { "globalSinceExportType", "" },
-                                { "globalTillExportType", "" },
-                                { "noOfResources", _options.ResourceTypes?.Count() },
-                                { "resourceTypeIndex", 0 },
-                                { "multiExport", "" },
-                                {"ImportId",0 },
-                                {"SearchParameterMigration", false }
-                            };
-                            logger.LogInformation("Starting update of the chunk table.");
-                            _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
-                            logger.LogInformation("Completed update of the chunk table.");
-                        }
-                    }
-                    TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
-                    var since = _options.IsParallel == true ? (string)qEntity["since"] : (string)qEntity["globalSinceExportType"];
+                }
+                TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                var since = _options.IsParallel == true ? (string)qEntity["since"] : (string)qEntity["globalSinceExportType"];
 
-                    if (_options.SpecificRun && !string.IsNullOrEmpty(since))
+                if (_options.SpecificRun && !string.IsNullOrEmpty(since))
+                {
+                    logger.LogInformation("Data Migration Tool checking for specific time range.");
+                    var currentTime = DateTime.UtcNow;
+                    var startDate = _options.StartDate;
+                    var endDate = _options.EndDate;
+                    logger.LogInformation($" Current time : ({currentTime}), startDate :({startDate}), endDate :({endDate})");
+                    if (endDate <= DateTime.Parse(since))
                     {
-                        logger.LogInformation("Data Migration Tool checking for specific time range.");
-                        var currentTime = DateTime.UtcNow;
-                        var startDate = _options.StartDate;
-                        var endDate = _options.EndDate;
-                        logger.LogInformation($" Current time : ({currentTime}), startDate :({startDate}), endDate :({endDate})");
-                        if (endDate <= DateTime.Parse(since))
-                        {
-                            continueRun = false;
-                            logger.LogInformation("Execution skipped: Specific time range date is reached");
-                        }
+                        continueRun = false;
+                        logger.LogInformation("Execution skipped: Specific time range date is reached");
                     }
+                }
 
-                    if (continueRun)
+                if (continueRun)
+                {
+                    var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
+                            maxNumberOfAttempts: 3,
+                            firstRetryInterval: TimeSpan.FromSeconds(5)));
+
+                    if (shouldRun)
                     {
-                        var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
-                                maxNumberOfAttempts: 3,
-                                firstRetryInterval: TimeSpan.FromSeconds(5)));
+                        logger.LogInformation("Start MigrationOrchestration.");
 
                         logger.LogInformation("Starting SearchParameter migration activities.");
                         // Run sub orchestration for search parameter
@@ -158,6 +159,24 @@ namespace ApiForFhirMigrationTool.Function
                         var exportContent = await context.CallSubOrchestratorAsync<string>("ExportOrchestration", options: options);
                         logger.LogInformation("Export migration activities ended.");
 
+                        logger.LogInformation("Starting Export Status activities");
+                        var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
+                        logger.LogInformation("Export Status activities ended.");
+
+                        // Run sub orchestration for Import and Import status
+                        logger.LogInformation("Starting Import  migration  activities.");
+                        var import = await context.CallSubOrchestratorAsync<string>("ImportOrchestration", options: options);
+                        logger.LogInformation("Import migration activities ended.");
+
+                        logger.LogInformation("Starting Import Status activities.");
+                        var importStatus = await context.CallSubOrchestratorAsync<string>("ImportStatusOrchestration", options: options);
+                        logger.LogInformation("Import Status activities ended.");
+                    }
+                    else if (_options.ContinueLastImportDuringPause)
+                    {
+                        //Only run export status and import activity to process any completed export after the tool stopped.
+
+                        //Run sub orchestration for export status
                         logger.LogInformation("Starting Export Status activities");
                         var exportStatusContent = await context.CallSubOrchestratorAsync<string>("ExportStatusOrchestration", options: options);
                         logger.LogInformation("Export Status activities ended.");
