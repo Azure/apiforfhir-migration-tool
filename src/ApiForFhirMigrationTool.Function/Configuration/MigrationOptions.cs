@@ -118,6 +118,9 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         [JsonProperty("maxCount")]
         public bool MaxCount { get; set; } = false;
 
+        [JsonProperty("continueLastImportDuringPause")]
+        public bool ContinueLastImportDuringPause { get; set; } = false;
+
         [JsonProperty("maxCountValue")]
         public int MaxCountValue { get; set; }
 
