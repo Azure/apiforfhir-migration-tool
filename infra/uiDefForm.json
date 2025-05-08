@@ -286,9 +286,9 @@
                                
                             },
                             {
-                                "name": "stopMigrationDuringBusinessHours",
+                                "name": "pauseMigrationDuringBusinessHours",
                                 "type": "Microsoft.Common.DropDown",
-                                "label": "Stop Data Migration Tool During Business Hours",
+                                "label": "Pause Data Migration Tool During Business Hours",
                                 "defaultValue":"False",
                                 "toolTip": "The migration tool lets you set a time frame to prevent new export operations during business hours, while ongoing exports will continue and new ones will start after the restricted period. ",
                                 "constraints": {
@@ -307,9 +307,9 @@
                                 "visible": true
                             },
                             {
-                                "name": "stopDmInfoBox",
+                                "name": "pauseDmInfoBox",
                                 "type": "Microsoft.Common.InfoBox",
-                                "visible": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
+                                "visible": "[steps('fhirSelection').fhirSection.pauseMigrationDuringBusinessHours]",
                                 "options": {
                                     "icon": "Info",
                                     "text": "You need to enter the start and end times in a 24-hour format in UTC for the restricted period. \nBy default, the start time is set to 8 and the end time is set to 17 UTC.\nFor example, if you do not want new exports to start between 09:00 AM and 06:00 PM UTC, enter 9 as the start time and 18 as the end time."
@@ -322,11 +322,11 @@
                                 "placeholder": "Enter Start Time",
                                 "defaultValue": 8,
                                 "dependsOn": [
-                                    "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]"
+                                    "[steps('fhirSelection').fhirSection.pauseMigrationDuringBusinessHours]"
                                 ],
-                                "visible": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
+                                "visible": "[steps('fhirSelection').fhirSection.pauseMigrationDuringBusinessHours]",
                                 "constraints": {
-                                    "required": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
+                                    "required": "[steps('fhirSelection').fhirSection.pauseMigrationDuringBusinessHours]",
                                     "regex": "^[0-9]{1,2}$",
                                     "validationMessage": "Hour must be an integer between 0 and 23",
                                     "minValue": 0,
@@ -340,11 +340,11 @@
                                 "placeholder": "Enter End Time",
                                 "defaultValue": 17,
                                 "dependsOn": [
-                                    "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]"
+                                    "[steps('fhirSelection').fhirSection.pauseMigrationDuringBusinessHours]"
                                 ],
-                                "visible": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
+                                "visible": "[steps('fhirSelection').fhirSection.pauseMigrationDuringBusinessHours]",
                                 "constraints": {
-                                    "required": "[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
+                                    "required": "[steps('fhirSelection').fhirSection.pauseMigrationDuringBusinessHours]",
                                     "regex": "^[0-9]{1,2}$",
                                     "validationMessage": "Hour must be an integer between 0 and 23",
                                     "minValue": 0,
@@ -430,7 +430,7 @@
             "isParallel":"[steps('fhirSelection').fhirSection.isParallel]",
             "exportDeidentified":"[steps('fhirSelection').fhirSection.exportDeidentified]",
             "configFile":"[steps('fhirSelection').fhirSection.configurationFile]",
-            "stopDm":"[steps('fhirSelection').fhirSection.stopMigrationDuringBusinessHours]",
+            "pauseDm":"[steps('fhirSelection').fhirSection.pauseMigrationDuringBusinessHours]",
             "startTime": "[int(steps('fhirSelection').fhirSection.startTime)]",
             "endTime": "[int(steps('fhirSelection').fhirSection.endTime)]",
             "specificRun":"[steps('fhirSelection').fhirSection.MigrationDuringSpecificRange]",

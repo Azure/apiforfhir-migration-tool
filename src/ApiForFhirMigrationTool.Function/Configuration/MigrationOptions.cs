@@ -287,8 +287,8 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         [JsonProperty("fileCount")]
         public int FileCount { get; set; } = 10000;
 
-        [JsonProperty("stopDm")]
-        public bool StopDm { get; set; } = false;
+        [JsonProperty("pauseDm")]
+        public bool PauseDm { get; set; } = false;
 
         [JsonProperty("specificRun")]
         public bool SpecificRun { get; set; } = false;

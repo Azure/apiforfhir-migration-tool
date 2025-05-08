@@ -58,7 +58,7 @@ param exportDeidentified bool
 param configFile string = ''
 
 @description('Export by timestamp')
-param stopDm bool
+param pauseDm bool
 
 @description('Indicates the start time for the hours when export and import operations are restricted')
 param startTime int = 8
@@ -153,7 +153,7 @@ module function './azureFunction.bicep'= {
         exportWithDelete : exportWithDelete
         isParallel :isParallel
         exportDeidentified:exportDeidentified
-        stopDm:stopDm
+        pauseDm:pauseDm
         startTime:startTime
         endTime:endTIme
         specificRun: specificRun

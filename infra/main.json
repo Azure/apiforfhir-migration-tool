@@ -144,7 +144,7 @@
                 "description": "Name of Configuration file"
             }
         },
-        "stopDm":{
+        "pauseDm":{
             "type": "bool",
             "defaultValue": false,
             "metadata": {
@@ -368,7 +368,7 @@
                 "AZURE_MaxCount": false,
                 "AZURE_MaxCountValue": 10000,
                 "AZURE_ExportDeidentified":"[parameters('exportDeidentified')]",
-                "AZURE_StopDm":"[parameters('stopDm')]",
+                "AZURE_PauseDm":"[parameters('pauseDm')]",
                 "AZURE_StartTime":"[parameters('startTime')]",
                 "AZURE_EndTime":"[parameters('endTime')]",
                 "AZURE_SpecificRun":"[parameters('specificRun')]",
