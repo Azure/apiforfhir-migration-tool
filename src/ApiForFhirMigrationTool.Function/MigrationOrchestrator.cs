@@ -54,7 +54,7 @@ namespace ApiForFhirMigrationTool.Function
                 bool shouldRun = true;
                 bool continueRun = true;
 
-                if (_options.StopDm)
+                if (_options.PauseDm)
                 {
                     if (_options.StartTime < 0 || _options.StartTime > 23 || _options.EndTime < 0 || _options.EndTime > 23)
                     {
@@ -174,7 +174,7 @@ namespace ApiForFhirMigrationTool.Function
                     }
                     else if (_options.ContinueLastImportDuringPause)
                     {
-                        //Only run export status and import activity to process any completed export after the tool stopped.
+                        //Only run export status and import activity to process any completed export after the tool paused.
 
                         //Run sub orchestration for export status
                         logger.LogInformation("Starting Export Status activities");

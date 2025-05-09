@@ -18,7 +18,7 @@ param exportWithDelete bool
 param isParallel bool
 param exportDeidentified bool
 param configFile string
-param stopDm bool
+param pauseDm bool
 param startTime int
 param endTime int
 param specificRun bool
@@ -137,7 +137,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
               AZURE_MaxCount: 'false'
               AZURE_MaxCountValue: 10000
               AZURE_ExportDeidentified:exportDeidentified
-              AZURE_StopDm:stopDm
+              AZURE_PauseDm:pauseDm
               AZURE_StartTime:startTime
               AZURE_EndTime:endTime
               AZURE_SpecificRun: specificRun

@@ -293,21 +293,21 @@ Take a look at the screenshot below to learn how to configure the export setting
 ![De-Identified](images/Export-with-history-and-delete-deidentified.png)
 
 
-### Stop Data Migration Tool During Business Hours
+### Pause Data Migration Tool During Business Hours
 
 The migration tool allows you to specify a time frame during which no new export operations will start. By setting a time frame, you can ensure that new exports do not begin during business hours, while still allowing ongoing exports to complete and new exports to start after the specified time frame ends.
 
-During the deployment of the migration tool, you will have the option to enable or disable "Stop Migration Tool During Business Hours" by specifying its value as true or false. If you select true, you will also need to enter the start time and end time for the restricted period  in UTC. By default, the start time is set to 8 and the end time is set to 17.
+During the deployment of the migration tool, you will have the option to enable or disable "Pause Migration Tool During Business Hours" by specifying its value as true or false. If you select true, you will also need to enter the start time and end time for the restricted period  in UTC. By default, the start time is set to 8 and the end time is set to 17.
 
-Take a look at the screenshot below to learn how to configure these settings. By default, the value of "Stop Migration Tool During Business Hours" is set to false. If you prefer to stop the migration tool during business hours, you can change the value to true and specify the start time and end time in a 24-hour format format in UTC.<br>
+Take a look at the screenshot below to learn how to configure these settings. By default, the value of "Pause Migration Tool During Business Hours" is set to false. If you prefer to pause the migration tool during business hours, you can change the value to true and specify the start time and end time in a 24-hour format format in UTC.<br>
 
 ![StopDM](images/Stop-Data-MigrationTool.png)
 
-Upon the completion of deployment, you can still make adjustments to the export settings to stop the migration tool by modifying the values within the Azure function's environment variables.
+Upon the completion of deployment, you can still make adjustments to the export settings to pause the migration tool by modifying the values within the Azure function's environment variables.
 
 Example:
 ```
-Name: AZURE_StopDm
+Name: AZURE_PauseDm
 Value: True
 ```
 You can also specify the start and end times for the restricted period. For example, if you do not want new exports to start between 09:00 AM and 06:00 PM, modify the following values within the Azure function's environment variables

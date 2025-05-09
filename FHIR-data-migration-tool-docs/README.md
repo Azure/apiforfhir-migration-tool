@@ -320,21 +320,21 @@ Take a look at the screenshot below to learn how to configure the export setting
 ![De-Identified](images/Export-with-history-and-delete-deidentified.png)
 
 
-### Stop Data Migration Tool During Business Hours
+### Pause Data Migration Tool During Business Hours
 
 The migration tool allows you to specify a time frame during which no new export/import operations will start. By setting a time frame, you can ensure that new exports/imports do not begin during business hours, while still allowing ongoing exports/imports to complete and new exports/imports to start after the specified time frame ends.
 
-During the deployment of the migration tool, you will have the option to enable or disable "Stop Migration Tool During Business Hours" by specifying its value as true or false. If you select true, you will also need to enter the start time and end time for the restricted period  in UTC. By default, the start time is set to 8 and the end time is set to 17.
+During the deployment of the migration tool, you will have the option to enable or disable "Pause Migration Tool During Business Hours" by specifying its value as true or false. If you select true, you will also need to enter the start time and end time for the restricted period  in UTC. By default, the start time is set to 8 and the end time is set to 17.
 
-Take a look at the screenshot below to learn how to configure these settings. By default, the value of "Stop Migration Tool During Business Hours" is set to false. If you prefer to stop the migration tool during business hours, you can change the value to true and specify the start time and end time in a 24-hour format format in UTC.<br>
+Take a look at the screenshot below to learn how to configure these settings. By default, the value of "Pause Migration Tool During Business Hours" is set to false. If you prefer to pause the migration tool during business hours, you can change the value to true and specify the start time and end time in a 24-hour format format in UTC.<br>
 
 ![StopDM](images/Stop-Data-MigrationTool.png)
 
-Upon the completion of deployment, you can still make adjustments to the export settings to stop the migration tool by modifying the values within the Azure function's environment variables.
+Upon the completion of deployment, you can still make adjustments to the export settings to pause the migration tool by modifying the values within the Azure function's environment variables.
 
 Example:
 ```
-Name: AZURE_StopDm
+Name: AZURE_PauseDm
 Value: True
 ```
 You can also specify the start and end times for the restricted period. For example, if you do not want new exports to start between 09:00 AM and 06:00 PM, modify the following values within the Azure function's environment variables
@@ -347,11 +347,11 @@ Value: 9
 Name: AZURE_EndTime
 Value: 18
 ``` 
-#### Run the import job during business hours while migration tool is stopped.
+#### Run the import job during business hours while migration tool is paused.
 
-There is a parameter named:AZURE_ContinueLastImportDuringPause in the migration tool that allows the import job to run for an export job that is completed during business hours while the migration tool is stopped.
+There is a parameter named:AZURE_ContinueLastImportDuringPause in the migration tool that allows the import job to run for an export job that is completed during business hours while the migration tool is paused.
 
-For example, if an export job is running when the migration tool is stopped, the export will continue to run. However, once it is completed, the import job will not start automatically because the tool is in a stopped state. By using this parameter, you can enable the import job to start for any export job that completes during the stopped period.
+For example, if an export job is running when the migration tool is paused, the export will continue to run. However, once it is completed, the import job will not start automatically because the tool is in a paused state. By using this parameter, you can enable the import job to start for any export job that completes during the paused period.
 
 You can specify the following values within the Azure function's environment variables
 
@@ -361,7 +361,7 @@ Name: AZURE_ContinueLastImportDuringPause
 Value: True
 ```
 
-__Note__: No new export jobs will start during business hours when the migration tool is stopped. This parameter only allows import jobs to run for export jobs that finish while the migration tool is in a stopped state.
+__Note__: No new export jobs will start during business hours when the migration tool is paused. This parameter only allows import jobs to run for export jobs that finish while the migration tool is in a paused state.
 
 ### Run Data Migration Tool During Specific Date Range
 
