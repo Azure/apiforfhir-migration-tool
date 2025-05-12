@@ -159,6 +159,7 @@ namespace ApiForFhirMigrationTool.Function
                                         exportEntity["importContentLocation"] = importResponse.Content;
                                         exportEntity["ImportStartTime"] = DateTime.UtcNow;
                                         exportEntity["ImportNo"] = blobItem.Name;
+                                        exportEntity["ImportRetry"] = 0;
 
                                         _logger?.LogInformation("Starting update of the export table.");
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
@@ -192,6 +193,7 @@ namespace ApiForFhirMigrationTool.Function
                                                 { "IsImportComplete", false },
                                                 { "IsImportRunning", "Started" },
                                                 { "ImportRequest", "Yes" },
+                                                { "ImportRetry", 0},
                                                 { "Since",item.GetString("Since") },
                                                 { "Till", item.GetString("Till") },
                                                 { "StartTime", item.GetDateTime("StartTime") },
