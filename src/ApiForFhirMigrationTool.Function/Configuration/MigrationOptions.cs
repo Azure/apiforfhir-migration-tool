@@ -71,7 +71,7 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         public TokenCredential TokenCredential { get; set; } = new DefaultAzureCredential();
 
         [JsonProperty("retryCount")]
-        public int RetryCount { get; set; }
+        public int RetryCount { get; set; } = 3;
 
         [JsonProperty("waitForRetry")]
         public double WaitForRetry { get; set; }
@@ -308,6 +308,8 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         [JsonProperty("clientSecret")]
         public string ClientSecret { get; set; } = string.Empty;
 
+        [JsonProperty("retryErrors")]
+        public bool RetryErrors { get; set; } = false;
 
         public bool ValidateConfig()
         {
