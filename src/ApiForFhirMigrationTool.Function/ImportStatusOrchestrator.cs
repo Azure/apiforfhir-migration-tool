@@ -172,7 +172,7 @@ namespace ApiForFhirMigrationTool.Function
                             exportEntity["EndTime"] = DateTime.UtcNow;
                             exportEntity["TotalImportResourceCount"] = resourceCount;
                             exportEntity["TotalFailedImportCount"] = errorImportCount;
-                            exportEntity["FailedImports"] = failedImportType;
+                            exportEntity["FailedImportResources"] = failedImportType;
 
                             Tuple<Uri, string> source = new Tuple<Uri, string>(_options.SourceUri, _options.SourceHttpClient);
                             Tuple<Uri, string> destination = new Tuple<Uri, string>(_options.DestinationUri, _options.DestinationHttpClient);

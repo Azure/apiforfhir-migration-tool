@@ -175,7 +175,7 @@ namespace ApiForFhirMigrationTool.Function
                                         exportEntity["ExportId"] = _orchestrationHelper.GetProcessId(statusUrl);
                                         exportEntity["SearchParameterCount"] = searchParameter_count;
                                         exportEntity["TotalFailedExportCount"] = errorExportCount;
-                                        exportEntity["FailedExports"] = failedExportType;
+                                        exportEntity["FailedExportResources"] = failedExportType;
 
                                         logger?.LogInformation("Starting update of the export table.");
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
