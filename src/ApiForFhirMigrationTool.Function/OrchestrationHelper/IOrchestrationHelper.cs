@@ -9,7 +9,7 @@ namespace ApiForFhirMigrationTool.Function.OrchestrationHelper
 {
     public interface IOrchestrationHelper
     {
-        int CreateImportRequest(string content, string importMode, string statusUrl);
+        (int,ulong) CreateImportRequest(string content, string importMode, string statusUrl);
 
         string GetProcessId(string statusUrl);
 

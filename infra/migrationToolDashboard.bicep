@@ -2800,7 +2800,7 @@ resource migrationToolDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview'
               type: 'Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart'
               settings: {
                 content: {
-                  Query: 'customEvents | where name == "Import" and tostring(customDimensions.ImportStatus) == "Completed"\n| extend TotalExpoertedResources = tostring(customDimensions.TotalExportResources)\n| extend TotalImportResources = tostring(customDimensions.TotalImportResources)\n| distinct timestamp, TotalExpoertedResources, TotalImportResources\n| order by timestamp desc  \n'
+                 Query: 'customEvents | where name == "Import" and tostring(customDimensions.ImportStatus) == "Completed"\n| extend TotalExportedResources = tostring(customDimensions.TotalExportResources)\n| extend TotalImportResources = tostring(customDimensions.TotalImportResources)\n| extend FailedImportCount = tostring(customDimensions.FailedImportCount)\n| extend FailedImportType = tostring(customDimensions.FailedResourceType)\n| extend SkippedSearchParameter = tostring(customDimensions.SearchParameterCount)\n| extend FailedExportCount = tostring(customDimensions.FailedExportCount)\n| extend FailedExportType = tostring(customDimensions.FailedExportType)\n| distinct timestamp, TotalExportedResources, TotalImportResources, FailedImportCount, FailedImportType, SkippedSearchParameter, FailedExportCount, FailedExportType\n| order by timestamp desc\n'
                 }
               }
               partHeader: {

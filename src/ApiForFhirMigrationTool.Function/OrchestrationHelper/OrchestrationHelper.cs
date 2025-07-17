@@ -23,11 +23,12 @@ namespace ApiForFhirMigrationTool.Function.OrchestrationHelper
             _azureBlobClientFactory = azureBlobClientFactory;
         }
 
-        public int CreateImportRequest(string content, string importMode, string statusUrl)
+        public (int,ulong) CreateImportRequest(string content, string importMode, string statusUrl)
         {
             int fileCount = _options.FileCount;
             string statusId = GetProcessId(statusUrl);
             int importPayloadCount = 1;
+            ulong searchParameterCount = 0;
             try
             {
                 JObject objResponse = JObject.Parse(content);
@@ -82,17 +83,25 @@ namespace ApiForFhirMigrationTool.Function.OrchestrationHelper
                             paramArray.Add(input);
                             counter++;
                         }
+                        else
+                        {
+                            var countToken = item["count"];
+                            if (countToken != null)
+                            {
+                                searchParameterCount += countToken.Value<ulong>();
+                            }
+                        }
                     }
                     importRequest.Add("parameter", paramArray);
                     SaveImportRequestToFile(importRequest, importPayloadCount, statusId);
                 }
-
+               
             }
             catch
             {
                 throw;
             }
-            return importPayloadCount;
+            return (importPayloadCount, searchParameterCount);
         }
 
         public void SaveImportRequestToFile(JObject importRequest, int importPayloadCount, string statusId)
