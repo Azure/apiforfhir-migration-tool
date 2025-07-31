@@ -19,7 +19,6 @@ using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Abstractions;
 using Newtonsoft.Json.Linq;
-
 namespace ApiForFhirMigrationTool.Function
 {
     public class ImportStatusOrchestrator
@@ -56,6 +55,9 @@ namespace ApiForFhirMigrationTool.Function
             bool isComplete = false;
             string? resContent = string.Empty;
             var resourceCount = string.Empty;
+            var errorImportCount = string.Empty;
+            JArray? objOutput = new JArray();
+            JArray? objError = new JArray();
 
             try
             {
@@ -147,19 +149,30 @@ namespace ApiForFhirMigrationTool.Function
                             if (!string.IsNullOrEmpty(resContent))
                             {
                                 JObject objResponse = JObject.Parse(resContent);
-                                var objOutput = objResponse["output"] as JArray;
+                                objOutput = objResponse["output"] as JArray;
+                                objError = objResponse["error"] as JArray;
+
                                 if (objOutput != null && objOutput.Any())
                                 {
                                     resourceCount = _orchestrationHelper.CalculateSumOfResources(objOutput).ToString();
+                                    if (objError != null && objError.Any())
+                                    {
+                                        errorImportCount = _orchestrationHelper.CalculateSumOfResources(objError).ToString();
+                                    }
                                 }
                             }
 
                             logger?.LogInformation($"Import Status check returned: Success.");
+
+                            var failedImportType = (objError?.HasValues ?? false) ? string.Join(", ", objError.Select(e => $"{e["type"]?.ToString()}:{e["count"]?.ToString()}")) : string.Empty;
+
                             TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                             exportEntity["IsImportComplete"] = true;
                             exportEntity["IsImportRunning"] = "Completed";
                             exportEntity["EndTime"] = DateTime.UtcNow;
                             exportEntity["TotalImportResourceCount"] = resourceCount;
+                            exportEntity["TotalFailedImportCount"] = errorImportCount;
+                            exportEntity["FailedImportResources"] = failedImportType;
 
                             Tuple<Uri, string> source = new Tuple<Uri, string>(_options.SourceUri, _options.SourceHttpClient);
                             Tuple<Uri, string> destination = new Tuple<Uri, string>(_options.DestinationUri, _options.DestinationHttpClient);
@@ -330,6 +343,11 @@ namespace ApiForFhirMigrationTool.Function
                                         { "DestinationResourceCount", fhirServiceTotal.Item1.HasValue ? fhirServiceTotal.Item1.Value.ToString() : " " },
                                         { "SourceError", azureApiForFhirTotal.Item2 ?? " " },
                                         { "DestinationError", fhirServiceTotal.Item2 ?? " " },
+                                        { "FailedImportCount", errorImportCount },
+                                        { "FailedResourceType", failedImportType },
+                                        { "SearchParameterCount", item.GetInt64("SearchParameterCount")?.ToString() ?? " " },
+                                        { "FailedExportCount", item.GetString("TotalFailedExportCount") },
+                                        { "FailedExportType", item.GetString("FailedExports")}
                                 });
                             logger?.LogInformation("Logs updated successfully in Application Insights.");
                             isComplete = true;
@@ -420,7 +438,6 @@ namespace ApiForFhirMigrationTool.Function
                     }
 
                     isComplete = false;
-                    //  }
                 }
             }
             catch

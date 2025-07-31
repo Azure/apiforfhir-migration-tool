@@ -53,6 +53,7 @@ namespace ApiForFhirMigrationTool.Function
             var statusUrl = string.Empty;
             var import_body = string.Empty;
             bool isComplete = false;
+            var errorExportCount = string.Empty;            
 
             try
             {
@@ -140,17 +141,27 @@ namespace ApiForFhirMigrationTool.Function
                                 {
                                     JObject objResponse = JObject.Parse(resContent);
                                     var objOutput = objResponse["output"] as JArray;
+                                    var objError = objResponse["error"] as JArray;
                                     bool result = CheckIfAllTypesAreSearchParameter(objOutput);
 
                                     if (objOutput != null && objOutput.Any() && result==false)
                                     {
                                         logger?.LogInformation($"Creation of import payload started.");
-                                        var payload_count = _orchestrationHelper.CreateImportRequest(response.Content, _options.ImportMode, statusUrl);
+                                        var count = _orchestrationHelper.CreateImportRequest(response.Content, _options.ImportMode, statusUrl);
+                                        int payload_count = count.Item1;
+                                        ulong searchParameter_count = count.Item2;
+                                        
                                         logger?.LogInformation($"Creation of import payload finished");
 
                                         var resourceCount = _orchestrationHelper.CalculateSumOfResources(objOutput).ToString(CultureInfo.InvariantCulture);
+                                        if (objError != null && objError.Any())
+                                        {
+                                            errorExportCount = _orchestrationHelper.CalculateSumOfResources(objError).ToString(CultureInfo.InvariantCulture);
+                                        }
                                         logger?.LogInformation("Successfully retrieved the total exported resource count.");
-                                       
+
+                                        var failedExportType = (objError?.HasValues ?? false) ? string.Join(", ", objError.Select(e => $"{e["type"]?.ToString()}:{e["count"]?.ToString()}")) : string.Empty;
+
                                         TableEntity exportEntity = _azureTableMetadataStore.GetEntity(exportTableClient, _options.PartitionKey, item.RowKey);
                                         exportEntity["IsExportComplete"] = true;
                                         exportEntity["IsExportRunning"] = "Completed";
@@ -162,12 +173,16 @@ namespace ApiForFhirMigrationTool.Function
                                         exportEntity["PayloadCount"] = payload_count;
                                         exportEntity["CompletedCount"] = 0;
                                         exportEntity["ExportId"] = _orchestrationHelper.GetProcessId(statusUrl);
-                                        
+                                        exportEntity["SearchParameterCount"] = searchParameter_count;
+                                        exportEntity["TotalFailedExportCount"] = errorExportCount;
+                                        exportEntity["FailedExportResources"] = failedExportType;
+
                                         logger?.LogInformation("Starting update of the export table.");
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                         logger?.LogInformation("Completed update of the export table.");
                                         
                                         logger?.LogInformation("Updating logs in Application Insights.");
+                                        
                                         _telemetryClient.TrackEvent(
                                             "Export",
                                             new Dictionary<string, string>()
@@ -178,6 +193,9 @@ namespace ApiForFhirMigrationTool.Function
                                                 { "Since", string.Empty },
                                                 { "Till", string.Empty },
                                                 { "TotalResources", resourceCount },
+                                                { "SearchParameterCount", searchParameter_count.ToString()},
+                                                { "FailedExportCount", errorExportCount },
+                                                { "FailedExportType", failedExportType }
                                             });
                                         logger?.LogInformation("Logs updated successfully in Application Insights.");
                                     }
@@ -197,8 +215,8 @@ namespace ApiForFhirMigrationTool.Function
                                         logger?.LogInformation("Starting update of the export table.");
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                         logger?.LogInformation("Completed update of the export table.");
-                                        
-                                        logger?.LogInformation("Updating logs in Application Insights.");
+                                                                               
+                                        logger?.LogInformation("Updating logs in Application Insights.");                                        
                                         _telemetryClient.TrackEvent(
                                         "Export",
                                         new Dictionary<string, string>()
@@ -208,7 +226,7 @@ namespace ApiForFhirMigrationTool.Function
                                             { "ExportStatus", "Completed" },
                                             { "Since", string.Empty },
                                             { "Till", string.Empty },
-                                            { "TotalResources", string.Empty },
+                                            { "TotalResources", string.Empty },                                           
                                         });
                                         logger?.LogInformation("Logs updated successfully in Application Insights.");
                                        
