@@ -400,6 +400,7 @@ public class ExportOrchestrator
               //  logger?.LogInformation(" Resetting table entity.");
                 TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                 qEntitynew["globalSinceExportType"] = qEntitynew["globalTillExportType"];
+                qEntitynew["since"] = qEntitynew["globalTillExportType"];
                 qEntitynew["globalTillExportType"] = "";
                 qEntitynew["resourceTypeIndex"] = 0; // all the import will done so will reset index
                 qEntitynew["multiExport"] = "";

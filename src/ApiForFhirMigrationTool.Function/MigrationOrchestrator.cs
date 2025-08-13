@@ -80,46 +80,25 @@ namespace ApiForFhirMigrationTool.Function
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 logger.LogInformation("Table client created successfully.");
 
-                if (_options.IsParallel == true)
+                Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
+                if (jobList.Count() <= 0)
                 {
-                    Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
-                    if (jobList.Count() <= 0)
-                    {
-                        var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
+                    var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
                     {
                         { "JobId", 0 },
-                        {"SurfaceJobId",0 },
-                        {"DeepJobId",0 },
-                        {"ImportId",0 },
-                        {"SearchParameterMigration", false }
+                        { "SurfaceJobId",0 },
+                        { "DeepJobId",0 },
+                        { "globalSinceExportType", "" },
+                        { "globalTillExportType", "" },
+                        { "noOfResources", _options.ResourceTypes?.Count() },
+                        { "resourceTypeIndex", 0 },
+                        { "multiExport", "" },
+                        { "ImportId",0 },
+                        { "SearchParameterMigration", false }
                     };
-                        logger.LogInformation("Starting update of the chunk table.");
-                        _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
-                        logger.LogInformation("Completed update of the chunk table.");
-                    }
-                }
-                else
-                {
-                    Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
-                    if (jobList.Count() <= 0)
-                    {
-                        var tableEntity = new TableEntity(_options.PartitionKey, _options.RowKey)
-                        {
-                            { "JobId", 0 },
-                            {"SurfaceJobId",0 },
-                            {"DeepJobId",0 },
-                            { "globalSinceExportType", "" },
-                            { "globalTillExportType", "" },
-                            { "noOfResources", _options.ResourceTypes?.Count() },
-                            { "resourceTypeIndex", 0 },
-                            { "multiExport", "" },
-                            {"ImportId",0 },
-                            {"SearchParameterMigration", false }
-                        };
-                        logger.LogInformation("Starting update of the chunk table.");
-                        _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
-                        logger.LogInformation("Completed update of the chunk table.");
-                    }
+                    logger.LogInformation("Starting update of the chunk table.");
+                    _azureTableMetadataStore.AddEntity(chunktableClient, tableEntity);
+                    logger.LogInformation("Completed update of the chunk table.");
                 }
                 TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                 var since = _options.IsParallel == true ? (string)qEntity["since"] : (string)qEntity["globalSinceExportType"];
@@ -206,7 +185,7 @@ namespace ApiForFhirMigrationTool.Function
         [DurableClient] DurableTaskClient client,
         FunctionContext executionContext)
         {
-            string instanceId_new = "FhirMigrationTool";
+            string instanceId_new = "FhirMigrationTool12";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
             try
             {
