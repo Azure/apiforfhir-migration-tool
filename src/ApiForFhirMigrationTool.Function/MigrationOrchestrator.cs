@@ -103,6 +103,18 @@ namespace ApiForFhirMigrationTool.Function
                 TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                 var since = _options.IsParallel == true ? (string)qEntity["since"] : (string)qEntity["globalSinceExportType"];
 
+                if (_options.IsParallel == true)
+                {
+                    qEntity["globalTillExportType"] = "";
+                    qEntity["resourceTypeIndex"] = 0;
+                    qEntity["multiExport"] = "";
+                    qEntity["subSinceExportType"] = "";
+                    qEntity["subTillExportType"] = "";
+                    logger.LogInformation("Starting update of the chunk table.");
+                    _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntity);
+                    logger.LogInformation("Completed update of the chunk table.");
+                }
+
                 if (_options.SpecificRun && !string.IsNullOrEmpty(since))
                 {
                     logger.LogInformation("Data Migration Tool checking for specific time range.");
