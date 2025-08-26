@@ -197,7 +197,7 @@ namespace ApiForFhirMigrationTool.Function
         [DurableClient] DurableTaskClient client,
         FunctionContext executionContext)
         {
-            string instanceId_new = "FhirMigrationTool12";
+            string instanceId_new = "FhirMigrationTool";
             StartOrchestrationOptions options = new StartOrchestrationOptions(instanceId_new);
             try
             {
