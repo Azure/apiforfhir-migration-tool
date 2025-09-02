@@ -235,7 +235,8 @@ namespace ApiForFhirMigrationTool.Function
                                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
 
                                             qEntitynew["since"] = exportEntity["Till"];
-                                            
+                                            qEntitynew["globalSinceExportType"] = exportEntity["Till"];
+
                                             logger?.LogInformation("Starting update of the chunk table.");
                                             _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
                                             logger?.LogInformation("Completed update of the chunk table.");

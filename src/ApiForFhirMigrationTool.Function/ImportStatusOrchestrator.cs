@@ -220,6 +220,7 @@ namespace ApiForFhirMigrationTool.Function
                                         {
                                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                                             qEntitynew["since"] = exportEntity["Till"];
+                                            qEntitynew["globalSinceExportType"] = exportEntity["Till"];
                                             logger?.LogInformation("Starting update of the chunk table.");
                                             _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
                                             logger?.LogInformation("Completed update of the chunk table.");
@@ -243,6 +244,7 @@ namespace ApiForFhirMigrationTool.Function
                                                 {
                                                     qEntityResourceType = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                                                     qEntityResourceType["globalSinceExportType"] = qEntityResourceType["globalTillExportType"];
+                                                    qEntityResourceType["since"] = qEntityResourceType["globalTillExportType"];
                                                     qEntityResourceType["globalTillExportType"] = "";
                                                     qEntityResourceType["resourceTypeIndex"] = 0; // all the import will done so will reset index
                                                     qEntityResourceType["subSinceExportType"] = "";
@@ -279,6 +281,7 @@ namespace ApiForFhirMigrationTool.Function
                                                     {
                                                         //Its last run to reset value and assigning till to since
                                                         qEntityResourceTypenew["globalSinceExportType"] = qEntityResourceTypenew["globalTillExportType"];
+                                                        qEntityResourceTypenew["since"] = qEntityResourceTypenew["globalTillExportType"];
                                                         qEntityResourceTypenew["globalTillExportType"] = "";
                                                         qEntityResourceTypenew["resourceTypeIndex"] = 0; // all the import will done so will reset index
                                                         qEntityResourceTypenew["multiExport"] = "";
