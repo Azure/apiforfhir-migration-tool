@@ -35,7 +35,7 @@ namespace ApiForFhirMigrationTool.Function.SearchParameterOperation
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(_options.SourceUri, "/SearchParameter"),
+                    RequestUri = new Uri(_options.SourceUri, "/SearchParameter?_count=1000"),
                     Headers =
                     {
                         { HttpRequestHeader.Accept.ToString(), "application/json" },
@@ -87,7 +87,7 @@ namespace ApiForFhirMigrationTool.Function.SearchParameterOperation
                         requestObject["url"] = $"SearchParameter/{(string)resource["resource"]["id"]}";
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
-                        requestObject["method"] = "PUT";
+                        requestObject["method"] = "POST";
                         resource["request"] = requestObject;
                     }
 
