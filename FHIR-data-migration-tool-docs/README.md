@@ -363,9 +363,9 @@ Value: True
 
 __Note__: No new export jobs will start during business hours when the migration tool is paused. This parameter only allows import jobs to run for export jobs that finish while the migration tool is in a paused state.
 
-### Run Data Migration Tool During Specific Date Range
+### Migrate data for Specific Date Range
 
-The migration tool allows you to specify a time range for a predefined set of data. By configuring a time frame, you can ensure that only the data within that specific period will be migrated. 
+The migration tool allows you to specify a date range for a predefined set of data. By configuring a date frame, you can ensure that only the data within that specific period will be migrated. 
 
 During the deployment of the migration tool, you will have the option to enable or disable "Run Data Migration Tool During Specific Date Range" by specifying its value as true or false. If you select true, you will also need to enter the start date and end date for the specific period in UTC.
 
@@ -380,7 +380,7 @@ Example:
 Name: AZURE_SpecificRun
 Value: True
 ```
-You can also specify the start and end date for the specific period. For example, if you want data migration to start from 2020-01-01 and end 2024-12-31, modify the following values within the Azure function's environment variables
+You can also specify the start and end date for the specific period. For example, if you want to migrate data from 2020-01-01 and 2024-12-31, modify the following values within the Azure function's environment variables
 
 Example:
 ```
