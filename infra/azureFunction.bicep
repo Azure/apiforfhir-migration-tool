@@ -151,7 +151,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
               AZURE_ClientId:clientId
               AZURE_ClientSecret:clientSecret
               AZURE_TenantId:tenantId
-
+              AZURE_MigrationStarterCron: '0 */15 * * * *'
               // This will trigger the custom deployment script to run during deployment
               SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
               ENABLE_ORYX_BUILD: 'true'

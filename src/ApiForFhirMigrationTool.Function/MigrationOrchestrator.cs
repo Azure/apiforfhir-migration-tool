@@ -193,7 +193,7 @@ namespace ApiForFhirMigrationTool.Function
 
         [Function("TimerOrchestration")]
         public async Task Run(
-        [TimerTrigger("0 */5 * * * *")] TimerInfo myTimer,
+        [TimerTrigger("%MigrationStarterCron%")] TimerInfo myTimer,
         [DurableClient] DurableTaskClient client,
         FunctionContext executionContext)
         {
