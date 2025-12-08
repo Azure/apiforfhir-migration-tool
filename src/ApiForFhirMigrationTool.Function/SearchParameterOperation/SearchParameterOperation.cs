@@ -87,7 +87,7 @@ namespace ApiForFhirMigrationTool.Function.SearchParameterOperation
                         requestObject["url"] = $"SearchParameter/{(string)resource["resource"]["id"]}";
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
-                        requestObject["method"] = "POST";
+                        requestObject["method"] = "PUT";
                         resource["request"] = requestObject;
                     }
 
