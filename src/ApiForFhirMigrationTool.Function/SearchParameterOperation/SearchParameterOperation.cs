@@ -35,7 +35,7 @@ namespace ApiForFhirMigrationTool.Function.SearchParameterOperation
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(_options.SourceUri, "/SearchParameter"),
+                    RequestUri = new Uri(_options.SourceUri, "/SearchParameter?_count=1000"),
                     Headers =
                     {
                         { HttpRequestHeader.Accept.ToString(), "application/json" },

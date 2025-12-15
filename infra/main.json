@@ -382,6 +382,7 @@
                 "AZURE_ClientId": "[parameters('clientId')]",
                 "AZURE_ClientSecret": "[parameters('clientSecret')]",
                 "AZURE_TenantId": "[parameters('tenantId')]",
+                "MigrationStarterCron": "0 0 * * * *",
                 "SCM_DO_BUILD_DURING_DEPLOYMENT": true,
                 "ENABLE_ORYX_BUILD": true,
                 "WEBSITE_RUN_FROM_PACKAGE": "0",

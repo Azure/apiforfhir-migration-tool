@@ -52,8 +52,8 @@ namespace ApiForFhirMigrationTool.Function.Configuration
         public List<string>? QuerySurface { get; set; } = new List<string> { "?_summary=Count" };
         public List<string>? HistoryDeleteQuerySurface { get; set; } = new List<string> { "_history?_summary=count" };
 
-        public List<string>? QueryDeep { get; set; } = new List<string> { "?_count=" };
-        public List<string>? HistoryDeleteQueryDeep { get; set; } = new List<string> { "_history?_count=" };
+        public List<string>? QueryDeep { get; set; } = new List<string> { "Patient?_count=" };
+        public List<string>? HistoryDeleteQueryDeep { get; set; } = new List<string> { "Patient/_history?_count=" };
 
         [JsonProperty("DeepCheckCount")]
         public int DeepCheckCount { get; set; }
