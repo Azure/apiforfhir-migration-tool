@@ -22,9 +22,9 @@ At a high level, this migration pattern involves:
 ![Architecture](images/Migration-tool-V1.2-Architecture.png)
 
 ### Concepts
-The  FHIR data migration tool executes a series of smaller export-import rounds in succession in order to continuously copy over **chunks** of data (default chunk is set at 30 days of data), checking every five minutes to check if the last export-import finished, and if there is new data to migrate. The five minute interval is set by the **orchestrator**. 
+The  FHIR data migration tool executes a series of smaller export-import rounds in succession in order to continuously copy over **chunks** of data (default chunk is set at 30 days of data), checking every one hour to check if the last export-import finished, and if there is new data to migrate. The one hour interval is set by the **orchestrator**. 
   - **Chunks**: The migration tool will "chunk" the data into 30-day segments (based on the resources' lastUpdated timestamp) for each round of export-import. The default is 30 days and can be adjusted (more information below). Reducing the size of the export and imports helps with the efficiency of the migration tool and helps to minimize errors.
-  - **Orchestrator**: Immediately after deploying the migration tool, the migration tool will find the earliest "chunk" of data and kick off a export, followed by an import. The orchestrator then checks every 5 minutes to see if the previous export-import round has finished. If the previous export-import round has indeed finished, it will kick off the migration of the next "chunk" of data to migrate, with the process continuing on and on until you choose to end the migration tool. The orchestrator will check every 5 minutes to see if there is new data since the last export-import in the origin Azure API for FHIR server to migrate over to the destination Azure Health Data Services FHIR server. This way, you can keep your Azure API for FHIR server up and running during the migration process, and choose exactly when to cut over to the new FHIR server.
+  - **Orchestrator**: Immediately after deploying the migration tool, the migration tool will find the earliest "chunk" of data and kick off a export, followed by an import. The orchestrator then checks every 1 hour to see if the previous export-import round has finished. If the previous export-import round has indeed finished, it will kick off the migration of the next "chunk" of data to migrate, with the process continuing on and on until you choose to end the migration tool. The orchestrator will check every 1 hour to see if there is new data since the last export-import in the origin Azure API for FHIR server to migrate over to the destination Azure Health Data Services FHIR server. This way, you can keep your Azure API for FHIR server up and running during the migration process, and choose exactly when to cut over to the new FHIR server.
 
 ## Deployed Components
 During the deployment of the FHIR data migration tool, the following components will be deployed:
@@ -221,6 +221,18 @@ Please note that if you are using [Private Link](/FHIR-data-migration-tool-docs/
 	
 ## Configurations to set up during deployment
 The following are optional settings that you can configure during deployment.
+
+### Scheduling of Migration.
+The data migration tool provides an option to schedule migration runs. By default, after deployment, the tool runs every hour. <br> 
+You can customize the migration schedule by updating the __MigrationStarterCron__ parameter to meet your specific requirements.
+
+Example:
+
+```
+Name: MigrationStarterCron
+Value: 0 0 * * * *
+
+```
 
 ### Type of Migration.
 The data migration tool gives the option to choose the type of migration:
