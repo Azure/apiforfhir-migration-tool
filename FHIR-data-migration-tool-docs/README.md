@@ -782,6 +782,7 @@ A: You can redeploy the latest code to your existing migration tool deployment b
 2. Click Sync and confirm. This will start the pull and deployment process.
 
 ![Architecture](images/deploymentcentersync.png)
+
 3. Go to Logs and verify the deployment details. The status should show Active for the latest deployment.
 ![Architecture](images/deploymentcenterlogs.png)
 
