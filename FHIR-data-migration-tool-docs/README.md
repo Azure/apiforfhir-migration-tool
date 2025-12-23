@@ -6,6 +6,16 @@ The FHIR data migration tool helps you continuously copy data from an Azure API 
 
 The API for FHIR migration tool is an [Azure durable function](https://learn.microsoft.com/azure/azure-functions/durable/) application and uses [Azure storage table](https://learn.microsoft.com/azure/storage/tables/table-storage-overview) for capturing and maintaining the status of the export-import operation.
 
+
+> **Important**
+>
+> The migration tool is an open-source project. It is not a managed service, and it is not part of Microsoft Azure Health Data Services. You bear sole responsibility for compliance with local law and for any data you use with this open-source toolkit. Please review the information and licensing terms on this GitHub website before using the migration tool.
+>
+>The migration tool GitHub is intended only for use in migrating data. It is not intended for use as a medical device or to perform any analysis or any medical function and the performance of the software for such purposes has not been established. You bear sole responsibility for any use of this software, including incorporation into any product intended for a medical purpose.
+>
+>As the user, you are responsible for monitoring the progress of the migration and for ensuring that all data has been successfully migrated before decommissioning the source FHIR server. You can monitor the progress of the migration and each export and import job through the dashboard. More information on the dashboard can be found in the [Monitoring during migration](https://github.com/Azure/apiforfhir-migration-tool/tree/main/FHIR-data-migration-tool-docs#monitoring-during-migration) document.
+
+
 ### FHIR Data Migration Tool Overview
 The OSS migration tool is an Azure Durable Function-based tool layered on top of existing FHIR server \$export and \$import functionality to orchestrate one-way migration of FHIR data. It continuously migrates new data to give you time to test your new FHIR server with your data, and flexibility to align your cutover with your organization’s existing maintenance windows.
 
@@ -519,6 +529,12 @@ Once the $import operation is completed, the import operation content location i
 
 # 4. During Migration
 ## Monitoring during migration
+
+
+> **Important**
+> As the user, you are responsible for monitoring the progress of the migration and for ensuring that all data has been successfully migrated before decommissioning the source FHIR server. You can monitor the progress of the migration and each export and import job through the dashboards. Please be sure to monitor both dashboards at least once per day, and alert the FHIR server team via Azure Support ticket if there are any issues with the export or import jobs.
+> 
+
 ### Dashboard Monitoring
 
 During the deployment of the data migration tool , the dashboard is also deployed for monitoring the data migration from Azure API for FHIR to Azure Health Data Service FHIR service. It's the visualization of each export-import run.
@@ -743,3 +759,30 @@ Some notes to remember post-migration:
 3. Cut over to your new Azure Health Data Services FHIR service, and start using your new FHIR server
 	- Start pointing your pipelines to your new FHIR server's URL
 	- Turn off any remaining pipelines that are running on Azure API for FHIR, delete data from the intermediate storage account that was used in the migration tool if necessary, delete data from your Azure API for FHIR server, and decommission your Azure API for FHIR account.
+
+
+# FAQ
+### Migration tool configurations
+Q: How can I get a list of my current migration tool configurations? How can I change configurations after deploying the migration tool?
+
+A: 
+1. After deploying, open the Data Migration Azure function app.
+2. On the left hand panel, under Settings, go to Environment variables. The variables will be listed under App Settings.
+3. Here you can see all the current configurations of the migration tool and update any as needed.
+![Architecture](images/Function-app-environment-variables.png)
+
+
+### Deploy the latest code to the migration tool
+Q: I noticed that there is a new version of the migration tool code on GitHub. How can I deploy the latest code to my existing migration tool deployment?
+
+A: You can redeploy the latest code to your existing migration tool deployment by following these steps:
+1. Navigate to Deployment Center and confirm that the selected branch is main.
+![Architecture](images/deploymentcenter.png)
+
+2. Click Sync and confirm. This will start the pull and deployment process.
+
+![Architecture](images/deploymentcentersync.png)
+3. Go to Logs and verify the deployment details. The status should show Active for the latest deployment.
+![Architecture](images/deploymentcenterlogs.png)
+
+### 
