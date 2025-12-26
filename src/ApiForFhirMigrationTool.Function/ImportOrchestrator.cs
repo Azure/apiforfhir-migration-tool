@@ -245,6 +245,14 @@ namespace ApiForFhirMigrationTool.Function
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                         _logger?.LogInformation("Completed update of the export table.");
 
+                                        TableEntity chunkEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                                        var maxExportRetries = (int)chunkEntity["maxExportRetries"];
+                                        chunkEntity["maxExportRetries"] = maxExportRetries + 1;
+
+                                        _logger?.LogInformation("Starting update of the chunk table.");
+                                        _azureTableMetadataStore.UpdateEntity(chunktableClient, chunkEntity);
+                                        _logger?.LogInformation("Completed update of the chunk table.");
+
                                         _logger?.LogInformation("Updating logs in Application Insights.");
                                         _telemetryClient.TrackEvent(
                                         "Import",
@@ -281,8 +289,8 @@ namespace ApiForFhirMigrationTool.Function
                                                 { "Since",item.GetString("Since") },
                                                 { "Till", item.GetString("Till") },
                                                 { "StartTime", item.GetDateTime("StartTime") },
-                                                {"TotalExportResourceCount",item.GetString("TotalExportResourceCount") },
-                                                {"ExportEndTime",item.GetDateTime("ExportEndTime")  },
+                                                { "TotalExportResourceCount",item.GetString("TotalExportResourceCount") },
+                                                { "ExportEndTime",item.GetDateTime("ExportEndTime")  },
                                                 { "ExportId",  statusId },
                                                 { "ImportNo",blobItem.Name},
                                                 { "IsProcessed",true }
@@ -294,6 +302,8 @@ namespace ApiForFhirMigrationTool.Function
 
                                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                                             qEntitynew["ImportId"] = importId++;
+                                            var maxExportRetries = (int)qEntitynew["maxExportRetries"];
+                                            qEntitynew["maxExportRetries"] = maxExportRetries + 1;
 
                                             _logger?.LogInformation("Starting update of the chunk table.");
                                             _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);

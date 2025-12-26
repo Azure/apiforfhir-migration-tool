@@ -215,7 +215,14 @@ namespace ApiForFhirMigrationTool.Function
                                         logger?.LogInformation("Starting update of the export table.");
                                         _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                         logger?.LogInformation("Completed update of the export table.");
-                                                                               
+
+                                        TableEntity chunkEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                                        chunkEntity["maxExportRetries"] = 0;
+
+                                        logger?.LogInformation("Starting update of the chunk table.");
+                                        _azureTableMetadataStore.UpdateEntity(chunktableClient, chunkEntity);
+                                        logger?.LogInformation("Completed update of the chunk table.");
+
                                         logger?.LogInformation("Updating logs in Application Insights.");                                        
                                         _telemetryClient.TrackEvent(
                                         "Export",
@@ -273,7 +280,15 @@ namespace ApiForFhirMigrationTool.Function
                                 logger?.LogInformation("Starting update of the export table.");
                                 _azureTableMetadataStore.UpdateEntity(exportTableClient, exportEntity);
                                 logger?.LogInformation("Completed update of the export table.");
-                                
+
+                                TableEntity chunkEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                                var maxExportRetries = (int)chunkEntity["maxExportRetries"];
+                                chunkEntity["maxExportRetries"] = maxExportRetries + 1;
+
+                                logger?.LogInformation("Starting update of the chunk table.");
+                                _azureTableMetadataStore.UpdateEntity(chunktableClient, chunkEntity);
+                                logger?.LogInformation("Completed update of the chunk table.");
+
                                 logger?.LogInformation("Updating logs in Application Insights.");
                                 _telemetryClient.TrackEvent(
                                         "Export",

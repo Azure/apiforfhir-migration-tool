@@ -54,6 +54,7 @@ namespace ApiForFhirMigrationTool.Function
                 bool shouldRun = true;
                 bool continueRun = true;
 
+                // Check if PauseDm is enabled
                 if (_options.PauseDm)
                 {
                     if (_options.StartTime < 0 || _options.StartTime > 23 || _options.EndTime < 0 || _options.EndTime > 23)
@@ -74,12 +75,14 @@ namespace ApiForFhirMigrationTool.Function
                         logger.LogInformation("Execution skipped: Current time is within the restricted window");
                     }
                 }
-                
+
+                // Validate configuration
                 _options.ValidateConfig();               
                 logger.LogInformation("Creating table client");
                 TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
                 logger.LogInformation("Table client created successfully.");
 
+                // Initialize chunk table if not exists
                 Pageable<TableEntity> jobList = chunktableClient.Query<TableEntity>();
                 if (jobList.Count() <= 0)
                 {
@@ -94,6 +97,7 @@ namespace ApiForFhirMigrationTool.Function
                         { "resourceTypeIndex", 0 },
                         { "multiExport", "" },
                         { "ImportId",0 },
+                        { "maxExportRetries", 0 },
                         { "SearchParameterMigration", false }
                     };
                     logger.LogInformation("Starting update of the chunk table.");
@@ -103,6 +107,7 @@ namespace ApiForFhirMigrationTool.Function
                 TableEntity qEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                 var since = _options.IsParallel == true ? (string)qEntity["since"] : (string)qEntity["globalSinceExportType"];
 
+                // Update chunk table for parallel export
                 if (_options.IsParallel == true)
                 {
                     qEntity["globalTillExportType"] = "";
@@ -115,6 +120,7 @@ namespace ApiForFhirMigrationTool.Function
                     logger.LogInformation("Completed update of the chunk table.");
                 }
 
+                // Check if SpecificRun is enabled
                 if (_options.SpecificRun && !string.IsNullOrEmpty(since))
                 {
                     logger.LogInformation("Data Migration Tool checking for specific time range.");
@@ -129,6 +135,47 @@ namespace ApiForFhirMigrationTool.Function
                     }
                 }
 
+                // check if Export Retry is needed
+                if (_options.MaxExportRetriesEnabled)
+                {
+                    logger.LogInformation($"Data Migration Tool will attempt a maximum of {_options.MaxExportRetries} export retries.");
+                    var maxExport = qEntity["maxExportRetries"];
+                    int maxExportValue = maxExport != null ? (int)maxExport : 0;
+
+                    if (maxExportValue >= _options.MaxExportRetries)
+                    {
+                        continueRun = false;
+                        
+                        string errorMessage = $"MIGRATION HALTED: Maximum export retries limit ({_options.MaxExportRetries}) has been reached. " +
+                            $"The export or import process has failed {maxExportValue} consecutive times. " +
+                            $"ACTION REQUIRED: Please investigate the export table ('{_options.ExportTableName}') for detailed failure information. " +
+                            $"Check the 'FailureReason' column for specific error details. " +
+                            $"Common issues include: connectivity problems, authentication failure or issue from FHIR server. " +
+                            $"After resolving the issue, use the ClearMaxExportRetries HTTP function to reset the retry counter and resume migration.";
+
+                        logger.LogError(errorMessage);
+                        logger.LogError($"Export Table Name: {_options.ExportTableName}");
+                        logger.LogError($"To restart the migration tool, GET Or POST to: /ClearMaxExportRetries_Http");
+
+                        logger.LogInformation("Updating logs in Application Insights.");
+                        _telemetryClient.TrackEvent(
+                            "ExportRetries",
+                            new Dictionary<string, string>()
+                            {
+                                { "Status", "MaxRetriesReached" },
+                                { "MaxExportRetries", maxExportValue.ToString() },
+                                { "ConfiguredLimit", _options.MaxExportRetries.ToString() },
+                                { "ExportTableName", _options.ExportTableName },
+                                { "PartitionKey", _options.PartitionKey },
+                                { "Time", DateTime.UtcNow.ToString("o") },
+                                { "ActionRequired", "Check export table for failure details and resolve issues before resuming" }
+                            });
+                        logger.LogInformation("Logs updated successfully in Application Insights.");
+
+                    }
+                }
+
+                // Start the migration process
                 if (continueRun)
                 {
                     var options = TaskOptions.FromRetryPolicy(new RetryPolicy(
