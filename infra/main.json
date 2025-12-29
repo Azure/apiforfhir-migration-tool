@@ -402,7 +402,7 @@
             "name": "[format('{0}/{1}', variables('functionAppName'), 'web')]",
             "properties": {
                 "repoUrl": "[variables('repoUrl')]",
-                "branch": "main",
+                "branch": "personal/v-shanarang/maxretryexport",
                 "isManualIntegration": true
             },
             "dependsOn": [
