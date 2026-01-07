@@ -221,6 +221,7 @@ namespace ApiForFhirMigrationTool.Function
                                             TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                                             qEntitynew["since"] = exportEntity["Till"];
                                             qEntitynew["globalSinceExportType"] = exportEntity["Till"];
+                                            qEntitynew["maxExportRetries"] = 0;
                                             logger?.LogInformation("Starting update of the chunk table.");
                                             _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
                                             logger?.LogInformation("Completed update of the chunk table.");
@@ -249,6 +250,7 @@ namespace ApiForFhirMigrationTool.Function
                                                     qEntityResourceType["resourceTypeIndex"] = 0; // all the import will done so will reset index
                                                     qEntityResourceType["subSinceExportType"] = "";
                                                     qEntityResourceType["subTillExportType"] = "";
+                                                    qEntityResourceType["maxExportRetries"] = 0;
                                                     logger?.LogInformation("Starting update of the chunk table.");
                                                     _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceType);
                                                     logger?.LogInformation("Completed update of the chunk table.");
@@ -266,6 +268,7 @@ namespace ApiForFhirMigrationTool.Function
                                                 else
                                                 {
                                                     qEntityResourceType["resourceTypeIndex"] = (int)qEntityResourceType["resourceTypeIndex"] + 1; //   import done then increment counter index
+                                                    qEntityResourceType["maxExportRetries"] = 0;
                                                     logger?.LogInformation("Starting update of the chunk table.");
                                                     _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceType);
                                                     logger?.LogInformation("Completed update of the chunk table.");
@@ -287,6 +290,7 @@ namespace ApiForFhirMigrationTool.Function
                                                         qEntityResourceTypenew["multiExport"] = "";
                                                         qEntityResourceTypenew["subSinceExportType"] = "";
                                                         qEntityResourceTypenew["subTillExportType"] = "";
+                                                        qEntityResourceTypenew["maxExportRetries"] = 0;
                                                         logger?.LogInformation("Starting update of the chunk table.");
                                                         _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceTypenew);
                                                         logger?.LogInformation("Completed update of the chunk table.");
@@ -306,6 +310,7 @@ namespace ApiForFhirMigrationTool.Function
                                                     {
                                                         qEntityResourceTypenew["multiExport"] = ""; // if global and sub till date matches for this all export done for those chunk  and increment the counter
                                                         qEntityResourceTypenew["resourceTypeIndex"] = (int)qEntityResourceTypenew["resourceTypeIndex"] + 1;
+                                                        qEntityResourceTypenew["maxExportRetries"] = 0;
                                                         logger?.LogInformation("Starting update of the chunk table.");
                                                         _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceTypenew);
                                                         logger?.LogInformation("Completed update of the chunk table.");
@@ -317,6 +322,7 @@ namespace ApiForFhirMigrationTool.Function
                                                     // multiexport run and completed sub export then assigining till to since and global till to sub till
                                                     qEntityResourceTypenew["subSinceExportType"] = qEntityResourceTypenew["subTillExportType"];
                                                     qEntityResourceTypenew["subTillExportType"] = qEntityResourceTypenew["globalTillExportType"];
+                                                    qEntityResourceTypenew["maxExportRetries"] = 0;
                                                     logger?.LogInformation("Starting update of the chunk table.");
                                                     _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntityResourceTypenew);
                                                     logger?.LogInformation("Completed update of the chunk table.");
@@ -419,6 +425,14 @@ namespace ApiForFhirMigrationTool.Function
                                     logger?.LogInformation("Completed update of the export table.");
                                 }
                             }
+
+                            TableEntity chunkEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+                            var maxExportRetries = (int)chunkEntity["maxExportRetries"];
+                            chunkEntity["maxExportRetries"] = maxExportRetries + 1;
+
+                            logger?.LogInformation("Starting update of the chunk table.");
+                            _azureTableMetadataStore.UpdateEntity(chunktableClient, chunkEntity);
+                            logger?.LogInformation("Completed update of the chunk table.");
 
                             isComplete = true;
                             logger?.LogInformation("Updating logs in Application Insights.");

@@ -8,6 +8,7 @@ using ApiForFhirMigrationTool.Function.FhirOperation;
 using ApiForFhirMigrationTool.Function.Models;
 using ApiForFhirMigrationTool.Function.OrchestrationHelper;
 using ApiForFhirMigrationTool.Function.Processors;
+using Azure.Data.Tables;
 using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -27,8 +28,9 @@ namespace ApiForFhirMigrationTool.Function
         private readonly IFhirProcessor _exportProcessor;
         private readonly IFhirClient _fhirClient;
         private readonly TelemetryClient _telemetryClient;
+        private readonly IMetadataStore _azureTableMetadataStore;
 
-        public FhirMigrationToolE2E(MigrationOptions options, ILoggerFactory loggerFactory, IOrchestrationHelper orchestrationHelper, IAzureTableClientFactory azureTableClientFactory, IFhirProcessor exportProcessor, IFhirClient fhirClient, TelemetryClient telemetryClient)
+        public FhirMigrationToolE2E(MigrationOptions options, ILoggerFactory loggerFactory, IOrchestrationHelper orchestrationHelper, IAzureTableClientFactory azureTableClientFactory, IFhirProcessor exportProcessor, IFhirClient fhirClient, TelemetryClient telemetryClient, IMetadataStore azureTableMetadataStore)
         {
             _options = options;
             _logger = loggerFactory.CreateLogger<FhirMigrationToolE2E>();
@@ -37,6 +39,7 @@ namespace ApiForFhirMigrationTool.Function
             _exportProcessor = exportProcessor;
             _fhirClient = fhirClient;
             _telemetryClient = telemetryClient;
+            _azureTableMetadataStore = azureTableMetadataStore;
         }
 
         [Function("E2ETest_Http")]
@@ -53,6 +56,61 @@ namespace ApiForFhirMigrationTool.Function
 
             logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
             return client.CreateCheckStatusResponse(req, instanceId);
+        }
+
+        [Function("ClearMaxExportRetries_Http")]
+        public async Task<HttpResponseData> ClearMaxExportRetries_Http(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
+            FunctionContext executionContext)
+        {
+            ILogger logger = executionContext.GetLogger("ClearMaxExportRetries_Http");
+
+            try
+            {
+                logger.LogInformation("Creating table client for chunk table.");
+                TableClient chunktableClient = _azureTableClientFactory.Create(_options.ChunkTableName);
+                logger.LogInformation("Table client created successfully.");
+
+                logger.LogInformation("Retrieving chunk table entity.");
+                TableEntity chunkEntity = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
+
+                if (chunkEntity == null)
+                {
+                    logger.LogWarning("Chunk table entity not found.");
+                    var notFoundResponse = req.CreateResponse(System.Net.HttpStatusCode.NotFound);
+                    await notFoundResponse.WriteStringAsync("Chunk table entity not found.");
+                    return notFoundResponse;
+                }
+
+                logger.LogInformation("Clearing maxExportRetries value.");
+                chunkEntity["maxExportRetries"] = 0;
+
+                logger.LogInformation("Updating chunk table entity.");
+                _azureTableMetadataStore.UpdateEntity(chunktableClient, chunkEntity);
+                logger.LogInformation("maxExportRetries cleared successfully.");
+
+                logger.LogInformation("Updating logs in Application Insights.");
+                _telemetryClient.TrackEvent(
+                    "MaxExportRetriesCleared",
+                    new Dictionary<string, string>()
+                    {
+                        { "PartitionKey", _options.PartitionKey },
+                        { "RowKey", _options.RowKey },
+                        { "ClearedAt", DateTime.UtcNow.ToString("o") }
+                    });
+                logger.LogInformation("Logs updated successfully in Application Insights.");
+
+                var response = req.CreateResponse(System.Net.HttpStatusCode.OK);
+                await response.WriteStringAsync("maxExportRetries cleared successfully.");
+                return response;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error occurred while clearing maxExportRetries: {ex.Message}");
+                var errorResponse = req.CreateResponse(System.Net.HttpStatusCode.InternalServerError);
+                await errorResponse.WriteStringAsync($"Error: {ex.Message}");
+                return errorResponse;
+            }
         }
 
         [Function(nameof(E2ETestOrchestration))]

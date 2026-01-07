@@ -234,14 +234,40 @@ The following are optional settings that you can configure during deployment.
 
 ### Scheduling of Migration.
 The data migration tool provides an option to schedule migration runs. By default, after deployment, the tool runs every hour. <br> 
-You can customize the migration schedule by updating the __MigrationStarterCron__ parameter to meet your specific requirements.
+You can customize the migration schedule by updating the __MigrationStarterCron__ parameter to meet your specific requirements.This parameter follows the six-field cron format used by Azure Functions:
+```
+{second} {minute} {hour} {day} {month} {day-of-week}
+```
 
-Example:
+#### Default Configuration (Runs Every Hour):
 
 ```
 Name: MigrationStarterCron
 Value: 0 0 * * * *
+```
+Explanation:
 
+- 0 → Second (runs at second 0)
+
+- 0 → Minute (runs at minute 0)
+
+- \* → Hour (every hour)
+
+- \* → Day of month (every day)
+
+- \* → Month (every month)
+
+- \* → Day of week (every day of the week)
+
+#### Common Customization Examples<br>
+
+Run every 15 minutes
+```
+0 */15 * * * *
+```
+Run every 30 minutes
+```
+0 */30 * * * *
 ```
 
 ### Type of Migration.
@@ -503,6 +529,92 @@ Name: AZURE_MaxCountValue
 Value: 5000
 
 ```
+
+#### How to configure MaxExportRetries for export/import
+1. After deploying, open the Data migration Azure function.
+2. Go to the environment variable setting and under it go to App Setting.
+3. Set the below configuration as per the need:
+```
+Name: AZURE_MaxExportRetriesEnabled
+Value: true or false
+
+Name: AZURE_MaxExportRetries
+Value: <<Int number>>
+
+```
+
+**Configuration:**
+
+![MaxExportRetries Configuration](images/MaxExportRetries-Configuration.png)
+
+AZURE_MaxExportRetriesEnabled can be set to true or false. This parameter allows the migration tool to retry failed export/import operations up to a specified number of times.
+- If set to false, the migration tool will keep retring the failed export/import operations.
+- If set to true, the migration tool will retry failed export/import operations up to the number specified in AZURE_MaxExportRetries.
+
+AZURE_MaxExportRetries will take an integer as value. This sets the maximum number of retry attempts for failed export/import operations. By default, this value is set to 5.
+
+**Consecutive Failure Behavior:**
+
+If an export or import operation fails consecutively for the number of times specified in AZURE_MaxExportRetries (when AZURE_MaxExportRetriesEnabled is set to true), the migration tool will automatically halt the migration process. When this occurs:
+- The migration process will stop to prevent further issues
+- Details of the migration halt will be logged in the logs
+- You will need to investigate the cause of the failures of the export/import by getting the details from the export table under **FailureReason** column for the export/import run and resolve the underlying issue before resuming migration
+
+This safeguard helps prevent continuous failed attempts that could lead to resource exhaustion.
+
+Migration Halt Error:
+
+- Open the Data Migration Azure function and go to MigrationOrchestration function and get the invocation logs for the error.<br>
+
+![MaxExportRetries Error](images/MaxExportRetries-Error.png)
+
+Example:
+
+Below setting in Azure Function will enable export/import retry with a maximum of 3 retry attempts: 
+```
+Name: AZURE_MaxExportRetriesEnabled
+Value: true
+
+Name: AZURE_MaxExportRetries
+Value: 3
+
+```
+
+### How to clear MaxExportRetries counter
+
+After resolving the issues that caused the consecutive failures, you will need to clear the maxExportRetries counter to resume the migration. There are two ways to clear this counter:
+
+**Option 1: Using the ClearMaxExportRetries Function**
+
+The migration tool provides a built-in HTTP function to clear the maxExportRetries counter:
+
+1. Navigate to your Azure Function App in the Azure Portal
+2. Go to "Functions" in the left menu
+3. Find and select the `ClearMaxExportRetries_Http` function
+4. Click on "Get Function Url" and copy the URL
+5. Send a GET or POST request to this URL
+6. The function will clear the maxExportRetries value in the chunk table and return a success message
+
+Example using curl:
+```
+curl -X GET "https://<your-function-app>.azurewebsites.net/api/ClearMaxExportRetries_Http?code=<function-key>"
+```
+![MaxExportRetries Function](images/MaxExportRetries-Function.png)
+
+**Option 2: Manually Clearing from Chunk Table**
+
+You can also manually clear the maxExportRetries counter directly in the storage table:
+
+1. Navigate to the Storage Account linked to your migration tool Function App
+2. Go to "Storage browser" in the left menu
+3. Expand "Tables" and select the chunk table (typically named "chunk")
+4. Locate the `maxExportRetries` column
+5. Edit the value and set it to `0`
+6. Save the changes
+
+![Clear MaxExportRetries](images/Clear-MaxExportRetries.png)
+
+Once the counter is cleared, the migration tool will resume processing the failed chunk in the next scheduled run.
 
 You  can configure the start date in Azure function from where the export should start from the API for FHIR server. AZURE_StartDate will help to export the data from that specific date. <br>
 If the start date is not provided the tool will fetch the first resource date from the server and start the migration.

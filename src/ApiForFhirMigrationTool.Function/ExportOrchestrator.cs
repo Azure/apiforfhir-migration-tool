@@ -220,6 +220,8 @@ public class ExportOrchestrator
                         
                         TableEntity qEntitynew = _azureTableMetadataStore.GetEntity(chunktableClient, _options.PartitionKey, _options.RowKey);
                         qEntitynew["JobId"] = jobId++;
+                        var maxExportRetries = (int)qEntitynew["maxExportRetries"];
+                        qEntitynew["maxExportRetries"] = maxExportRetries + 1;
 
                         _logger?.LogInformation("Starting update of the chunk table.");
                         _azureTableMetadataStore.UpdateEntity(chunktableClient, qEntitynew);
@@ -235,7 +237,7 @@ public class ExportOrchestrator
                             { "ExportStatus", "Failed" },
                             { "Since", sinceValue },
                             { "Till", tillValue },
-                           { "FailureReason", diagnosticsValue }
+                            { "FailureReason", diagnosticsValue }
                        });
                         _logger?.LogInformation("Logs updated successfully in Application Insights.");
 
