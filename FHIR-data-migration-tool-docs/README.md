@@ -80,6 +80,9 @@ During the deployment of the FHIR data migration tool, the following components 
 > [!IMPORTANT]  
 > Please ensure that your $import is set to **incremental import mode** in order for the migration tool to work. If needed, you may switch back to initial import mode post-migration. Set incremental import mode following these [configuration settings](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/configure-import-data#step-3b-set-import-configuration-for-incremental-import-mode) and [parameter value](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data#body). Learn more about incremental and initial import [here](https://learn.microsoft.com/en-us/azure/healthcare-apis/fhir/import-data).
 
+> [!IMPORTANT]
+> If your Azure API for FHIR instance contains more than 2 TB of data, open an [Azure support request](https://learn.microsoft.com/azure/azure-portal/supportability/how-to-create-azure-support-request) **before** starting your migration. In the support ticket, include your Azure API for FHIR instance name and your Azure Health Data Services FHIR service instance name so the team can assist with your migration planning.
+
 
 
 ## Extra prerequisites needed (advanced scenarios)
